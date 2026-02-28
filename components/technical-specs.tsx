@@ -8,49 +8,84 @@ import { Label } from "@/components/ui/label"
 import { Server, Link2, Globe, Zap, FileText } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectRow } from "@/lib/useProjectRow"
 
 type TechnicalSpecsProps = {
   projectId: string
 }
 
-export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
-  const defaultData = {
-    currentHosting: "",
-    hostingNotes: "",
-    proposedHosting: "",
-    cms: "",
-    contentUpdateFrequency: "",
-    contentManagers: "",
-    editableContent: "",
-    thirdPartyIntegrations: "",
-    technicalRequirements: "",
-    performanceRequirements: "",
-    browserSupport: "",
-    seoRequirements: "",
-  }
+type TechnicalData = {
+  currentHosting: string
+  hostingNotes: string
+  proposedHosting: string
+  cms: string
+  contentUpdateFrequency: string
+  contentManagers: string
+  editableContent: string
+  thirdPartyIntegrations: string
+  technicalRequirements: string
+  performanceRequirements: string
+  browserSupport: string
+  seoRequirements: string
+}
 
-  const [technicalData, setTechnicalData] = useState(defaultData)
+const defaultTechnicalData: TechnicalData = {
+  currentHosting: "",
+  hostingNotes: "",
+  proposedHosting: "",
+  cms: "",
+  contentUpdateFrequency: "",
+  contentManagers: "",
+  editableContent: "",
+  thirdPartyIntegrations: "",
+  technicalRequirements: "",
+  performanceRequirements: "",
+  browserSupport: "",
+  seoRequirements: "",
+}
+
+export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
+  const { data: technicalData, setData: setTechnicalData } = useProjectRow<TechnicalData>({
+    tableName: "technical_specs",
+    projectId,
+    defaults: {},
+    fromRow: (row) => ({
+      currentHosting: row?.current_hosting != null ? String(row.current_hosting) : "",
+      hostingNotes: row?.hosting_notes != null ? String(row.hosting_notes) : "",
+      proposedHosting: row?.proposed_hosting != null ? String(row.proposed_hosting) : "",
+      cms: row?.cms != null ? String(row.cms) : "",
+      contentUpdateFrequency: row?.content_update_frequency != null ? String(row.content_update_frequency) : "",
+      contentManagers: row?.content_managers != null ? String(row.content_managers) : "",
+      editableContent: row?.editable_content != null ? String(row.editable_content) : "",
+      thirdPartyIntegrations: row?.third_party_integrations != null ? String(row.third_party_integrations) : "",
+      technicalRequirements: row?.technical_requirements != null ? String(row.technical_requirements) : "",
+      performanceRequirements: row?.performance_requirements != null ? String(row.performance_requirements) : "",
+      browserSupport: row?.browser_support != null ? String(row.browser_support) : "",
+      seoRequirements: row?.seo_requirements != null ? String(row.seo_requirements) : "",
+    }),
+    toPayload: (d) => ({
+      current_hosting: d?.currentHosting || null,
+      hosting_notes: d?.hostingNotes || null,
+      proposed_hosting: d?.proposedHosting || null,
+      cms: d?.cms || null,
+      content_update_frequency: d?.contentUpdateFrequency || null,
+      content_managers: d?.contentManagers || null,
+      editable_content: d?.editableContent || null,
+      third_party_integrations: d?.thirdPartyIntegrations || null,
+      technical_requirements: d?.technicalRequirements || null,
+      performance_requirements: d?.performanceRequirements || null,
+      browser_support: d?.browserSupport || null,
+      seo_requirements: d?.seoRequirements || null,
+    }),
+  })
+
+  const data = technicalData ?? defaultTechnicalData
 
   const [isComplete, setIsComplete] = useState(false)
 
   useEffect(() => {
-    const storageKey = `project-${projectId}-technical`
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      const parsedData = JSON.parse(savedData)
-      setTechnicalData({ ...defaultData, ...parsedData })
-    }
-  }, [projectId])
-
-  useEffect(() => {
     setIsComplete(checkSectionCompletion(projectId, "technical"))
   }, [projectId])
-
-  useEffect(() => {
-    const storageKey = `project-${projectId}-technical`
-    setUserItem(storageKey, JSON.stringify(technicalData))
-  }, [technicalData, projectId])
 
   const toggleCompletion = (checked: boolean) => {
     setIsComplete(checked)
@@ -97,8 +132,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Input
                 id="currentHosting"
-                value={technicalData.currentHosting}
-                onChange={(e) => setTechnicalData({ ...technicalData, currentHosting: e.target.value })}
+                value={data.currentHosting}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, currentHosting: e.target.value } : { ...defaultTechnicalData, currentHosting: e.target.value }))}
                 placeholder="e.g., Vercel, Netlify, AWS, GoDaddy"
                 className="bg-white border-gray-300 text-gray-900"
               />
@@ -109,8 +144,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="hostingNotes"
-                value={technicalData.hostingNotes}
-                onChange={(e) => setTechnicalData({ ...technicalData, hostingNotes: e.target.value })}
+                value={data.hostingNotes}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, hostingNotes: e.target.value } : { ...defaultTechnicalData, hostingNotes: e.target.value }))}
                 placeholder="Account details, credentials location, billing info, migration notes..."
                 rows={3}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -122,8 +157,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Input
                 id="proposedHosting"
-                value={technicalData.proposedHosting}
-                onChange={(e) => setTechnicalData({ ...technicalData, proposedHosting: e.target.value })}
+                value={data.proposedHosting}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, proposedHosting: e.target.value } : { ...defaultTechnicalData, proposedHosting: e.target.value }))}
                 placeholder="Recommended hosting for new site"
                 className="bg-white border-gray-300 text-gray-900"
               />
@@ -147,8 +182,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Input
                 id="cms"
-                value={technicalData.cms}
-                onChange={(e) => setTechnicalData({ ...technicalData, cms: e.target.value })}
+                value={data.cms}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, cms: e.target.value } : { ...defaultTechnicalData, cms: e.target.value }))}
                 placeholder="e.g., WordPress, Contentful, Sanity, Custom"
                 className="bg-white border-gray-300 text-gray-900"
               />
@@ -159,8 +194,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Input
                 id="contentManagers"
-                value={technicalData.contentManagers}
-                onChange={(e) => setTechnicalData({ ...technicalData, contentManagers: e.target.value })}
+                value={data.contentManagers}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, contentManagers: e.target.value } : { ...defaultTechnicalData, contentManagers: e.target.value }))}
                 placeholder="e.g., Client, Agency, Marketing Team, Both"
                 className="bg-white border-gray-300 text-gray-900"
               />
@@ -171,8 +206,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Input
                 id="contentUpdateFrequency"
-                value={technicalData.contentUpdateFrequency}
-                onChange={(e) => setTechnicalData({ ...technicalData, contentUpdateFrequency: e.target.value })}
+                value={data.contentUpdateFrequency}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, contentUpdateFrequency: e.target.value } : { ...defaultTechnicalData, contentUpdateFrequency: e.target.value }))}
                 placeholder="e.g., Daily, Weekly, Monthly, Rarely"
                 className="bg-white border-gray-300 text-gray-900"
               />
@@ -183,8 +218,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="editableContent"
-                value={technicalData.editableContent}
-                onChange={(e) => setTechnicalData({ ...technicalData, editableContent: e.target.value })}
+                value={data.editableContent}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, editableContent: e.target.value } : { ...defaultTechnicalData, editableContent: e.target.value }))}
                 placeholder="List what needs to be editable (e.g., blog posts, product pages, team members, testimonials, FAQs, pricing, images, videos...)"
                 rows={3}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -211,8 +246,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="thirdPartyIntegrations"
-                value={technicalData.thirdPartyIntegrations}
-                onChange={(e) => setTechnicalData({ ...technicalData, thirdPartyIntegrations: e.target.value })}
+                value={data.thirdPartyIntegrations}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, thirdPartyIntegrations: e.target.value } : { ...defaultTechnicalData, thirdPartyIntegrations: e.target.value }))}
                 placeholder="List all third-party services (e.g., Google Analytics, Mailchimp, Stripe, Zapier, HubSpot, payment processors, social media APIs, marketing tools...)"
                 rows={8}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -237,8 +272,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="performanceRequirements"
-                value={technicalData.performanceRequirements}
-                onChange={(e) => setTechnicalData({ ...technicalData, performanceRequirements: e.target.value })}
+                value={data.performanceRequirements}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, performanceRequirements: e.target.value } : { ...defaultTechnicalData, performanceRequirements: e.target.value }))}
                 placeholder="Page load time targets, Core Web Vitals, CDN requirements, image optimization..."
                 rows={4}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -250,8 +285,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="browserSupport"
-                value={technicalData.browserSupport}
-                onChange={(e) => setTechnicalData({ ...technicalData, browserSupport: e.target.value })}
+                value={data.browserSupport}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, browserSupport: e.target.value } : { ...defaultTechnicalData, browserSupport: e.target.value }))}
                 placeholder="Required browsers and versions (e.g., Chrome, Firefox, Safari, Edge - last 2 versions, IE11 support...)"
                 rows={3}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -276,8 +311,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="seoRequirements"
-                value={technicalData.seoRequirements}
-                onChange={(e) => setTechnicalData({ ...technicalData, seoRequirements: e.target.value })}
+                value={data.seoRequirements}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, seoRequirements: e.target.value } : { ...defaultTechnicalData, seoRequirements: e.target.value }))}
                 placeholder="Meta tags, structured data, sitemap, robots.txt, canonical URLs, Open Graph tags..."
                 rows={4}
                 className="bg-white border-gray-300 text-gray-900 resize-none"
@@ -289,8 +324,8 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
               </Label>
               <Textarea
                 id="technicalRequirements"
-                value={technicalData.technicalRequirements}
-                onChange={(e) => setTechnicalData({ ...technicalData, technicalRequirements: e.target.value })}
+                value={data.technicalRequirements}
+                onChange={(e) => setTechnicalData((prev) => (prev ? { ...prev, technicalRequirements: e.target.value } : { ...defaultTechnicalData, technicalRequirements: e.target.value }))}
                 placeholder="Accessibility standards, multilingual support, email setup, analytics tracking, cookie consent, security requirements..."
                 rows={3}
                 className="bg-white border-gray-300 text-gray-900 resize-none"

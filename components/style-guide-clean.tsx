@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
 import { PaletteIcon, Pencil, Plus, Minus, X, TypeIcon, PencilIcon } from "lucide-react"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectRow } from "@/lib/useProjectRow"
 
 type StyleGuideProps = {
   projectId: string
@@ -73,6 +73,54 @@ type StandardColors = {
   secondaryBackground: string
 }
 
+type StyleGuideData = {
+  standardColors: StandardColors
+  customColors: CustomColor[]
+  typography: TypographyLevel[]
+  buttonStyles: Record<string, ButtonStyle>
+}
+
+const defaultStandardColors: StandardColors = {
+  primary: "",
+  secondary: "",
+  accent: "",
+  highlight: "",
+  background: "",
+  secondaryBackground: "",
+}
+
+const defaultTypography: TypographyLevel[] = [
+  { level: "h1", label: "H1", fontFamily: "Inter", fontSize: 32, color: "#000000", previewText: "This is a H1 heading example", description: "Main page heading" },
+  { level: "h2", label: "H2", fontFamily: "Inter", fontSize: 28, color: "#000000", previewText: "This is a H2 heading example", description: "Section heading" },
+  { level: "h3", label: "H3", fontFamily: "Inter", fontSize: 24, color: "#000000", previewText: "This is a H3 heading example", description: "Subsection heading" },
+  { level: "h4", label: "H4", fontFamily: "Inter", fontSize: 20, color: "#000000", previewText: "This is a H4 heading example", description: "Card or component heading" },
+  { level: "h5", label: "H5", fontFamily: "Inter", fontSize: 18, color: "#000000", previewText: "This is a H5 heading example", description: "Small section heading" },
+  { level: "h6", label: "H6", fontFamily: "Inter", fontSize: 16, color: "#000000", previewText: "This is a H6 heading example", description: "Smallest heading" },
+  { level: "body", label: "Paragraph", fontFamily: "Inter", fontSize: 14, color: "#000000", previewText: "This is body text used for paragraphs and general content throughout your website.", description: "Body and paragraph text" },
+]
+
+const defaultButtonStyles: Record<string, ButtonStyle> = {
+  primary: {
+    fontFamily: "Inter", fontSize: 16, textColor: "#FFFFFF", bold: false, underline: false, italic: false, alignment: "center",
+    backgroundColor: "#000000", borderWidth: 0, borderColor: "#000000", borderRadius: 6, shadow: false,
+    hoverBackgroundColor: "#333333", hoverBorderColor: "#000000", hoverTextColor: "#FFFFFF", hoverBold: false, hoverUnderline: false, hoverItalic: false,
+    padding: "12px 24px",
+  },
+  secondary: {
+    fontFamily: "Inter", fontSize: 16, textColor: "#000000", bold: false, underline: false, italic: false, alignment: "center",
+    backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#000000", borderRadius: 6, shadow: false,
+    hoverBackgroundColor: "#F3F4F6", hoverBorderColor: "#000000", hoverTextColor: "#000000", hoverBold: false, hoverUnderline: false, hoverItalic: false,
+    padding: "12px 24px",
+  },
+}
+
+const defaultStyleGuideData: StyleGuideData = {
+  standardColors: defaultStandardColors,
+  customColors: [],
+  typography: defaultTypography,
+  buttonStyles: defaultButtonStyles,
+}
+
 const STANDARD_FONTS = [
   "Inter",
   "Arial",
@@ -95,179 +143,66 @@ const STANDARD_FONTS = [
 
 export function StyleGuideClean({ projectId }: { projectId: string }) {
   const [isCompleted, setIsCompleted] = useState(false)
-
-  const [isDataLoaded, setIsDataLoaded] = useState(false)
-  const [standardColors, setStandardColors] = useState<StandardColors>({
-    primary: "",
-    secondary: "",
-    accent: "",
-    highlight: "",
-    background: "",
-    secondaryBackground: "",
+  const { data: styleData, setData: setStyleData } = useProjectRow<StyleGuideData>({
+    tableName: "style_guide",
+    projectId,
+    defaults: {},
+    fromRow: (row) => {
+      const raw = row?.data
+      if (!raw || typeof raw !== "object") return defaultStyleGuideData
+      const o = raw as Record<string, unknown>
+      return {
+        standardColors: (o.standardColors as StandardColors) ?? defaultStandardColors,
+        customColors: Array.isArray(o.customColors) ? (o.customColors as CustomColor[]) : [],
+        typography: Array.isArray(o.typography) ? (o.typography as TypographyLevel[]) : defaultTypography,
+        buttonStyles: (o.buttonStyles as Record<string, ButtonStyle>) ?? defaultButtonStyles,
+      }
+    },
+    toPayload: (d) => ({ data: d ?? defaultStyleGuideData }),
   })
 
-  const [customColors, setCustomColors] = useState<CustomColor[]>([])
+  const standardColors = styleData?.standardColors ?? defaultStandardColors
+  const customColors = styleData?.customColors ?? []
+  const typography = styleData?.typography ?? defaultTypography
+  const buttonStyles = styleData?.buttonStyles ?? defaultButtonStyles
+
+  const setStandardColors = (value: StandardColors | ((prev: StandardColors) => StandardColors)) => {
+    setStyleData((prev) => {
+      const next = prev ?? defaultStyleGuideData
+      const nextStandard = typeof value === "function" ? value(next.standardColors) : value
+      return { ...next, standardColors: nextStandard }
+    })
+  }
+  const setCustomColors = (value: CustomColor[] | ((prev: CustomColor[]) => CustomColor[])) => {
+    setStyleData((prev) => {
+      const next = prev ?? defaultStyleGuideData
+      const nextCustom = typeof value === "function" ? value(next.customColors) : value
+      return { ...next, customColors: nextCustom }
+    })
+  }
+  const setTypography = (value: TypographyLevel[] | ((prev: TypographyLevel[]) => TypographyLevel[])) => {
+    setStyleData((prev) => {
+      const next = prev ?? defaultStyleGuideData
+      const nextTypo = typeof value === "function" ? value(next.typography) : value
+      return { ...next, typography: nextTypo }
+    })
+  }
+  const setButtonStyles = (value: Record<string, ButtonStyle> | ((prev: Record<string, ButtonStyle>) => Record<string, ButtonStyle>)) => {
+    setStyleData((prev) => {
+      const next = prev ?? defaultStyleGuideData
+      const nextStyles = typeof value === "function" ? value(next.buttonStyles) : value
+      return { ...next, buttonStyles: nextStyles }
+    })
+  }
+
   const [newCustomColor, setNewCustomColor] = useState("#000000")
   const [newColorLabel, setNewColorLabel] = useState("")
-
-  const [typography, setTypography] = useState<TypographyLevel[]>([
-    {
-      level: "h1",
-      label: "H1",
-      fontFamily: "Inter",
-      fontSize: 32,
-      color: "#000000",
-      previewText: "This is a H1 heading example",
-      description: "Main page heading",
-    },
-    {
-      level: "h2",
-      label: "H2",
-      fontFamily: "Inter",
-      fontSize: 28,
-      color: "#000000",
-      previewText: "This is a H2 heading example",
-      description: "Section heading",
-    },
-    {
-      level: "h3",
-      label: "H3",
-      fontFamily: "Inter",
-      fontSize: 24,
-      color: "#000000",
-      previewText: "This is a H3 heading example",
-      description: "Subsection heading",
-    },
-    {
-      level: "h4",
-      label: "H4",
-      fontFamily: "Inter",
-      fontSize: 20,
-      color: "#000000",
-      previewText: "This is a H4 heading example",
-      description: "Card or component heading",
-    },
-    {
-      level: "h5",
-      label: "H5",
-      fontFamily: "Inter",
-      fontSize: 18,
-      color: "#000000",
-      previewText: "This is a H5 heading example",
-      description: "Small section heading",
-    },
-    {
-      level: "h6",
-      label: "H6",
-      fontFamily: "Inter",
-      fontSize: 16,
-      color: "#000000",
-      previewText: "This is a H6 heading example",
-      description: "Smallest heading",
-    },
-    {
-      level: "body",
-      label: "Paragraph",
-      fontFamily: "Inter",
-      fontSize: 14,
-      color: "#000000",
-      previewText: "This is body text used for paragraphs and general content throughout your website.",
-      description: "Body and paragraph text",
-    },
-  ])
-
   const [editingTypography, setEditingTypography] = useState<string | null>(null)
-
-  const [buttonStyles, setButtonStyles] = useState({
-    primary: {
-      fontFamily: "Inter",
-      fontSize: 16,
-      textColor: "#FFFFFF",
-      bold: false,
-      underline: false,
-      italic: false,
-      alignment: "center" as const,
-      backgroundColor: "#000000",
-      borderWidth: 0,
-      borderColor: "#000000",
-      borderRadius: 6,
-      shadow: false,
-      hoverBackgroundColor: "#333333",
-      hoverBorderColor: "#000000",
-      hoverTextColor: "#FFFFFF",
-      hoverBold: false,
-      hoverUnderline: false,
-      hoverItalic: false,
-      padding: "12px 24px",
-    },
-    secondary: {
-      fontFamily: "Inter",
-      fontSize: 16,
-      textColor: "#000000",
-      bold: false,
-      underline: false,
-      italic: false,
-      alignment: "center" as const,
-      backgroundColor: "#FFFFFF",
-      borderWidth: 1,
-      borderColor: "#000000",
-      borderRadius: 6,
-      shadow: false,
-      hoverBackgroundColor: "#F3F4F6",
-      hoverBorderColor: "#000000",
-      hoverTextColor: "#000000",
-      hoverBold: false,
-      hoverUnderline: false,
-      hoverItalic: false,
-      padding: "12px 24px",
-    },
-  })
-
   const [activeButtonTab, setActiveButtonTab] = useState<"primary" | "secondary">("primary")
-
-  useEffect(() => {
-    if (!projectId) {
-      console.log("[v0] StyleGuide: No projectId provided, skipping load")
-      return
-    }
-
-    const storageKey = `styleguide_${projectId}`
-    console.log("[v0] StyleGuide: Loading data from", storageKey)
-    const saved = getUserItem(storageKey)
-    if (saved) {
-      const data = JSON.parse(saved)
-      console.log("[v0] StyleGuide: Loaded data:", data)
-      if (data.standardColors) setStandardColors(data.standardColors)
-      if (data.customColors) setCustomColors(data.customColors)
-      if (data.typography) setTypography(data.typography)
-      if (data.buttonStyles) setButtonStyles(data.buttonStyles)
-    } else {
-      console.log("[v0] StyleGuide: No saved data found")
-    }
-    setIsDataLoaded(true)
-  }, [projectId])
 
   useEffect(() => {
     setIsCompleted(checkSectionCompletion(projectId, "styleguide"))
   }, [projectId])
-
-  // Save data whenever it changes
-  useEffect(() => {
-    if (!projectId || !isDataLoaded) {
-      console.log("[v0] StyleGuide: Skipping save - projectId:", projectId, "isDataLoaded:", isDataLoaded)
-      return
-    }
-
-    const storageKey = `styleguide_${projectId}`
-    const dataToSave = {
-      standardColors,
-      customColors,
-      typography,
-      buttonStyles,
-    }
-    console.log("[v0] StyleGuide: Saving to", storageKey, dataToSave)
-    setUserItem(storageKey, JSON.stringify(dataToSave))
-  }, [standardColors, customColors, typography, buttonStyles, projectId, isDataLoaded])
 
   const handleCompletionToggle = (checked: boolean) => {
     setIsCompleted(checked)

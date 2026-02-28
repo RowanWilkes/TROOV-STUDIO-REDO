@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectRow } from "@/lib/useProjectRow"
 
 const BLOCK_LIBRARY = [
   {
@@ -142,8 +142,47 @@ type WireframeCanvasProps = {
   projectId: string
 }
 
+const defaultPages: SitemapPage[] = [
+  { id: "home", name: "Home", path: "/", blocks: [], children: [] },
+]
+
+type SitemapData = {
+  pages: SitemapPage[]
+  custom_blocks: CustomBlock[]
+}
+
 export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
-  const [pages, setPages] = useState<SitemapPage[]>([])
+  const { data: sitemapData, setData: setSitemapData } = useProjectRow<SitemapData>({
+    tableName: "sitemap",
+    projectId,
+    defaults: {},
+    fromRow: (row) => ({
+      pages: Array.isArray(row?.pages) ? (row.pages as SitemapPage[]) : defaultPages,
+      custom_blocks: Array.isArray(row?.custom_blocks) ? (row.custom_blocks as CustomBlock[]) : [],
+    }),
+    toPayload: (d) => ({
+      pages: d?.pages ?? defaultPages,
+      custom_blocks: d?.custom_blocks ?? [],
+    }),
+  })
+
+  const pages = sitemapData?.pages ?? defaultPages
+  const setPages = (value: SitemapPage[] | ((prev: SitemapPage[]) => SitemapPage[])) => {
+    setSitemapData((prev) => {
+      const next = prev ?? { pages: defaultPages, custom_blocks: [] }
+      const nextPages = typeof value === "function" ? value(next.pages) : value
+      return { ...next, pages: nextPages }
+    })
+  }
+  const customBlocks = sitemapData?.custom_blocks ?? []
+  const setCustomBlocks = (value: CustomBlock[] | ((prev: CustomBlock[]) => CustomBlock[])) => {
+    setSitemapData((prev) => {
+      const next = prev ?? { pages: defaultPages, custom_blocks: [] }
+      const nextCustom = typeof value === "function" ? value(next.custom_blocks) : value
+      return { ...next, custom_blocks: nextCustom }
+    })
+  }
+
   const [selectedPage, setSelectedPage] = useState<string | null>(null)
   const [newPageName, setNewPageName] = useState("")
   const [showAddPage, setShowAddPage] = useState(false)
@@ -154,8 +193,6 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null)
   const [dragOverPageId, setDragOverPageId] = useState<string | null>(null)
 
-  // Custom section state
-  const [customBlocks, setCustomBlocks] = useState<CustomBlock[]>([])
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName] = useState("")
   const [customDescription, setCustomDescription] = useState("")
@@ -163,45 +200,12 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const [editingCustomId, setEditingCustomId] = useState<string | null>(null)
 
   useEffect(() => {
-    const customKey = `project-${projectId}-custom-blocks`
-    const savedCustom = getUserItem(customKey)
-    if (savedCustom) {
-      setCustomBlocks(JSON.parse(savedCustom))
-    }
-  }, [projectId])
-
-  useEffect(() => {
-    const customKey = `project-${projectId}-custom-blocks`
-    setUserItem(customKey, JSON.stringify(customBlocks))
-  }, [customBlocks, projectId])
-
-  useEffect(() => {
-    const storageKey = `project-${projectId}-sitemap`
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      setPages(JSON.parse(savedData))
-    } else {
-      setPages([
-        {
-          id: "home",
-          name: "Home",
-          path: "/",
-          blocks: [],
-          children: [],
-        },
-      ])
-      setSelectedPage("home")
-    }
-  }, [projectId])
-
-  useEffect(() => {
     setIsCompleted(checkSectionCompletion(projectId, "wireframe"))
   }, [projectId])
 
   useEffect(() => {
-    const storageKey = `project-${projectId}-sitemap`
-    setUserItem(storageKey, JSON.stringify(pages))
-  }, [pages, projectId])
+    if (pages.length > 0 && selectedPage === null) setSelectedPage(pages[0].id)
+  }, [pages, selectedPage])
 
   const allBlocks = [...BLOCK_LIBRARY, ...customBlocks]
   const categories = ["All", ...Array.from(new Set(allBlocks.map((b) => b.category)))]

@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, CheckCircle2, Circle, GripVertical, Trash2 } from "lucide-react"
 import { setSectionCompletion } from "@/lib/completion-tracker"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectList } from "@/lib/useProjectList"
 
 interface Task {
-  id: string
+  id?: string
   title: string
   completed: boolean
   order: number
@@ -23,22 +23,26 @@ type TaskManagerProps = {
 }
 
 export function TaskManager({ projectId }: TaskManagerProps) {
-  const [tasks, setTasks] = useState<Task[]>([])
+  const { items: tasks, createItem, updateItem, deleteItem } = useProjectList<Task>({
+    tableName: "tasks",
+    projectId,
+    fromRow: (r) => ({
+      id: String(r.id),
+      title: String(r.title ?? ""),
+      completed: Boolean(r.completed),
+      order: Number(r.sort_order) ?? 0,
+    }),
+    toRow: (item) => ({
+      title: item.title,
+      completed: item.completed ?? false,
+      sort_order: item.order ?? 0,
+    }),
+  })
+
   const [newTaskTitle, setNewTaskTitle] = useState("")
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
 
   useEffect(() => {
-    const storageKey = `project-${projectId}-manual-tasks`
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      setTasks(JSON.parse(savedData))
-    }
-  }, [projectId])
-
-  useEffect(() => {
-    const storageKey = `project-${projectId}-manual-tasks`
-    setUserItem(storageKey, JSON.stringify(tasks))
-
     const allCompleted = tasks.length === 0 || tasks.every((t) => t.completed)
     setSectionCompletion(projectId, "tasks", allCompleted)
   }, [tasks, projectId])
@@ -53,25 +57,18 @@ export function TaskManager({ projectId }: TaskManagerProps) {
   const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const toggleTask = (taskId: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t)))
+    const task = tasks.find((t) => String(t.id) === taskId)
+    if (task) updateItem(taskId, { completed: !task.completed })
   }
 
   const addTask = () => {
     if (!newTaskTitle.trim()) return
-
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle,
-      completed: false,
-      order: tasks.length,
-    }
-
-    setTasks([...tasks, newTask])
+    createItem({ title: newTaskTitle.trim(), completed: false, order: tasks.length })
     setNewTaskTitle("")
   }
 
   const deleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    deleteItem(taskId)
   }
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -88,18 +85,16 @@ export function TaskManager({ projectId }: TaskManagerProps) {
     e.preventDefault()
     if (!draggedTaskId || draggedTaskId === targetTaskId) return
 
-    const draggedIndex = sortedTasks.findIndex((t) => t.id === draggedTaskId)
-    const targetIndex = sortedTasks.findIndex((t) => t.id === targetTaskId)
+    const draggedIndex = sortedTasks.findIndex((t) => String(t.id) === draggedTaskId)
+    const targetIndex = sortedTasks.findIndex((t) => String(t.id) === targetTaskId)
+    if (draggedIndex < 0 || targetIndex < 0) return
 
     const reordered = [...sortedTasks]
     const [removed] = reordered.splice(draggedIndex, 1)
     reordered.splice(targetIndex, 0, removed)
-
     reordered.forEach((task, index) => {
-      task.order = index
+      if (task.id) updateItem(String(task.id), { sort_order: index } as Partial<Task>)
     })
-
-    setTasks(reordered)
     setDraggedTaskId(null)
   }
 
@@ -171,22 +166,25 @@ export function TaskManager({ projectId }: TaskManagerProps) {
             </div>
           ) : (
             <div className="space-y-2">
-              {sortedTasks.map((task) => (
+              {sortedTasks.map((task) => {
+                const taskId = task.id != null ? String(task.id) : ""
+                if (!taskId) return null
+                return (
                 <div
-                  key={task.id}
+                  key={taskId}
                   draggable
-                  onDragStart={(e) => handleDragStart(e, task.id)}
+                  onDragStart={(e) => handleDragStart(e, taskId)}
                   onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, task.id)}
+                  onDrop={(e) => handleDrop(e, taskId)}
                   className={`flex items-center gap-3 p-3 rounded-lg border-2 bg-white transition-all cursor-move group ${
                     task.completed
                       ? "border-emerald-200 bg-emerald-50 opacity-60"
                       : "border-gray-200 hover:border-emerald-300 hover:shadow-sm"
-                  } ${draggedTaskId === task.id ? "opacity-30 scale-95" : ""}`}
+                  } ${draggedTaskId === taskId ? "opacity-30 scale-95" : ""}`}
                 >
                   <GripVertical className="size-5 text-gray-400 shrink-0" />
 
-                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} className="shrink-0" />
+                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(taskId)} className="shrink-0" />
 
                   <p
                     className={`flex-1 font-medium ${task.completed ? "line-through text-gray-400" : "text-gray-900"}`}
@@ -195,7 +193,7 @@ export function TaskManager({ projectId }: TaskManagerProps) {
                   </p>
 
                   <button
-                    onClick={() => deleteTask(task.id)}
+                    onClick={() => deleteTask(taskId)}
                     className="size-8 rounded-md flex items-center justify-center hover:bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="size-4" />
@@ -207,7 +205,8 @@ export function TaskManager({ projectId }: TaskManagerProps) {
                     <Circle className="size-5 text-gray-300 shrink-0" />
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </CardContent>

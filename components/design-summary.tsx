@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,7 +35,7 @@ import {
   Search,
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { getUserItem } from "@/lib/storage-utils"
+import { supabase } from "@/lib/supabase"
 
 interface DesignSummaryProps {
   projectId: string
@@ -63,59 +63,130 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
   })
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
 
-  const loadData = () => {
+  const loadData = useCallback(async () => {
+    if (!projectId) return
     try {
-      const overview = JSON.parse(getUserItem(`project-${projectId}-overview`) || "{}")
-      const moodBoardRaw = JSON.parse(getUserItem(`project-${projectId}-moodboard`) || "{}")
-      const styleGuideRaw = JSON.parse(getUserItem(`styleguide_${projectId}`) || "{}")
-      const sitemap = JSON.parse(getUserItem(`project-${projectId}-sitemap`) || "[]")
-      const technical = JSON.parse(getUserItem(`project-${projectId}-technical`) || "{}")
-      const content = JSON.parse(getUserItem(`project-${projectId}-content`) || "{}")
-      const assetsRaw = JSON.parse(getUserItem(`project-${projectId}-assets`) || "{}")
+      const loaded: string[] = []
+      const [
+        { data: overviewRow },
+        { data: moodBoardRow },
+        { data: moodBoardItems },
+        { data: styleGuideRow },
+        { data: sitemapRow },
+        { data: technicalRow },
+        { data: contentRow },
+        { data: assetRow },
+      ] = await Promise.all([
+        supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("mood_board").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("mood_board_items").select("*").eq("project_id", projectId).order("created_at", { ascending: true }),
+        supabase.from("style_guide").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("sitemap").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("technical_specs").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("content_section").select("*").eq("project_id", projectId).maybeSingle(),
+        supabase.from("asset_section").select("*").eq("project_id", projectId).maybeSingle(),
+      ])
 
+      const row = overviewRow as Record<string, unknown> | null
+      const overview = row
+        ? {
+            projectName: row.project_name ?? row.name ?? "",
+            client: row.client_name ?? row.client ?? "",
+            description: row.description ?? "",
+            goal: row.project_goal ?? row.goal ?? "",
+            primaryAction: row.primary_action ?? "",
+            audience: row.target_audience ?? row.audience ?? "",
+            deadline: row.launch_target ?? row.deadline ?? "",
+            budget: row.budget_range ?? row.budget ?? "",
+            constraints: row.constraints_requirements ?? row.constraints ?? "",
+            successMetrics: row.success_criteria ?? row.success_metrics ?? "",
+            kpis: row.kpis ?? "",
+            kickoffDate: row.kickoff_date ?? "",
+            priorityLevel: row.priority_level ?? "Medium",
+            estimatedDevTime: row.estimated_dev_time ?? "",
+            teamMembers: row.team_members ?? "",
+            clientReviewDate: row.client_review_date ?? "",
+            projectType: row.project_type ?? "",
+            websiteFeatures: Array.isArray(row.website_features_required) ? row.website_features_required : Array.isArray(row.website_features) ? row.website_features : [],
+            deliverables: row.deliverables ?? "",
+          }
+        : {}
+      if (overviewRow) loaded.push("overview")
+
+      const inspirationImages = (moodBoardItems ?? []).filter((r: { type?: string }) => r.type === "image").map((r: { id?: string; url?: string; title?: string; notes?: string }) => ({ id: r.id, url: r.url, title: r.title, notes: r.notes }))
+      const websiteReferences = (moodBoardItems ?? []).filter((r: { type?: string }) => r.type === "website_reference").map((r: { id?: string; url?: string; title?: string; notes?: string }) => ({ id: r.id, url: r.url, title: r.title, notes: r.notes }))
       const moodBoard = {
-        inspirationImages: moodBoardRaw.inspirationImages || [],
-        websiteReferences: moodBoardRaw.websiteReferences || [],
-        notes: moodBoardRaw.styleNotes || "",
+        inspirationImages,
+        websiteReferences,
+        notes: moodBoardRow?.style_notes != null ? String(moodBoardRow.style_notes) : "",
       }
+      if (moodBoardRow || (moodBoardItems && moodBoardItems.length > 0)) loaded.push("mood_board")
 
+      const styleGuideRaw = (styleGuideRow?.data as Record<string, unknown>) ?? {}
       const styleGuide = {
-        colors: styleGuideRaw.standardColors || {},
-        customColors: styleGuideRaw.customColors || [],
-        typography: styleGuideRaw.typography || [],
-        buttonStyles: styleGuideRaw.buttonStyles || {}, // Changed from 'buttons' to 'buttonStyles'
+        colors: styleGuideRaw.standardColors ?? {},
+        customColors: styleGuideRaw.customColors ?? [],
+        typography: styleGuideRaw.typography ?? [],
+        buttonStyles: styleGuideRaw.buttonStyles ?? {},
       }
+      if (styleGuideRow) loaded.push("style_guide")
 
-      const assets = assetsRaw.uploadedAssets || []
+      const sitemapPages = Array.isArray(sitemapRow?.pages) ? (sitemapRow.pages as unknown[]) : []
+      if (sitemapRow) loaded.push("sitemap")
+
+      const tr = technicalRow as Record<string, unknown> | null
+      const technical = tr
+        ? {
+            currentHosting: tr.current_hosting ?? "",
+            hostingNotes: tr.hosting_notes ?? "",
+            proposedHosting: tr.proposed_hosting ?? "",
+            cms: tr.cms ?? "",
+            contentUpdateFrequency: tr.content_update_frequency ?? "",
+            contentManagers: tr.content_managers ?? "",
+            editableContent: tr.editable_content ?? "",
+            thirdPartyIntegrations: tr.third_party_integrations ?? "",
+            technicalRequirements: tr.technical_requirements ?? "",
+            performanceRequirements: tr.performance_requirements ?? "",
+            browserSupport: tr.browser_support ?? "",
+            seoRequirements: tr.seo_requirements ?? "",
+          }
+        : {}
+      if (technicalRow) loaded.push("technical_specs")
+
+      const content = (contentRow?.data as Record<string, unknown>) ?? {}
+      if (contentRow) loaded.push("content_section")
+
+      const assetsRaw = (assetRow?.data as Record<string, unknown>) ?? {}
+      const assets = Array.isArray(assetsRaw.uploadedAssets) ? assetsRaw.uploadedAssets : []
       const organizedAssets: Record<string, any[]> = {}
-
       assets.forEach((asset: any) => {
         const category = asset.category || "Uncategorized"
-        if (!organizedAssets[category]) {
-          organizedAssets[category] = []
-        }
+        if (!organizedAssets[category]) organizedAssets[category] = []
         organizedAssets[category].push(asset)
       })
+      if (assetRow) loaded.push("asset_section")
+
+      console.log("[Design Summary] projectId=", projectId, "tables loaded:", loaded.join(", ") || "none")
 
       setSummaryData({
         overview,
         moodBoard,
         styleGuide,
-        sitemapPages: sitemap,
+        sitemapPages,
         technical,
         content,
         assets: { uploadedAssets: assets, tabs: organizedAssets },
       })
     } catch (error) {
-      console.error("Error loading summary data:", error)
+      console.error("[Design Summary] Error loading summary data:", error)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     loadData()
     const interval = setInterval(loadData, 2000)
     return () => clearInterval(interval)
-  }, [projectId])
+  }, [loadData])
 
   const hasContent = (value: any): boolean => {
     if (value === null || value === undefined) return false

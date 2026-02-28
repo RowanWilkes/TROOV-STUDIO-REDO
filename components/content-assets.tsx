@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectRow } from "@/lib/useProjectRow"
 
 // Define interfaces for BrandMessaging, MessagingPillar, and ContentGuideline
 interface BrandMessaging {
@@ -80,193 +80,172 @@ type ContentAssetsProps = {
   showAssetsOnly?: boolean
 }
 
+type ContentSectionData = {
+  contentItems: ContentItem[]
+  assets: Asset[]
+  toneNotes: string
+  brandMessaging: BrandMessaging
+  messagingPillars: MessagingPillar[]
+  contentGuidelines: ContentGuideline[]
+  seoKeywords: string[]
+  metaTitle: string
+  metaDescription: string
+  focusKeyword: string
+  keywordDifficulty: Record<string, "easy" | "medium" | "hard">
+  competitorAnalysis: string
+  isComplete?: boolean
+}
+
+type AssetSectionData = {
+  uploadedAssets: UploadedAsset[]
+  isComplete?: boolean
+}
+
+const defaultBrandMessaging: BrandMessaging = {
+  missionStatement: "",
+  visionStatement: "",
+  valueProposition: "",
+  brandPromise: "",
+  tagline: "",
+  brandVoice: "",
+  keyMessages: [],
+}
+
+const defaultContentSectionData: ContentSectionData = {
+  contentItems: [],
+  assets: [],
+  toneNotes: "",
+  brandMessaging: defaultBrandMessaging,
+  messagingPillars: [],
+  contentGuidelines: [],
+  seoKeywords: [],
+  metaTitle: "",
+  metaDescription: "",
+  focusKeyword: "",
+  keywordDifficulty: {},
+  competitorAnalysis: "",
+}
+
+const defaultAssetSectionData: AssetSectionData = {
+  uploadedAssets: [],
+}
+
 export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAssetsProps) {
-  const [isDataLoaded, setIsDataLoaded] = useState(false)
-  const [contentItems, setContentItems] = useState<ContentItem[]>([])
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [toneNotes, setToneNotes] = useState("")
-  const [newAsset, setNewAsset] = useState({ name: "", url: "", type: "link" as Asset["type"] })
-
-  const [brandMessaging, setBrandMessaging] = useState<BrandMessaging>({
-    missionStatement: "",
-    visionStatement: "",
-    valueProposition: "",
-    brandPromise: "",
-    tagline: "",
-    brandVoice: "",
-    keyMessages: [],
+  const { data: contentData, setData: setContentData } = useProjectRow<ContentSectionData>({
+    tableName: "content_section",
+    projectId,
+    defaults: {},
+    fromRow: (row) => {
+      const raw = row?.data as Record<string, unknown> | undefined
+      if (!raw) return defaultContentSectionData
+      return {
+        contentItems: Array.isArray(raw.contentItems) ? (raw.contentItems as ContentItem[]) : [],
+        assets: Array.isArray(raw.assets) ? (raw.assets as Asset[]) : [],
+        toneNotes: typeof raw.toneNotes === "string" ? raw.toneNotes : "",
+        brandMessaging: raw.brandMessaging && typeof raw.brandMessaging === "object" ? { ...defaultBrandMessaging, ...(raw.brandMessaging as object) } : defaultBrandMessaging,
+        messagingPillars: Array.isArray(raw.messagingPillars) ? (raw.messagingPillars as MessagingPillar[]) : [],
+        contentGuidelines: Array.isArray(raw.contentGuidelines) ? (raw.contentGuidelines as ContentGuideline[]) : [],
+        seoKeywords: Array.isArray(raw.seoKeywords) ? (raw.seoKeywords as string[]) : [],
+        metaTitle: typeof raw.metaTitle === "string" ? raw.metaTitle : "",
+        metaDescription: typeof raw.metaDescription === "string" ? raw.metaDescription : "",
+        focusKeyword: typeof raw.focusKeyword === "string" ? raw.focusKeyword : "",
+        keywordDifficulty: raw.keywordDifficulty && typeof raw.keywordDifficulty === "object" ? (raw.keywordDifficulty as Record<string, "easy" | "medium" | "hard">) : {},
+        competitorAnalysis: typeof raw.competitorAnalysis === "string" ? raw.competitorAnalysis : "",
+        isComplete: raw.isComplete === true,
+      }
+    },
+    toPayload: (d) => ({ data: d ?? defaultContentSectionData }),
   })
-  const [messagingPillars, setMessagingPillars] = useState<MessagingPillar[]>([])
-  const [contentGuidelines, setContentGuidelines] = useState<ContentGuideline[]>([])
-  // const [keyMessages, setKeyMessages] = useState<string[]>([]) // REMOVED: Now part of BrandMessaging
-  const [seoKeywords, setSeoKeywords] = useState<string[]>([])
-  const [newKeyword, setNewKeyword] = useState("")
-  const [metaTitle, setMetaTitle] = useState("")
-  const [metaDescription, setMetaDescription] = useState("")
-  const [focusKeyword, setFocusKeyword] = useState("")
-  const [keywordDifficulty, setKeywordDifficulty] = useState<Record<string, "easy" | "medium" | "hard">>({})
-  const [competitorAnalysis, setCompetitorAnalysis] = useState("")
 
-  const [uploadedAssets, setUploadedAssets] = useState<UploadedAsset[]>([])
+  const { data: assetData, setData: setAssetData } = useProjectRow<AssetSectionData>({
+    tableName: "asset_section",
+    projectId,
+    defaults: {},
+    fromRow: (row) => {
+      const raw = row?.data as Record<string, unknown> | undefined
+      if (!raw) return defaultAssetSectionData
+      return {
+        uploadedAssets: Array.isArray(raw.uploadedAssets) ? (raw.uploadedAssets as UploadedAsset[]) : [],
+        isComplete: raw.isComplete === true,
+      }
+    },
+    toPayload: (d) => ({ data: d ?? defaultAssetSectionData }),
+  })
+
+  const content = contentData ?? defaultContentSectionData
+  const contentItems = content.contentItems
+  const setContentItems = (v: ContentItem[] | ((p: ContentItem[]) => ContentItem[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), contentItems: typeof v === "function" ? v(p?.contentItems ?? []) : v }))
+  const assets = content.assets
+  const setAssets = (v: Asset[] | ((p: Asset[]) => Asset[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), assets: typeof v === "function" ? v(p?.assets ?? []) : v }))
+  const toneNotes = content.toneNotes
+  const setToneNotes = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), toneNotes: v }))
+  const brandMessaging = content.brandMessaging
+  const setBrandMessaging = (v: BrandMessaging | ((p: BrandMessaging) => BrandMessaging)) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), brandMessaging: typeof v === "function" ? v(p?.brandMessaging ?? defaultBrandMessaging) : v }))
+  const messagingPillars = content.messagingPillars
+  const setMessagingPillars = (v: MessagingPillar[] | ((p: MessagingPillar[]) => MessagingPillar[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), messagingPillars: typeof v === "function" ? v(p?.messagingPillars ?? []) : v }))
+  const contentGuidelines = content.contentGuidelines
+  const setContentGuidelines = (v: ContentGuideline[] | ((p: ContentGuideline[]) => ContentGuideline[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), contentGuidelines: typeof v === "function" ? v(p?.contentGuidelines ?? []) : v }))
+  const seoKeywords = content.seoKeywords
+  const setSeoKeywords = (v: string[] | ((p: string[]) => string[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), seoKeywords: typeof v === "function" ? v(p?.seoKeywords ?? []) : v }))
+  const metaTitle = content.metaTitle
+  const setMetaTitle = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), metaTitle: v }))
+  const metaDescription = content.metaDescription
+  const setMetaDescription = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), metaDescription: v }))
+  const focusKeyword = content.focusKeyword
+  const setFocusKeyword = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), focusKeyword: v }))
+  const keywordDifficulty = content.keywordDifficulty
+  const setKeywordDifficulty = (v: Record<string, "easy" | "medium" | "hard"> | ((p: Record<string, "easy" | "medium" | "hard">) => Record<string, "easy" | "medium" | "hard">)) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), keywordDifficulty: typeof v === "function" ? v(p?.keywordDifficulty ?? {}) : v }))
+  const competitorAnalysis = content.competitorAnalysis
+  const setCompetitorAnalysis = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), competitorAnalysis: v }))
+
+  const assetsSection = assetData ?? defaultAssetSectionData
+  const uploadedAssets = assetsSection.uploadedAssets
+  const setUploadedAssets = (v: UploadedAsset[] | ((p: UploadedAsset[]) => UploadedAsset[])) => setAssetData((p) => ({ ...(p ?? defaultAssetSectionData), uploadedAssets: typeof v === "function" ? v(p?.uploadedAssets ?? []) : v }))
+
+  const [newAsset, setNewAsset] = useState({ name: "", url: "", type: "link" as Asset["type"] })
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null)
   const [editingLabel, setEditingLabel] = useState("")
   const [isDragging, setIsDragging] = useState(false)
   const [selectedTab, setSelectedTab] = useState<string>("all")
   const [enlargedAsset, setEnlargedAsset] = useState<UploadedAsset | null>(null)
   const [isComplete, setIsComplete] = useState(false)
-  // Removed manualOverride state
 
-  const [newContentType, setNewContentType] = useState<string>("heading") // Changed to string to accommodate custom types
+  const [newKeyword, setNewKeyword] = useState("")
+  const [newContentType, setNewContentType] = useState<string>("heading")
   const [newContentText, setNewContentText] = useState("")
   const [editingContentId, setEditingContentId] = useState<string | null>(null)
   const [isCustomType, setIsCustomType] = useState(false)
   const [customTypeName, setCustomTypeName] = useState("")
 
-  const removeSeoKeyword = (index: number) => {
-    const updatedKeywords = seoKeywords.filter((_, i) => i !== index)
-    setSeoKeywords(updatedKeywords)
-  }
-
-  const addSeoKeyword = () => {
-    if (newKeyword.trim()) {
-      setSeoKeywords([...seoKeywords, newKeyword.trim()])
-      setNewKeyword("")
-    }
-  }
-
-  useEffect(() => {
-    if (!projectId) {
-      console.log("[v0] ContentAssets: No projectId provided, skipping load")
-      return
-    }
-
-    const section = showAssetsOnly ? "assets" : "content"
-    const storageKey = `project-${projectId}-${section}`
-    console.log("[v0] ContentAssets: Loading data from", storageKey)
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData)
-        // Use conditional checks for each field to avoid overwriting with undefined
-        if (parsed) {
-          console.log("[v0] ContentAssets: Loaded data:", JSON.stringify(parsed).substring(0, 200) + "...")
-          setContentItems(parsed.contentItems || [])
-          setAssets(parsed.assets || [])
-          setToneNotes(parsed.toneNotes || "")
-          if (parsed.brandMessaging) {
-            setBrandMessaging({
-              missionStatement: parsed.brandMessaging.missionStatement || "",
-              visionStatement: parsed.brandMessaging.visionStatement || "",
-              valueProposition: parsed.brandMessaging.valueProposition || "",
-              brandPromise: parsed.brandMessaging.brandPromise || "",
-              tagline: parsed.brandMessaging.tagline || "",
-              brandVoice: parsed.brandMessaging.brandVoice || "",
-              keyMessages: parsed.brandMessaging.keyMessages || [],
-            })
-          }
-          if (parsed.messagingPillars) {
-            setMessagingPillars(parsed.messagingPillars)
-          }
-          if (parsed.contentGuidelines) {
-            setContentGuidelines(parsed.contentGuidelines || [])
-          }
-          if (parsed.seoKeywords) {
-            setSeoKeywords(parsed.seoKeywords)
-          }
-          if (parsed.metaTitle) {
-            setMetaTitle(parsed.metaTitle)
-          }
-          if (parsed.metaDescription) {
-            setMetaDescription(parsed.metaDescription)
-          }
-          if (parsed.focusKeyword) {
-            setFocusKeyword(parsed.focusKeyword)
-          }
-          if (parsed.keywordDifficulty) {
-            setKeywordDifficulty(parsed.keywordDifficulty)
-          }
-          if (parsed.competitorAnalysis) {
-            setCompetitorAnalysis(parsed.competitorAnalysis)
-          }
-          if (parsed.uploadedAssets) {
-            setUploadedAssets(parsed.uploadedAssets)
-          }
-          setIsDataLoaded(true)
-        } else {
-          setIsDataLoaded(true)
-        }
-      } catch (error) {
-        console.error("[v0] ContentAssets: Error parsing saved data", error)
-        setIsDataLoaded(true)
-      }
-    } else {
-      console.log("[v0] ContentAssets: No saved data found")
-      setIsDataLoaded(true)
-    }
-
-    const complete = checkSectionCompletion(projectId, showAssetsOnly ? "assets" : "content")
-    setIsComplete(complete)
-  }, [projectId, showAssetsOnly])
-
-  useEffect(() => {
-    if (!projectId || !isDataLoaded) {
-      console.log("[v0] ContentAssets: Skipping save - projectId:", projectId, "isDataLoaded:", isDataLoaded)
-      return
-    }
-
-    const section = showAssetsOnly ? "assets" : "content"
-    const storageKey = `project-${projectId}-${section}`
-
-    const dataToSave = showAssetsOnly
-      ? { uploadedAssets, isComplete }
-      : {
-          contentItems,
-          assets,
-          toneNotes,
-          brandMessaging,
-          messagingPillars,
-          contentGuidelines,
-          // keyMessages, // REMOVED: Now part of BrandMessaging
-          seoKeywords,
-          metaTitle,
-          metaDescription,
-          focusKeyword,
-          keywordDifficulty,
-          competitorAnalysis,
-          isComplete,
-        }
-
-    console.log("[v0] ContentAssets: Saving to", storageKey, dataToSave)
-    setUserItem(storageKey, JSON.stringify(dataToSave))
-  }, [
-    contentItems,
-    assets,
-    toneNotes,
-    brandMessaging,
-    messagingPillars,
-    contentGuidelines,
-    // keyMessages, // REMOVED: Now part of BrandMessaging
-    seoKeywords,
-    metaTitle,
-    metaDescription,
-    focusKeyword,
-    keywordDifficulty,
-    competitorAnalysis, // <-- Added competitorAnalysis here
-    uploadedAssets, // <-- Added uploadedAssets here
-    projectId,
-    isComplete,
-    isDataLoaded,
-    showAssetsOnly,
-  ])
-
-  // Add useEffect for checking completion status
   useEffect(() => {
     setIsComplete(checkSectionCompletion(projectId, showAssetsOnly ? "assets" : "content"))
   }, [projectId, showAssetsOnly])
 
+  useEffect(() => {
+    if (showAssetsOnly && assetsSection.isComplete !== undefined) setIsComplete(assetsSection.isComplete)
+    if (!showAssetsOnly && content.isComplete !== undefined) setIsComplete(!!content.isComplete)
+  }, [showAssetsOnly, assetsSection.isComplete, content.isComplete])
+
+  const persistCompletion = (checked: boolean) => {
+    if (showAssetsOnly) setAssetData((p) => ({ ...(p ?? defaultAssetSectionData), isComplete: checked }))
+    else setContentData((p) => ({ ...(p ?? defaultContentSectionData), isComplete: checked }))
+  }
+
+  const removeSeoKeyword = (index: number) => {
+    setSeoKeywords((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const addSeoKeyword = () => {
+    if (newKeyword.trim()) {
+      setSeoKeywords((prev) => [...prev, newKeyword.trim()])
+      setNewKeyword("")
+    }
+  }
+
   const toggleCompletion = (checked: boolean) => {
     setIsComplete(checked)
     setSectionCompletion(projectId, showAssetsOnly ? "assets" : "content", checked)
+    persistCompletion(checked)
   }
 
   const addAsset = () => {

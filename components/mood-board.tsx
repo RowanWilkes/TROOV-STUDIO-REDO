@@ -6,7 +6,7 @@ import { DialogContent as DialogContentComponent } from "@/components/ui/dialog"
 import { Dialog } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ImageIcon, Plus, X, Link } from "lucide-react"
 import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { useProjectRow } from "@/lib/useProjectRow"
+import { useProjectList } from "@/lib/useProjectList"
 
 interface InspirationImage {
   id: string
@@ -30,17 +31,57 @@ interface WebsiteReference {
   notes: string
 }
 
+type MoodBoardItem = {
+  id?: string
+  type: "image" | "website_reference"
+  url: string
+  title: string
+  notes: string
+}
+
 type MoodBoardProps = {
   projectId: string
 }
 
 export function MoodBoard({ projectId }: MoodBoardProps) {
-  const [isDataLoaded, setIsDataLoaded] = useState(false)
-  const [styleNotes, setStyleNotes] = useState("")
-  const [inspirationImages, setInspirationImages] = useState<InspirationImage[]>([])
+  const { data: rowData, setData: setRowData, isLoading: rowLoading } = useProjectRow({
+    tableName: "mood_board",
+    projectId,
+    defaults: {},
+    fromRow: (row) => ({ styleNotes: row?.style_notes != null ? String(row.style_notes) : "" }),
+    toPayload: (d) => ({ style_notes: d.styleNotes || null }),
+  })
+  const { items: moodItems, createItem, updateItem, deleteItem, isLoading: itemsLoading } = useProjectList<MoodBoardItem>({
+    tableName: "mood_board_items",
+    projectId,
+    fromRow: (r) => ({
+      id: String(r.id),
+      type: (r.type as "image" | "website_reference") || "image",
+      url: r.url != null ? String(r.url) : "",
+      title: r.title != null ? String(r.title) : "",
+      notes: r.notes != null ? String(r.notes) : "",
+    }),
+    toRow: (item) => ({
+      type: item.type,
+      url: item.url || null,
+      title: item.title || null,
+      notes: item.notes || null,
+    }),
+  })
+
+  const styleNotes = rowData?.styleNotes ?? ""
+  const setStyleNotes = (value: string) => setRowData((prev) => (prev ? { ...prev, styleNotes: value } : { styleNotes: value }))
+  const inspirationImages = useMemo<InspirationImage[]>(
+    () => moodItems.filter((i) => i.type === "image").map((i) => ({ id: i.id!, url: i.url, title: i.title, notes: i.notes })),
+    [moodItems]
+  )
+  const websiteReferences = useMemo<WebsiteReference[]>(
+    () => moodItems.filter((i) => i.type === "website_reference").map((i) => ({ id: i.id!, url: i.url, title: i.title, notes: i.notes })),
+    [moodItems]
+  )
+
   const [newImage, setNewImage] = useState({ url: "", notes: "" })
   const [isDragging, setIsDragging] = useState(false)
-  const [websiteReferences, setWebsiteReferences] = useState<WebsiteReference[]>([])
   const [newWebsite, setNewWebsite] = useState({ url: "", notes: "" })
   const [editingWebsiteId, setEditingWebsiteId] = useState<string | null>(null)
   const [editingNotes, setEditingNotes] = useState("")
@@ -50,65 +91,19 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
   const [zoomedImage, setZoomedImage] = useState<InspirationImage | null>(null)
 
   useEffect(() => {
-    if (!projectId) {
-      console.log("[v0] MoodBoard: No projectId provided, skipping load")
-      return
-    }
-
-    const storageKey = `project-${projectId}-moodboard`
-    console.log("[v0] MoodBoard: Loading data from", storageKey)
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      const parsed = JSON.parse(savedData)
-      console.log("[v0] MoodBoard: Loaded data:", parsed)
-      setStyleNotes(parsed.styleNotes || "")
-      setInspirationImages(parsed.inspirationImages || [])
-      setWebsiteReferences(parsed.websiteReferences || [])
-    } else {
-      console.log("[v0] MoodBoard: No saved data found")
-      setStyleNotes("Modern minimalist with bold typography. Use generous whitespace and clean layouts.")
-      setInspirationImages([])
-      setWebsiteReferences([])
-    }
-    setIsDataLoaded(true)
-  }, [projectId])
-
-  useEffect(() => {
-    if (!projectId || !isDataLoaded) {
-      console.log("[v0] MoodBoard: Skipping save - projectId:", projectId, "isDataLoaded:", isDataLoaded)
-      return
-    }
-
-    const storageKey = `project-${projectId}-moodboard`
-    const savedData = getUserItem(storageKey)
-    const parsed = savedData ? JSON.parse(savedData) : {}
-    const dataToSave = { ...parsed, styleNotes, inspirationImages, websiteReferences }
-    console.log("[v0] MoodBoard: Saving to", storageKey, dataToSave)
-    setUserItem(storageKey, JSON.stringify(dataToSave))
-  }, [styleNotes, inspirationImages, websiteReferences, projectId, isDataLoaded])
-
-  useEffect(() => {
     setIsComplete(checkSectionCompletion(projectId, "mood"))
   }, [projectId])
 
   const addInspirationImage = () => {
     if (newImage.url) {
       const autoTitle = newImage.url.split("/").pop()?.split("?")[0] || "Design Inspiration"
-      setInspirationImages([
-        ...inspirationImages,
-        {
-          id: Date.now().toString(),
-          url: newImage.url,
-          title: autoTitle,
-          notes: newImage.notes,
-        },
-      ])
+      createItem({ type: "image", url: newImage.url, title: autoTitle, notes: newImage.notes })
       setNewImage({ url: "", notes: "" })
     }
   }
 
   const removeInspirationImage = (id: string) => {
-    setInspirationImages(inspirationImages.filter((img) => img.id !== id))
+    deleteItem(id)
   }
 
   const addWebsiteReference = () => {
@@ -116,33 +111,17 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
       try {
         const url = new URL(newWebsite.url.startsWith("http") ? newWebsite.url : `https://${newWebsite.url}`)
         const title = url.hostname.replace("www.", "")
-        setWebsiteReferences([
-          ...websiteReferences,
-          {
-            id: Date.now().toString(),
-            url: newWebsite.url,
-            title,
-            notes: newWebsite.notes,
-          },
-        ])
+        createItem({ type: "website_reference", url: newWebsite.url, title, notes: newWebsite.notes })
         setNewWebsite({ url: "", notes: "" })
       } catch (e) {
-        setWebsiteReferences([
-          ...websiteReferences,
-          {
-            id: Date.now().toString(),
-            url: newWebsite.url,
-            title: newWebsite.url,
-            notes: newWebsite.notes,
-          },
-        ])
+        createItem({ type: "website_reference", url: newWebsite.url, title: newWebsite.url, notes: newWebsite.notes })
         setNewWebsite({ url: "", notes: "" })
       }
     }
   }
 
   const removeWebsiteReference = (id: string) => {
-    setWebsiteReferences(websiteReferences.filter((site) => site.id !== id))
+    deleteItem(id)
   }
 
   const startEditingNotes = (site: WebsiteReference) => {
@@ -152,9 +131,7 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
 
   const saveEditingNotes = () => {
     if (editingWebsiteId) {
-      setWebsiteReferences(
-        websiteReferences.map((site) => (site.id === editingWebsiteId ? { ...site, notes: editingNotes } : site)),
-      )
+      updateItem(editingWebsiteId, { notes: editingNotes })
       setEditingWebsiteId(null)
       setEditingNotes("")
     }
@@ -175,15 +152,12 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
         const reader = new FileReader()
         reader.onload = (event) => {
           const imageUrl = event.target?.result as string
-          setInspirationImages((prev) => [
-            ...prev,
-            {
-              id: Date.now().toString() + Math.random(),
-              url: imageUrl,
-              title: file.name.replace(/\.[^/.]+$/, ""),
-              notes: "",
-            },
-          ])
+          createItem({
+            type: "image",
+            url: imageUrl,
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            notes: "",
+          })
         }
         reader.readAsDataURL(file)
       }
@@ -207,15 +181,12 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
         const reader = new FileReader()
         reader.onloadend = () => {
           const autoTitle = file.name.replace(/\.[^/.]+$/, "") || "Design Inspiration"
-          setInspirationImages((prev) => [
-            ...prev,
-            {
-              id: Date.now().toString() + Math.random(),
-              url: reader.result as string,
-              title: autoTitle,
-              notes: "",
-            },
-          ])
+          createItem({
+            type: "image",
+            url: reader.result as string,
+            title: autoTitle,
+            notes: "",
+          })
         }
         reader.readAsDataURL(file)
       })
@@ -223,7 +194,7 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
   }
 
   const saveImageNotes = (id: string) => {
-    setInspirationImages(inspirationImages.map((img) => (img.id === id ? { ...img, notes: editingImageNotes } : img)))
+    updateItem(id, { notes: editingImageNotes })
     setEditingImageId(null)
     setEditingImageNotes("")
   }
