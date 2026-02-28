@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   LayoutDashboard,
@@ -65,6 +65,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
 import React from "react"
 import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { supabase } from "@/lib/supabase"
 
 type UserServiceUser = {
   id: string
@@ -116,6 +117,7 @@ type NavItemProps = {
 
 function DashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [activeView, setActiveView] = useState<
     | "home"
     | "overview"
@@ -183,51 +185,154 @@ function DashboardContent() {
   }, [activeView, projects, refreshTrigger])
 
   useEffect(() => {
-    const authData = localStorage.getItem("design-studio-auth")
-    const userData = localStorage.getItem("design-studio-user")
+    let cancelled = false
 
-    if (!authData || !userData) {
-      router.push("/login")
-      return
-    }
+    ;(async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession()
 
-    try {
-      const parsedUser: UserServiceUser = JSON.parse(userData)
-      setUser(parsedUser)
+      if (cancelled) return
 
-      const storedProjects = getUserItem("design-studio-projects")
-      if (storedProjects) {
-        const parsedProjects: Project[] = JSON.parse(storedProjects)
-        setProjects(parsedProjects)
-        if (parsedProjects.length > 0) {
-          setCurrentProjectId(parsedProjects[0].id)
+      if (sessionError || !session) {
+        router.push("/login")
+        setIsLoading(false)
+        return
+      }
+
+      console.log("[dashboard] session user id:", session.user.id)
+
+      const sessionEmail = session.user.email ?? ""
+      const sessionName =
+        (session.user.user_metadata?.name as string) ??
+        (session.user.user_metadata?.full_name as string) ??
+        sessionEmail.split("@")[0] ??
+        "User"
+
+      // Prefer DB-backed profile for display + plan data.
+      type ProfileRow = Record<string, any> | null
+      let profile: ProfileRow = null
+
+      try {
+        const { data, error } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle()
+        if (error) {
+          console.error("[dashboard] Failed to fetch profile:", error)
         } else {
-          // No projects - currentProjectId stays null to show welcome screen
-          setCurrentProjectId(null)
+          profile = data
         }
-      } else {
-        // First time user - no projects stored, show welcome screen
-        setProjects([])
-        setCurrentProjectId(null)
+
+        if (!profile) {
+          const { error: upsertError } = await supabase
+            .from("profiles")
+            .upsert({ id: session.user.id, email: sessionEmail, name: sessionName }, { onConflict: "id" })
+
+          if (upsertError) {
+            console.error("[dashboard] Failed to create profile:", upsertError)
+          } else {
+            const { data: refetched, error: refetchError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .maybeSingle()
+
+            if (refetchError) {
+              console.error("[dashboard] Failed to refetch profile:", refetchError)
+            } else {
+              profile = refetched
+            }
+          }
+        }
+      } catch (e) {
+        console.error("[dashboard] Profile load exception:", e)
       }
 
-      const storedSummaries = getUserItem("downloadedSummaries")
-      if (storedSummaries) {
-        setDownloadedSummaries(JSON.parse(storedSummaries))
+      if (cancelled) return
+
+      const profileName = (profile?.name ?? profile?.full_name ?? sessionName) as string
+      const profilePlan = (profile?.plan ?? profile?.subscription_plan ?? profile?.subscriptionPlan) as string | undefined
+      const profileLifetimeProjectCount = (profile?.lifetime_project_count ??
+        profile?.lifetimeProjectCount) as number | undefined
+
+      setUser({
+        id: session.user.id,
+        email: sessionEmail,
+        fullName: profileName,
+        plan: profilePlan,
+        lifetimeProjectCount: profileLifetimeProjectCount,
+      })
+
+      // Keep localStorage in sync for legacy helpers (e.g. user-scoped storage keys and plan gating),
+      // but the dashboard should still work even if nothing was previously stored.
+      try {
+        const localUser = {
+          email: sessionEmail,
+          fullName: profileName,
+          lifetimeProjectCount: Number.isFinite(profileLifetimeProjectCount) ? profileLifetimeProjectCount : 0,
+          subscriptionPlan: profilePlan ?? "free",
+          subscriptionStatus: (profile?.subscription_status ?? profile?.subscriptionStatus ?? "active") as string,
+          createdAt: (profile?.created_at ?? profile?.createdAt ?? new Date().toISOString()) as string,
+        }
+        localStorage.setItem("design-studio-user", JSON.stringify(localUser))
+      } catch (e) {
+        console.error("[dashboard] Failed to sync local user:", e)
       }
-    } catch (error) {
-      console.error("Error parsing stored data:", error)
-      router.push("/login")
-    } finally {
-      setIsLoading(false)
+
+      try {
+        const { data: projectRows, error: projectsError } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false })
+
+        if (projectsError) {
+          console.error("[dashboard] list projects error:", projectsError)
+          setProjects([])
+          setCurrentProjectId(null)
+        } else {
+          const mapped: Project[] = (projectRows ?? []).map((row: Record<string, unknown>) => ({
+            id: String(row.id),
+            name: String(row.title ?? row.name ?? ""),
+            createdAt: row.created_at ? new Date(row.created_at as string).toISOString() : new Date().toISOString(),
+            lastModified: row.updated_at ? new Date(row.updated_at as string).toISOString() : new Date().toISOString(),
+            deadline: row.deadline ? new Date(row.deadline as string).toISOString() : undefined,
+          }))
+          setProjects(mapped)
+          console.log("[dashboard] list projects count:", mapped.length)
+
+          const paramId = searchParams.get("project")
+          const initialId =
+            paramId && mapped.some((p) => p.id === paramId)
+              ? paramId
+              : mapped.length > 0
+                ? mapped[0].id
+                : null
+          setCurrentProjectId(initialId)
+          console.log("[dashboard] active projectId:", initialId)
+        }
+
+        const storedSummaries = getUserItem("downloadedSummaries")
+        if (storedSummaries) {
+          setDownloadedSummaries(JSON.parse(storedSummaries))
+        }
+      } catch (err) {
+        console.error("Error parsing stored data:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [router])
 
   useEffect(() => {
-    if (projects.length > 0) {
-      setUserItem("design-studio-projects", JSON.stringify(projects))
+    const id = searchParams.get("project")
+    if (id && projects.length > 0 && projects.some((p) => p.id === id)) {
+      setCurrentProjectId(id)
     }
-  }, [projects])
+  }, [searchParams, projects])
 
   useEffect(() => {
     setUserItem("downloadedSummaries", JSON.stringify(downloadedSummaries))
@@ -354,46 +459,90 @@ function DashboardContent() {
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId)
     setActiveView("home")
+    router.replace(`/dashboard?project=${projectId}`)
   }
 
-  const handleCreateProject = (projectName: string) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name: projectName,
-      createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString(),
-      lastActivity: { section: "Project Overview", timestamp: new Date().toISOString() },
-      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+  const handleCreateProject = async (projectName: string) => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+    if (sessionError || !session) {
+      console.error("[dashboard] create project: error (no session)", sessionError)
+      return
     }
-    setProjects([...projects, newProject])
+    const { data: row, error } = await supabase
+      .from("projects")
+      .insert({ user_id: session.user.id, title: projectName, status: "active" })
+      .select("id, title, created_at, updated_at")
+      .single()
+    if (error) {
+      console.error("[dashboard] create project: error", error)
+      return
+    }
+    console.log("[dashboard] create project: success")
+    const newProject: Project = {
+      id: String(row.id),
+      name: String(row.title ?? projectName),
+      createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+      lastModified: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+    }
+    setProjects([newProject, ...projects])
     setCurrentProjectId(newProject.id)
     setActiveView("home")
+    router.replace(`/dashboard?project=${newProject.id}`)
   }
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+    if (sessionError || !session) return
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", projectId)
+      .eq("user_id", session.user.id)
+    if (error) {
+      console.error("[dashboard] delete project error:", error)
+      return
+    }
     const updatedProjects = projects.filter((p) => p.id !== projectId)
     setProjects(updatedProjects)
-
     if (currentProjectId === projectId) {
-      setCurrentProjectId(updatedProjects.length > 0 ? updatedProjects[0].id : null)
+      const nextId = updatedProjects.length > 0 ? updatedProjects[0].id : null
+      setCurrentProjectId(nextId)
       setActiveView("home")
-    }
-
-    if (updatedProjects.length === 0) {
-      localStorage.removeItem("design-studio-projects")
+      router.replace(nextId ? `/dashboard?project=${nextId}` : "/dashboard")
     }
   }
 
-  const handleRenameProject = (projectId: string, newName: string) => {
+  const handleRenameProject = async (projectId: string, newName: string) => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+    if (sessionError || !session) return
+    const { error } = await supabase
+      .from("projects")
+      .update({ title: newName, updated_at: new Date().toISOString() })
+      .eq("id", projectId)
+      .eq("user_id", session.user.id)
+    if (error) {
+      console.error("[dashboard] rename project error:", error)
+      return
+    }
     setProjects(
       projects.map((p) => (p.id === projectId ? { ...p, name: newName, lastModified: new Date().toISOString() } : p)),
     )
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("design-studio-auth")
-    localStorage.removeItem("design-studio-user")
-    router.push("/login")
+    supabase.auth.signOut().then(() => {
+      localStorage.removeItem("design-studio-user")
+      router.push("/login")
+    })
   }
 
   const handleUpgrade = () => {

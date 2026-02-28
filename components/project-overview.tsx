@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,37 +25,114 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
-import { getUserItem, setUserItem } from "@/lib/storage-utils"
+import { supabase } from "@/lib/supabase"
+
+const OVERVIEW_DEBOUNCE_MS = 500
 
 type ProjectOverviewProps = {
   projectId: string
 }
 
-export function ProjectOverview({ projectId }: ProjectOverviewProps) {
-  const [projectData, setProjectData] = useState({
-    name: "",
-    client: "",
-    description: "",
-    goal: "",
-    primaryAction: "", // Add primary action field for core user CTA
-    audience: "",
-    deadline: "",
-    budget: "",
-    constraints: "",
-    successMetrics: "",
-    kpis: "",
-    kickoffDate: "",
-    priorityLevel: "Medium",
-    estimatedDevTime: "",
-    teamMembers: "",
-    clientReviewDate: "",
-    projectType: "",
-    websiteFeatures: [] as string[],
-  })
+type OverviewState = {
+  name: string
+  client: string
+  description: string
+  goal: string
+  primaryAction: string
+  audience: string
+  deadline: string
+  budget: string
+  constraints: string
+  successMetrics: string
+  kpis: string
+  kickoffDate: string
+  priorityLevel: string
+  estimatedDevTime: string
+  teamMembers: string
+  clientReviewDate: string
+  projectType: string
+  websiteFeatures: string[]
+}
 
+const defaultOverviewState: OverviewState = {
+  name: "",
+  client: "",
+  description: "",
+  goal: "",
+  primaryAction: "",
+  audience: "",
+  deadline: "",
+  budget: "",
+  constraints: "",
+  successMetrics: "",
+  kpis: "",
+  kickoffDate: "",
+  priorityLevel: "Medium",
+  estimatedDevTime: "",
+  teamMembers: "",
+  clientReviewDate: "",
+  projectType: "",
+  websiteFeatures: [],
+}
+
+function rowToState(row: Record<string, unknown> | null): OverviewState {
+  if (!row) return defaultOverviewState
+  const arr = row.website_features_required ?? row.website_features
+  const websiteFeatures = Array.isArray(arr) ? arr.map((x) => String(x)) : []
+  return {
+    name: String(row.project_name ?? row.name ?? ""),
+    client: String(row.client_name ?? row.client ?? ""),
+    description: String(row.description ?? ""),
+    goal: String(row.project_goal ?? row.goal ?? ""),
+    primaryAction: String(row.primary_action ?? ""),
+    audience: String(row.target_audience ?? row.audience ?? ""),
+    deadline: String(row.launch_target ?? row.deadline ?? ""),
+    budget: String(row.budget_range ?? row.budget ?? ""),
+    constraints: String(row.constraints_requirements ?? row.constraints ?? ""),
+    successMetrics: String(row.success_criteria ?? row.success_metrics ?? ""),
+    kpis: String(row.kpis ?? ""),
+    kickoffDate: String(row.kickoff_date ?? ""),
+    priorityLevel: String(row.priority_level ?? "Medium"),
+    estimatedDevTime: String(row.estimated_dev_time ?? ""),
+    teamMembers: String(row.team_members ?? ""),
+    clientReviewDate: String(row.client_review_date ?? ""),
+    projectType: String(row.project_type ?? ""),
+    websiteFeatures,
+  }
+}
+
+function stateToPayload(state: OverviewState, projectId: string, userId: string) {
+  return {
+    project_id: projectId,
+    user_id: userId,
+    project_name: state.name || null,
+    client_name: state.client || null,
+    description: state.description || null,
+    project_goal: state.goal || null,
+    primary_action: state.primaryAction || null,
+    target_audience: state.audience || null,
+    launch_target: state.deadline || null,
+    budget_range: state.budget || null,
+    constraints_requirements: state.constraints || null,
+    success_criteria: state.successMetrics || null,
+    kpis: state.kpis || null,
+    kickoff_date: state.kickoffDate || null,
+    priority_level: state.priorityLevel || null,
+    estimated_dev_time: state.estimatedDevTime || null,
+    team_members: state.teamMembers || null,
+    client_review_date: state.clientReviewDate || null,
+    project_type: state.projectType || null,
+    website_features_required: state.websiteFeatures.length ? state.websiteFeatures : [],
+  }
+}
+
+export function ProjectOverview({ projectId }: ProjectOverviewProps) {
+  const router = useRouter()
+  const [projectData, setProjectData] = useState<OverviewState>(defaultOverviewState)
   const [isComplete, setIsComplete] = useState(false)
   const [featureInput, setFeatureInput] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const commonFeatures = [
     "Blog/News Section",
@@ -81,37 +159,80 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
 
   useEffect(() => {
     if (!projectId) return
+    let cancelled = false
 
-    const storageKey = `project-${projectId}-overview`
-    const savedData = getUserItem(storageKey)
-    if (savedData) {
-      const parsedData = JSON.parse(savedData)
-      setProjectData({
-        name: parsedData.name || "",
-        client: parsedData.client || "",
-        description: parsedData.description || "",
-        goal: parsedData.goal || "",
-        primaryAction: parsedData.primaryAction || "",
-        audience: parsedData.audience || "",
-        deadline: parsedData.deadline || "",
-        budget: parsedData.budget || "",
-        constraints: parsedData.constraints || "",
-        successMetrics: parsedData.successMetrics || "",
-        kpis: parsedData.kpis || "",
-        kickoffDate: parsedData.kickoffDate || "",
-        priorityLevel: parsedData.priorityLevel || "Medium",
-        estimatedDevTime: parsedData.estimatedDevTime || "",
-        teamMembers: parsedData.teamMembers || "",
-        clientReviewDate: parsedData.clientReviewDate || "",
-        projectType: parsedData.projectType || "",
-        websiteFeatures: parsedData.websiteFeatures || [],
-      })
+    ;(async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        router.replace("/login")
+        return
+      }
+
+      console.log("[overview] projectId detected:", projectId)
+
+      const { data: row, error } = await supabase
+        .from("project_overview")
+        .select("*")
+        .eq("project_id", projectId)
+        .maybeSingle()
+
+      if (cancelled) return
+      if (error) {
+        console.log("[overview] load result: error", error)
+        return
+      }
+      if (row) {
+        console.log("[overview] load result: success")
+        setProjectData(rowToState(row as Record<string, unknown>))
+      } else {
+        console.log("[overview] load result: none, creating row")
+        const { error: insertErr } = await supabase.from("project_overview").insert({
+          project_id: projectId,
+          user_id: session.user.id,
+        })
+        if (insertErr) {
+          console.error("[overview] insert error:", insertErr)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
-  }, [projectId])
+  }, [projectId, router])
 
   useEffect(() => {
-    const storageKey = `project-${projectId}-overview`
-    setUserItem(storageKey, JSON.stringify(projectData))
+    if (!projectId) return
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      saveTimeoutRef.current = null
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession()
+      if (sessionError || !session) return
+
+      const payload = stateToPayload(projectData, projectId, session.user.id)
+      console.log("[overview] upsert payload:", payload)
+
+      const { data: result, error } = await supabase
+        .from("project_overview")
+        .upsert(payload, { onConflict: "project_id" })
+
+      if (error) {
+        console.error("[overview] upsert: error", error)
+      } else {
+        console.log("[overview] upsert: success", result)
+      }
+    }, OVERVIEW_DEBOUNCE_MS)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
   }, [projectData, projectId])
 
   useEffect(() => {

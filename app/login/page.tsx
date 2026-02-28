@@ -20,10 +20,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("design-studio-auth")
-    if (isAuthenticated) {
-      router.replace("/dashboard")
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/dashboard")
+      }
+    })
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,14 +40,15 @@ export default function LoginPage() {
         return
       }
 
-      const existingUser = getUser()
-      if (!existingUser) {
-        initializeUser(email, email.split("@")[0])
+      if (data.session) {
+        const existingUser = getUser()
+        if (!existingUser) {
+          initializeUser(email, email.split("@")[0])
+        }
+        router.replace("/dashboard")
+      } else {
+        setIsLoading(false)
       }
-
-      localStorage.setItem("design-studio-auth", "true")
-
-      router.replace("/dashboard")
     } catch (error) {
       console.error("[v0] Login error:", error)
       setIsLoading(false)

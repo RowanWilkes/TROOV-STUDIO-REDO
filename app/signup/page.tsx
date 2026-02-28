@@ -26,7 +26,7 @@ export default function SignupPage() {
     setIsLoading(true)
 
     console.log("[signup] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } })
     console.log("[signup] signUp result:", { data, error })
 
     if (error) {
@@ -35,10 +35,13 @@ export default function SignupPage() {
       return
     }
 
-    initializeUser(email, name)
-    localStorage.setItem("design-studio-auth", "true")
-
-    router.push("/dashboard")
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      initializeUser(email, name)
+      router.push("/dashboard")
+    } else {
+      setIsLoading(false)
+    }
   }
 
   return (
