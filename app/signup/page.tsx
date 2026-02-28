@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Mail, Lock } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { initializeUser } from "@/lib/user-service"
+import { supabase } from "@/lib/supabase"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -24,8 +25,15 @@ export default function SignupPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate account creation
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    console.log("[signup] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    console.log("[signup] signUp result:", { data, error })
+
+    if (error) {
+      console.error("[signup] Supabase error:", error)
+      setIsLoading(false)
+      return
+    }
 
     initializeUser(email, name)
     localStorage.setItem("design-studio-auth", "true")

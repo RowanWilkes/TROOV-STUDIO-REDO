@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Mail, Lock } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { getUser, initializeUser } from "@/lib/user-service"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,8 +31,13 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Simulate authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+      if (error) {
+        console.error("[login] signIn error:", error)
+        setIsLoading(false)
+        return
+      }
 
       const existingUser = getUser()
       if (!existingUser) {
