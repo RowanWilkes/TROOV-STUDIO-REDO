@@ -64,12 +64,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
 import { SettingsCard } from "@/components/settings-card"
 import { useProfile } from "@/lib/useProfile"
+import { usePreferences } from "@/lib/usePreferences"
 import { AVATARS } from "@/lib/avatars"
 import { avatarSrcFromKey } from "@/lib/avatarUtils"
 import React from "react"
 import { getUserItem, setUserItem } from "@/lib/storage-utils"
 import { supabase } from "@/lib/supabase"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 type UserServiceUser = {
   id: string
@@ -162,6 +164,8 @@ function DashboardContent() {
   const [showNewProject, setShowNewProject] = useState(false)
   const [triggerExportOnce, setTriggerExportOnce] = useState(false)
   const { profile, displayName, email: profileEmail, loading: profileLoading, save, saving: profileSaving, refetch: refetchProfile } = useProfile()
+  const { prefs, loading: prefsLoading, updatePrefs, saving: prefsSaving } = usePreferences()
+  const defaultViewAppliedRef = useRef(false)
   const [profileForm, setProfileForm] = useState({ full_name: "", company: "", role: "designer", avatar_key: "" })
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [profileSavedMessage, setProfileSavedMessage] = useState(false)
@@ -185,6 +189,9 @@ function DashboardContent() {
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null)
   const [subscriptionLoading, setSubscriptionLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [supportSubject, setSupportSubject] = useState("")
+  const [supportMessage, setSupportMessage] = useState("")
+  const [supportSending, setSupportSending] = useState(false)
 
   React.useEffect(() => {
     if (activeView === "home") {
@@ -354,6 +361,18 @@ function DashboardContent() {
   }, [profile])
 
   useEffect(() => {
+    if (prefs == null) return
+    setSidebarCollapsed(prefs.collapse_sidebar)
+    if (!defaultViewAppliedRef.current) {
+      const view = prefs.default_project_view ?? "home"
+      if (view === "home" || view === "overview" || view === "tasks") {
+        setActiveView(view as "home" | "overview" | "tasks")
+      }
+      defaultViewAppliedRef.current = true
+    }
+  }, [prefs?.user_id, prefs?.collapse_sidebar, prefs?.default_project_view])
+
+  useEffect(() => {
     if (activeView !== "account-usage" || !user?.id) return
     let cancelled = false
     setSubscriptionLoading(true)
@@ -391,6 +410,39 @@ function DashboardContent() {
     } catch (e) {
       console.error("[portal]", e)
       setPortalLoading(false)
+    }
+  }
+
+  const handleSubmitSupport = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!supportSubject.trim() || !supportMessage.trim()) {
+      toast.error("Subject and message are required")
+      return
+    }
+    setSupportSending(true)
+    try {
+      const res = await fetch("/api/support/ticket", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: supportSubject.trim(),
+          message: supportMessage.trim(),
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data?.error ?? "Failed to send message")
+        return
+      }
+      toast.success("Message sent. We'll get back to you soon.")
+      setSupportSubject("")
+      setSupportMessage("")
+    } catch (err) {
+      console.error("[support]", err)
+      toast.error("Failed to send message")
+    } finally {
+      setSupportSending(false)
     }
   }
 
@@ -537,6 +589,13 @@ function DashboardContent() {
   }
 
   const handleCreateProject = async (projectName: string) => {
+    const plan = subscription?.plan ?? "free"
+    if (plan === "free" && projects.length >= 1) {
+      toast.error("Free plan project limit reached. Upgrade to create more projects.", {
+        action: { label: "Upgrade", onClick: () => router.push("/pricing") },
+      })
+      return
+    }
     const {
       data: { session },
       error: sessionError,
@@ -552,6 +611,15 @@ function DashboardContent() {
       .single()
     if (error) {
       console.error("[dashboard] create project: error", error)
+      const isLimitError =
+        error?.message?.includes("Free plan project limit") || error?.code === "P0001"
+      if (isLimitError) {
+        toast.error("Free plan project limit reached. Upgrade to create more projects.", {
+          action: { label: "Upgrade", onClick: () => router.push("/pricing") },
+        })
+      } else {
+        toast.error("Failed to create project. Try again.")
+      }
       return
     }
     console.log("[dashboard] create project: success")
@@ -582,10 +650,24 @@ function DashboardContent() {
       console.error("[dashboard] delete project error:", error)
       return
     }
+    const { data: projectRows, error: refetchError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false })
     const updatedProjects = projects.filter((p) => p.id !== projectId)
-    setProjects(updatedProjects)
+    const listAfterDelete: Project[] = refetchError
+      ? updatedProjects
+      : (projectRows ?? []).map((row: Record<string, unknown>) => ({
+          id: String(row.id),
+          name: String(row.title ?? row.name ?? ""),
+          createdAt: row.created_at ? new Date(row.created_at as string).toISOString() : new Date().toISOString(),
+          lastModified: row.updated_at ? new Date(row.updated_at as string).toISOString() : new Date().toISOString(),
+          deadline: row.deadline ? new Date(row.deadline as string).toISOString() : undefined,
+        }))
+    setProjects(listAfterDelete)
     if (currentProjectId === projectId) {
-      const nextId = updatedProjects.length > 0 ? updatedProjects[0].id : null
+      const nextId = listAfterDelete.length > 0 ? listAfterDelete[0].id : null
       setCurrentProjectId(nextId)
       setActiveView("home")
       router.replace(nextId ? `/dashboard?project=${nextId}` : "/dashboard")
@@ -739,7 +821,11 @@ function DashboardContent() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={() => {
+              const next = !sidebarCollapsed
+              setSidebarCollapsed(next)
+              updatePrefs({ collapse_sidebar: next })
+            }}
             className="h-8 w-8"
           >
             {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -825,6 +911,9 @@ function DashboardContent() {
               onDeleteProject={handleDeleteProject}
               onRenameProject={handleRenameProject}
               userPlan={user?.plan || "free"}
+              freePlanLimitReached={
+                (subscription?.plan ?? "free") === "free" && projects.length >= 1
+              }
             />
 
             <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
@@ -1848,7 +1937,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Dashboard Theme</p>
                           <p className="text-sm text-gray-600">Choose your preferred color scheme</p>
                         </div>
-                        <Select defaultValue="light">
+                        <Select
+                          value={prefs?.theme ?? "light"}
+                          onValueChange={(v) => updatePrefs({ theme: v as "light" | "dark" | "system" })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        >
                           <SelectTrigger className="w-32">
                             <SelectValue />
                           </SelectTrigger>
@@ -1865,7 +1958,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Compact Mode</p>
                           <p className="text-sm text-gray-600">Reduce spacing for more content</p>
                         </div>
-                        <Switch />
+                        <Switch
+                          checked={prefs?.compact_mode ?? false}
+                          onCheckedChange={(checked) => updatePrefs({ compact_mode: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -1873,7 +1970,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Show Animations</p>
                           <p className="text-sm text-gray-600">Enable transition animations</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch
+                          checked={prefs?.show_animations ?? true}
+                          onCheckedChange={(checked) => updatePrefs({ show_animations: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -1889,7 +1990,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Email Notifications</p>
                           <p className="text-sm text-gray-600">Receive project updates via email</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch
+                          checked={prefs?.email_notifications ?? true}
+                          onCheckedChange={(checked) => updatePrefs({ email_notifications: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -1897,7 +2002,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Task Reminders</p>
                           <p className="text-sm text-gray-600">Get reminded about upcoming deadlines</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch
+                          checked={prefs?.task_reminders ?? true}
+                          onCheckedChange={(checked) => updatePrefs({ task_reminders: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -1905,7 +2014,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Weekly Summary</p>
                           <p className="text-sm text-gray-600">Receive weekly progress reports</p>
                         </div>
-                        <Switch />
+                        <Switch
+                          checked={prefs?.weekly_summary ?? false}
+                          onCheckedChange={(checked) => updatePrefs({ weekly_summary: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -1921,7 +2034,11 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Auto-save</p>
                           <p className="text-sm text-gray-600">Automatically save your changes</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch
+                          checked={prefs?.auto_save ?? true}
+                          onCheckedChange={(checked) => updatePrefs({ auto_save: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -1929,12 +2046,20 @@ function DashboardContent() {
                           <p className="font-medium text-gray-900">Collapse Sidebar</p>
                           <p className="text-sm text-gray-600">Remember sidebar collapsed state</p>
                         </div>
-                        <Switch />
+                        <Switch
+                          checked={prefs?.collapse_sidebar ?? false}
+                          onCheckedChange={(checked) => updatePrefs({ collapse_sidebar: checked })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        />
                       </div>
 
                       <div className="space-y-2">
                         <Label>Default Project View</Label>
-                        <Select defaultValue="home">
+                        <Select
+                          value={prefs?.default_project_view ?? "home"}
+                          onValueChange={(v) => updatePrefs({ default_project_view: v })}
+                          disabled={prefsLoading || prefsSaving || prefs == null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -2125,35 +2250,35 @@ function DashboardContent() {
                   <div className="grid grid-cols-1 gap-4">
                     <Link href="/getting-started">
                       <Card className="cursor-pointer hover:shadow-md transition-all bg-emerald-50 border-emerald-200 hover:border-emerald-300">
-                        <CardContent className="pt-6 flex items-start justify-between">
-                          <div className="flex items-start gap-4">
-                            <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-center justify-between p-6 rounded-xl">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
                               <FileText className="h-6 w-6 text-emerald-600" />
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-lg text-emerald-900 mb-1">Getting Started Guide</h3>
+                            <div className="space-y-1">
+                              <h3 className="font-semibold text-lg text-emerald-900">Getting Started Guide</h3>
                               <p className="text-sm text-emerald-800">Learn the basics in just 5 minutes</p>
                             </div>
                           </div>
                           <ChevronRight className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-                        </CardContent>
+                        </div>
                       </Card>
                     </Link>
 
                     <Link href="/faq">
                       <Card className="cursor-pointer hover:shadow-md transition-all bg-blue-50 border-blue-200 hover:border-blue-300">
-                        <CardContent className="pt-6 flex items-start justify-between">
-                          <div className="flex items-start gap-4">
-                            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-center justify-between p-6 rounded-xl">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                               <HelpCircle className="h-6 w-6 text-blue-600" />
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-lg text-blue-900 mb-1">Frequently Asked Questions</h3>
+                            <div className="space-y-1">
+                              <h3 className="font-semibold text-lg text-blue-900">Frequently Asked Questions</h3>
                               <p className="text-sm text-blue-800">Find answers to common questions</p>
                             </div>
                           </div>
                           <ChevronRight className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                        </CardContent>
+                        </div>
                       </Card>
                     </Link>
                   </div>
@@ -2164,21 +2289,34 @@ function DashboardContent() {
                       <CardDescription>Need help? Our team is here to assist you</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="support-subject">Subject</Label>
-                        <Input id="support-subject" placeholder="What do you need help with?" />
-                      </div>
+                      <form onSubmit={handleSubmitSupport} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="support-subject">Subject</Label>
+                          <Input
+                            id="support-subject"
+                            placeholder="What do you need help with?"
+                            value={supportSubject}
+                            onChange={(e) => setSupportSubject(e.target.value)}
+                            disabled={supportSending}
+                          />
+                        </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="support-message">Message</Label>
-                        <textarea
-                          id="support-message"
-                          className="w-full min-h-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="Describe your issue or question..."
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="support-message">Message</Label>
+                          <textarea
+                            id="support-message"
+                            className="w-full min-h-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Describe your issue or question..."
+                            value={supportMessage}
+                            onChange={(e) => setSupportMessage(e.target.value)}
+                            disabled={supportSending}
+                          />
+                        </div>
 
-                      <Button className="w-full">Send Message</Button>
+                        <Button type="submit" className="w-full" disabled={supportSending}>
+                          {supportSending ? "Sending…" : "Send Message"}
+                        </Button>
+                      </form>
                     </CardContent>
                   </Card>
                 </div>

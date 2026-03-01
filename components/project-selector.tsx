@@ -31,10 +31,14 @@ type ProjectSelectorProps = {
   onCreateProject: (name: string) => void
   onSelectProject: (projectId: string) => void
   onDeleteProject: (projectId: string) => void
+  freePlanLimitReached?: boolean
 }
 
 export const ProjectSelector = forwardRef<{ openCreateDialog: () => void }, ProjectSelectorProps>(
-  function ProjectSelector({ projects, currentProjectId, onCreateProject, onSelectProject, onDeleteProject }, ref) {
+  function ProjectSelector(
+    { projects, currentProjectId, onCreateProject, onSelectProject, onDeleteProject, freePlanLimitReached = false },
+    ref,
+  ) {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [newProjectName, setNewProjectName] = useState("")
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
@@ -50,8 +54,13 @@ export const ProjectSelector = forwardRef<{ openCreateDialog: () => void }, Proj
 
     const handleCreateProject = () => {
       if (newProjectName.trim()) {
-        const { allowed, reason } = canCreateProject()
+        if (freePlanLimitReached) {
+          setIsCreateDialogOpen(false)
+          setShowUpgradeDialog(true)
+          return
+        }
 
+        const { allowed } = canCreateProject()
         if (!allowed) {
           setIsCreateDialogOpen(false)
           setShowUpgradeDialog(true)
