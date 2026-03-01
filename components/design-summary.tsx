@@ -35,6 +35,7 @@ import {
   Search,
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import {
   hasContent,
@@ -229,170 +230,35 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
   }
 
   const handleExportPDF = useCallback(async () => {
-    const el = summaryRef.current ?? document.getElementById("summary-content")
-    const element = el as HTMLElement | null
-    if (!element) {
-      alert("Could not find summary content to export")
-      return
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      alert("You must be signed in to download and save the summary.")
-      return
-    }
-
     setIsDownloading(true)
-    setExportImageWarning(null)
-
-    const setCrossOriginOnImages = (root: HTMLElement) => {
-      root.querySelectorAll("img").forEach((img) => {
-        try {
-          img.setAttribute("crossorigin", "anonymous")
-          ;(img as HTMLImageElement).crossOrigin = "anonymous"
-        } catch {
-          // ignore per-image failures
-        }
-      })
-    }
-
-    const hideImages = (root: HTMLElement) => {
-      root.querySelectorAll("img").forEach((img) => {
-        ;(img as HTMLElement).style.setProperty("visibility", "hidden")
-      })
-    }
-
-    const restoreImagesVisibility = (root: HTMLElement) => {
-      root.querySelectorAll("img").forEach((img) => {
-        ;(img as HTMLElement).style.removeProperty("visibility")
-      })
-    }
-
-    let imagesSkipped = false
-
     try {
-      setCrossOriginOnImages(element)
-
-      const originalBackground = element.style.backgroundColor
-      const originalColor = element.style.color
-      element.style.backgroundColor = "#fff"
-
-      const html2canvas = (await import("html2canvas")).default
-      const { jsPDF } = await import("jspdf")
-
-      const a4WidthMm = 210
-      const a4HeightMm = 297
-      const captureWidthPx = element.clientWidth
-      const pageHeightPx = Math.floor((a4HeightMm / a4WidthMm) * captureWidthPx)
-      const totalSlices = Math.ceil(element.scrollHeight / pageHeightPx)
-      console.log("[summary export] total slices:", totalSlices, "pageHeightPx:", pageHeightPx, "scrollHeight:", element.scrollHeight)
-
-      const isCorsOrTaintedError = (err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err)
-        const lower = msg.toLowerCase()
-        return (
-          lower.includes("tainted") ||
-          lower.includes("cors") ||
-          lower.includes("cross-origin") ||
-          lower.includes("crossorigin") ||
-          lower.includes("securityerror") ||
-          lower.includes("failed to execute 'todataurl'")
-        )
+      const res = await fetch(`/api/projects/${projectId}/summary-pdf`, { credentials: "include" })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const message = (body as { error?: string }).error ?? "Failed to generate PDF. Please try again."
+        toast.error(message)
+        return
       }
-
-      const pdf = new jsPDF("p", "mm", "a4")
-
-      for (let index = 0, y = 0; y < element.scrollHeight; y += pageHeightPx, index += 1) {
-        console.log("[summary export] slice", index, "y-offset", y)
-
-        const sliceOpts = {
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: "#fff",
-          scale: 2,
-          logging: false,
-          width: captureWidthPx,
-          height: pageHeightPx,
-          windowWidth: captureWidthPx,
-          windowHeight: pageHeightPx,
-          scrollX: 0,
-          scrollY: -y,
-        }
-
-        let canvas: HTMLCanvasElement
-        try {
-          canvas = await html2canvas(element, sliceOpts)
-        } catch (captureErr) {
-          if (!isCorsOrTaintedError(captureErr)) {
-            throw captureErr
-          }
-          hideImages(element)
-          try {
-            canvas = await html2canvas(element, sliceOpts)
-            imagesSkipped = true
-          } finally {
-            restoreImagesVisibility(element)
-          }
-        }
-
-        const imgData = canvas.toDataURL("image/png")
-        if (index > 0) {
-          pdf.addPage()
-        }
-        pdf.addImage(imgData, "PNG", 0, 0, a4WidthMm, a4HeightMm)
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition")
+      let filename = "troov-summary.pdf"
+      if (disposition) {
+        const match = /filename="?([^";\n]+)"?/.exec(disposition)
+        if (match?.[1]) filename = match[1]
       }
-
-      element.style.backgroundColor = originalBackground
-      element.style.color = originalColor
-
-      const baseName = `${summaryData.overview?.projectName || "Untitled Project"}_Summary`.replace(/[^a-zA-Z0-9-_]/g, "_")
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
-      const fileName = `${baseName}_${timestamp}.pdf`
-      const blob = pdf.output("blob") as Blob
-
-      const storagePath = `${user.id}/${projectId}/${timestamp}-${baseName}.pdf`
-      const { error: uploadError } = await supabase.storage.from("summaries").upload(storagePath, blob, {
-        contentType: "application/pdf",
-        upsert: false,
-      })
-      if (uploadError) {
-        console.error("[summary export] upload failed", uploadError)
-        throw new Error(uploadError.message)
-      }
-
-      const { error: insertError } = await supabase.from("downloaded_summaries").insert({
-        user_id: user.id,
-        project_id: projectId,
-        file_path: storagePath,
-        file_name: fileName,
-        is_client_copy: false,
-      })
-      if (insertError) {
-        console.error("[summary export] insert failed", insertError)
-        throw new Error(insertError.message)
-      }
-
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = fileName
+      a.download = filename
       a.click()
       URL.revokeObjectURL(url)
-
-      if (imagesSkipped) {
-        setExportImageWarning("Some images couldn't be embedded due to cross-domain restrictions.")
-        setTimeout(() => setExportImageWarning(null), 5000)
-      }
-    } catch (error) {
-      const readable = error instanceof Error ? error.message : String(error)
-      console.error("[summary export] failed", error)
-      console.error("[summary export] readable message:", readable)
-      alert("Failed to generate PDF. Please try again.")
+    } catch {
+      toast.error("Failed to generate PDF. Please try again.")
     } finally {
       setIsDownloading(false)
       onExportComplete?.()
     }
-  }, [projectId, summaryData.overview?.projectName, onExportComplete])
+  }, [projectId, onExportComplete])
 
   exportPdfRef.current = handleExportPDF
 

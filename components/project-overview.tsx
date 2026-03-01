@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 
 const OVERVIEW_DEBOUNCE_MS = 500
 
@@ -134,6 +135,7 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
   const [featureInput, setFeatureInput] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasHydratedRef = useRef(false)
 
   const commonFeatures = [
     "Blog/News Section",
@@ -160,6 +162,7 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
 
   useEffect(() => {
     if (!projectId) return
+    hasHydratedRef.current = false
     let cancelled = false
 
     ;(async () => {
@@ -172,8 +175,6 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
         return
       }
 
-      console.log("[overview] projectId detected:", projectId)
-
       const { data: row, error } = await supabase
         .from("project_overview")
         .select("*")
@@ -182,22 +183,24 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
 
       if (cancelled) return
       if (error) {
-        console.log("[overview] load result: error", error)
+        console.error("[overview] fetch error:", error)
+        toast.error("Failed to load overview. Please try again.")
         return
       }
       if (row) {
-        console.log("[overview] load result: success")
         setProjectData(rowToState(row as Record<string, unknown>))
       } else {
-        console.log("[overview] load result: none, creating row")
         const { error: insertErr } = await supabase.from("project_overview").insert({
           project_id: projectId,
           user_id: session.user.id,
         })
         if (insertErr) {
           console.error("[overview] insert error:", insertErr)
+          toast.error("Failed to create overview. Please try again.")
         }
+        setProjectData(defaultOverviewState)
       }
+      if (!cancelled) hasHydratedRef.current = true
     })()
 
     return () => {
@@ -206,7 +209,7 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
   }, [projectId, router])
 
   useEffect(() => {
-    if (!projectId) return
+    if (!projectId || !hasHydratedRef.current) return
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
 
     saveTimeoutRef.current = setTimeout(async () => {
@@ -218,16 +221,14 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
       if (sessionError || !session) return
 
       const payload = stateToPayload(projectData, projectId, session.user.id)
-      console.log("[overview] upsert payload:", payload)
 
-      const { data: result, error } = await supabase
+      const { error } = await supabase
         .from("project_overview")
         .upsert(payload, { onConflict: "project_id" })
 
       if (error) {
-        console.error("[overview] upsert: error", error)
-      } else {
-        console.log("[overview] upsert: success", result)
+        console.error("[overview] upsert error:", error)
+        toast.error("Failed to save overview. Please try again.")
       }
     }, OVERVIEW_DEBOUNCE_MS)
 
