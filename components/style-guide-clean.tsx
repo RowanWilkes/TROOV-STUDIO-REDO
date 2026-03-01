@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { PaletteIcon, Pencil, Plus, Minus, X, TypeIcon, PencilIcon } from "lucide-react"
 import { useProjectRow } from "@/lib/useProjectRow"
 
@@ -142,7 +142,8 @@ const STANDARD_FONTS = [
 ]
 
 export function StyleGuideClean({ projectId }: { projectId: string }) {
-  const [isCompleted, setIsCompleted] = useState(false)
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isCompleted = completion.styleguide
   const { data: styleData, setData: setStyleData } = useProjectRow<StyleGuideData>({
     tableName: "style_guide",
     projectId,
@@ -200,13 +201,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
   const [editingTypography, setEditingTypography] = useState<string | null>(null)
   const [activeButtonTab, setActiveButtonTab] = useState<"primary" | "secondary">("primary")
 
-  useEffect(() => {
-    setIsCompleted(checkSectionCompletion(projectId, "styleguide"))
-  }, [projectId])
-
   const handleCompletionToggle = (checked: boolean) => {
-    setIsCompleted(checked)
-    setSectionCompletion(projectId, "styleguide", checked)
+    setOverride("styleguide", checked)
   }
 
   const updateStandardColor = (key: keyof StandardColors, value: string) => {

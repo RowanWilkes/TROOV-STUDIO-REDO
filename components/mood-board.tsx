@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ImageIcon, Plus, X, Link } from "lucide-react"
-import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { useProjectRow } from "@/lib/useProjectRow"
 import { useProjectList } from "@/lib/useProjectList"
 
@@ -87,12 +87,9 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
   const [editingNotes, setEditingNotes] = useState("")
   const [editingImageId, setEditingImageId] = useState<string | null>(null)
   const [editingImageNotes, setEditingImageNotes] = useState("")
-  const [isComplete, setIsComplete] = useState(false)
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isComplete = completion.mood
   const [zoomedImage, setZoomedImage] = useState<InspirationImage | null>(null)
-
-  useEffect(() => {
-    setIsComplete(checkSectionCompletion(projectId, "mood"))
-  }, [projectId])
 
   const addInspirationImage = () => {
     if (newImage.url) {
@@ -200,9 +197,7 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
   }
 
   const toggleComplete = () => {
-    const newValue = !isComplete
-    setIsComplete(newValue)
-    setSectionCompletion(projectId, "mood", newValue)
+    setOverride("mood", !isComplete)
   }
 
   return (

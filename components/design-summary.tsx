@@ -36,6 +36,17 @@ import {
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
+import {
+  hasContent,
+  hasOverviewContent,
+  hasMoodBoardContent,
+  hasStyleGuideContent,
+  hasSitemapContent,
+  hasTechnicalContent,
+  hasContentSectionContent,
+  hasAssetsContent,
+} from "@/lib/summary/hasContent"
+import { useSectionCompletionContext } from "@/lib/useSectionCompletion"
 
 interface DesignSummaryProps {
   projectId: string
@@ -46,6 +57,8 @@ interface DesignSummaryProps {
 }
 
 export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }: DesignSummaryProps) {
+  const completionContext = useSectionCompletionContext()
+  const useMergedCompletion = completionContext && completionContext.projectId === projectId
   const summaryRef = useRef<HTMLDivElement>(null)
   const runExportAfterLoadRef = useRef(false)
   const exportPdfRef = useRef<() => void>(() => {})
@@ -205,48 +218,6 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
   useEffect(() => {
     if (triggerExportOnce && projectId) runExportAfterLoadRef.current = true
   }, [triggerExportOnce, projectId])
-
-  const hasContent = (value: any): boolean => {
-    if (value === null || value === undefined) return false
-    if (typeof value === "string") return value.trim().length > 0
-    if (typeof value === "number") return true
-    if (Array.isArray(value)) return value.length > 0
-    if (typeof value === "object") return Object.keys(value).length > 0
-    return false
-  }
-
-  const hasStyleGuideBeenEdited = (styleGuide: any) => {
-    // Check if any colors have been set (non-empty values)
-    const hasColors =
-      styleGuide?.colors && Object.values(styleGuide.colors).some((color: any) => color && color.trim() !== "")
-    const hasCustomColors = styleGuide?.customColors && styleGuide.customColors.length > 0
-
-    // Check if typography has been modified from defaults
-    const hasModifiedTypography =
-      styleGuide?.typography &&
-      styleGuide.typography.some((typo: any) => {
-        // Check if any field is different from defaults (e.g., not Inter font or default values)
-        return typo.fontFamily !== "Inter" || typo.color !== "#000000" || typo.description !== typo.label // Any custom description
-      })
-
-    const hasButtonStyles = styleGuide?.buttonStyles && Object.keys(styleGuide.buttonStyles).length > 0
-
-    return hasColors || hasCustomColors || hasModifiedTypography || hasButtonStyles
-  }
-
-  const isDefaultSitemap = (pages: any[]): boolean => {
-    if (!pages || pages.length === 0) return true
-    if (pages.length === 1) {
-      const page = pages[0]
-      return (
-        page.name === "Home" &&
-        page.path === "/" &&
-        (!page.blocks || page.blocks.length === 0) &&
-        (!page.children || page.children.length === 0)
-      )
-    }
-    return false
-  }
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
@@ -425,50 +396,31 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
 
   exportPdfRef.current = handleExportPDF
 
-  const sections = [
-    {
-      name: "Overview",
-      icon: FileText,
-      hasData: Object.keys(summaryData.overview || {}).some((key) => hasContent(summaryData.overview[key])),
-      color: "emerald",
-    },
-    {
-      name: "Mood Board",
-      icon: Eye,
-      hasData:
-        hasContent(summaryData.moodBoard?.inspirationImages) || hasContent(summaryData.moodBoard?.websiteReferences),
-      color: "purple",
-    },
-    {
-      name: "Style Guide",
-      icon: Palette,
-      hasData: hasStyleGuideBeenEdited(summaryData.styleGuide), // Use new function instead of hasContent checks
-      color: "pink",
-    },
-    {
-      name: "Sitemap",
-      icon: Layout,
-      hasData: hasContent(summaryData.sitemapPages) && !isDefaultSitemap(summaryData.sitemapPages),
-      color: "orange",
-    },
-    {
-      name: "Technical",
-      icon: Code,
-      hasData: Object.keys(summaryData.technical || {}).some((key) => hasContent(summaryData.technical[key])),
-      color: "blue",
-    },
-    {
-      name: "Content",
-      icon: Type,
-      hasData: Object.keys(summaryData.content || {}).some((key) => hasContent(summaryData.content[key])),
-      color: "rose", // Changed from 'indigo'
-    },
-    { name: "Assets", icon: ImageIcon, hasData: hasContent(summaryData.assets?.uploadedAssets), color: "cyan" },
-  ]
+  const sections = useMergedCompletion
+    ? [
+        { name: "Overview", icon: FileText, hasData: completionContext!.completion.overview, color: "emerald" },
+        { name: "Mood Board", icon: Eye, hasData: completionContext!.completion.mood, color: "purple" },
+        { name: "Style Guide", icon: Palette, hasData: completionContext!.completion.styleguide, color: "pink" },
+        { name: "Sitemap", icon: Layout, hasData: completionContext!.completion.wireframe, color: "orange" },
+        { name: "Technical", icon: Code, hasData: completionContext!.completion.technical, color: "blue" },
+        { name: "Content", icon: Type, hasData: completionContext!.completion.content, color: "rose" },
+        { name: "Assets", icon: ImageIcon, hasData: completionContext!.completion.assets, color: "cyan" },
+      ]
+    : [
+        { name: "Overview", icon: FileText, hasData: hasOverviewContent(summaryData.overview), color: "emerald" },
+        { name: "Mood Board", icon: Eye, hasData: hasMoodBoardContent(summaryData.moodBoard), color: "purple" },
+        { name: "Style Guide", icon: Palette, hasData: hasStyleGuideContent(summaryData.styleGuide), color: "pink" },
+        { name: "Sitemap", icon: Layout, hasData: hasSitemapContent(summaryData.sitemapPages), color: "orange" },
+        { name: "Technical", icon: Code, hasData: hasTechnicalContent(summaryData.technical), color: "blue" },
+        { name: "Content", icon: Type, hasData: hasContentSectionContent(summaryData.content), color: "rose" },
+        { name: "Assets", icon: ImageIcon, hasData: hasAssetsContent(summaryData.assets), color: "cyan" },
+      ]
 
   const completedSections = sections.filter((s) => s.hasData).length
   const totalSections = sections.length
-  const completionPercentage = Math.round((completedSections / totalSections) * 100)
+  const completionPercentage = useMergedCompletion
+    ? completionContext!.completionPercentage
+    : Math.round((completedSections / totalSections) * 100)
   const hasAnyContent = completedSections > 0
 
   // --- State and logic for Assets section ---

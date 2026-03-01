@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Server, Link2, Globe, Zap, FileText } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { useProjectRow } from "@/lib/useProjectRow"
 
 type TechnicalSpecsProps = {
@@ -81,15 +81,11 @@ export function TechnicalSpecs({ projectId }: TechnicalSpecsProps) {
 
   const data = technicalData ?? defaultTechnicalData
 
-  const [isComplete, setIsComplete] = useState(false)
-
-  useEffect(() => {
-    setIsComplete(checkSectionCompletion(projectId, "technical"))
-  }, [projectId])
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isComplete = completion.technical
 
   const toggleCompletion = (checked: boolean) => {
-    setIsComplete(checked)
-    setSectionCompletion(projectId, "technical", checked)
+    setOverride("technical", checked)
   }
 
   return (

@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { supabase } from "@/lib/supabase"
 
 const OVERVIEW_DEBOUNCE_MS = 500
@@ -128,8 +128,9 @@ function stateToPayload(state: OverviewState, projectId: string, userId: string)
 
 export function ProjectOverview({ projectId }: ProjectOverviewProps) {
   const router = useRouter()
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isComplete = completion.overview
   const [projectData, setProjectData] = useState<OverviewState>(defaultOverviewState)
-  const [isComplete, setIsComplete] = useState(false)
   const [featureInput, setFeatureInput] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -235,14 +236,8 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
     }
   }, [projectData, projectId])
 
-  useEffect(() => {
-    setIsComplete(checkSectionCompletion(projectId, "overview"))
-  }, [projectId])
-
   const toggleComplete = () => {
-    const newValue = !isComplete
-    setIsComplete(newValue)
-    setSectionCompletion(projectId, "overview", newValue)
+    setOverride("overview", !isComplete)
   }
 
   const addWebsiteFeature = (feature: string) => {

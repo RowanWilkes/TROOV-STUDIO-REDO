@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, X, PaletteIcon, Type, Pencil } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 
 interface ColorSwatch {
   id: string
@@ -165,19 +165,14 @@ export function StyleGuide({ projectId }: StyleGuideProps) {
   const [customColors, setCustomColors] = useState<ColorSwatch[]>([])
   const [typography, setTypography] = useState<Typography[]>([])
   const [buttonStyles, setButtonStyles] = useState<ButtonStyles>(defaultButtonStyles)
-  const [isCompleted, setIsCompleted] = useState(false)
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isCompleted = completion.styleguide
   const [newCustomColor, setNewCustomColor] = useState({ hex: "#000000", name: "" })
   const [editingTypography, setEditingTypography] = useState<string | null>(null)
   const [activeButtonType, setActiveButtonType] = useState<"primary" | "secondary">("primary")
 
-  useEffect(() => {
-    const completed = checkSectionCompletion(projectId, "styleguide")
-    setIsCompleted(completed)
-  }, [projectId])
-
   const handleCompletionToggle = (checked: boolean) => {
-    setIsCompleted(checked)
-    setSectionCompletion(projectId, "styleguide", checked)
+    setOverride("styleguide", checked)
   }
 
   useEffect(() => {

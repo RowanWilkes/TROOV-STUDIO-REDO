@@ -26,7 +26,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useProjectRow } from "@/lib/useProjectRow"
 
@@ -131,6 +131,9 @@ const defaultAssetSectionData: AssetSectionData = {
 }
 
 export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAssetsProps) {
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const sectionId = showAssetsOnly ? "assets" : "content"
+  const isComplete = completion[sectionId]
   const { data: contentData, setData: setContentData } = useProjectRow<ContentSectionData>({
     tableName: "content_section",
     projectId,
@@ -208,7 +211,6 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   const [isDragging, setIsDragging] = useState(false)
   const [selectedTab, setSelectedTab] = useState<string>("all")
   const [enlargedAsset, setEnlargedAsset] = useState<UploadedAsset | null>(null)
-  const [isComplete, setIsComplete] = useState(false)
 
   const [newKeyword, setNewKeyword] = useState("")
   const [newContentType, setNewContentType] = useState<string>("heading")
@@ -216,15 +218,6 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   const [editingContentId, setEditingContentId] = useState<string | null>(null)
   const [isCustomType, setIsCustomType] = useState(false)
   const [customTypeName, setCustomTypeName] = useState("")
-
-  useEffect(() => {
-    setIsComplete(checkSectionCompletion(projectId, showAssetsOnly ? "assets" : "content"))
-  }, [projectId, showAssetsOnly])
-
-  useEffect(() => {
-    if (showAssetsOnly && assetsSection.isComplete !== undefined) setIsComplete(assetsSection.isComplete)
-    if (!showAssetsOnly && content.isComplete !== undefined) setIsComplete(!!content.isComplete)
-  }, [showAssetsOnly, assetsSection.isComplete, content.isComplete])
 
   const persistCompletion = (checked: boolean) => {
     if (showAssetsOnly) setAssetData((p) => ({ ...(p ?? defaultAssetSectionData), isComplete: checked }))
@@ -243,9 +236,7 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   }
 
   const toggleCompletion = (checked: boolean) => {
-    setIsComplete(checked)
-    setSectionCompletion(projectId, showAssetsOnly ? "assets" : "content", checked)
-    persistCompletion(checked)
+    setOverride(sectionId, checked)
   }
 
   const addAsset = () => {

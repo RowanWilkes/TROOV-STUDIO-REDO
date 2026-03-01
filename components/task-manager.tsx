@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, CheckCircle2, Circle, GripVertical, Trash2 } from "lucide-react"
-import { setSectionCompletion } from "@/lib/completion-tracker"
 import { useProjectList } from "@/lib/useProjectList"
+import { useSectionCompletionContext } from "@/lib/useSectionCompletion"
 
 interface Task {
   id?: string
@@ -41,11 +41,11 @@ export function TaskManager({ projectId }: TaskManagerProps) {
 
   const [newTaskTitle, setNewTaskTitle] = useState("")
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+  const completionContext = useSectionCompletionContext()
 
   useEffect(() => {
-    const allCompleted = tasks.length > 0 && tasks.every((t) => t.completed)
-    setSectionCompletion(projectId, "tasks", allCompleted)
-  }, [tasks, projectId])
+    completionContext?.refetchCompletion?.()
+  }, [tasks.length, tasks.filter((t) => t.completed).length, completionContext?.refetchCompletion])
 
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1

@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Calendar,
   Bell,
+  Pencil,
   Shield,
   CreditCard,
   Download,
@@ -61,7 +62,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion, fetchSectionCompletion, SectionCompletionProvider } from "@/lib/useSectionCompletion"
+import { useNotifications } from "@/lib/useNotifications"
 import { SettingsCard } from "@/components/settings-card"
 import { useProfile } from "@/lib/useProfile"
 import { usePreferences } from "@/lib/usePreferences"
@@ -108,15 +110,6 @@ type DownloadedSummary = {
   project_title: string | null
 }
 
-type Notification = {
-  id: string
-  projectId: string
-  projectName: string
-  message: string
-  type: "deadline-warning" | "deadline-overdue"
-  date: string
-}
-
 type NavItemProps = {
   icon: any
   label: string
@@ -154,7 +147,7 @@ function DashboardContent() {
 
   const [downloadedSummaries, setDownloadedSummaries] = useState<DownloadedSummary[]>([])
   const [activeTasks, setActiveTasks] = useState(0)
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const { notifications, unreadCount, loading: notificationsLoading, markRead, markAllRead } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
 
   const [projectCompletionCounts, setProjectCompletionCounts] = React.useState<Record<string, number>>({})
@@ -201,25 +194,31 @@ function DashboardContent() {
   }, [activeView])
 
   React.useEffect(() => {
-    if (activeView === "home") {
+    if (activeView !== "home" || projects.length === 0) return
+    let cancelled = false
+    const run = async () => {
       const counts: Record<string, number> = {}
-      projects.forEach((project) => {
-        const projectSections = [
-          { id: "overview", name: "Overview" },
-          { id: "mood", name: "Mood Board" },
-          { id: "styleguide", name: "Style Guide" },
-          { id: "wireframe", name: "Sitemap" },
-          { id: "technical", name: "Technical" },
-          { id: "content", name: "Content" },
-          { id: "assets", name: "Assets" },
-          { id: "tasks", name: "Tasks" },
-        ]
-        const completedCount = projectSections.filter((section) =>
-          checkSectionCompletion(project.id, section.id),
-        ).length
-        counts[project.id] = completedCount
-      })
-      setProjectCompletionCounts(counts)
+      await Promise.all(
+        projects.map(async (project) => {
+          const map = await fetchSectionCompletion(project.id)
+          const completedCount = [
+            map.overview,
+            map.mood,
+            map.styleguide,
+            map.wireframe,
+            map.technical,
+            map.content,
+            map.assets,
+            map.tasks,
+          ].filter(Boolean).length
+          counts[project.id] = completedCount
+        }),
+      )
+      if (!cancelled) setProjectCompletionCounts(counts)
+    }
+    run()
+    return () => {
+      cancelled = true
     }
   }, [activeView, projects, refreshTrigger])
 
@@ -473,87 +472,6 @@ function DashboardContent() {
     }
   }, [currentProjectId, activeView])
 
-  useEffect(() => {
-    if (activeView !== "home" || !currentProjectId) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const { data, error } = await supabase
-          .from("tasks")
-          .select("id, completed")
-          .eq("project_id", currentProjectId)
-        if (cancelled) return
-        if (error) {
-          console.error("[Home Tasks completion] fetch error", error)
-          setSectionCompletion(currentProjectId, "tasks", false)
-          setRefreshTrigger((prev) => prev + 1)
-          return
-        }
-        const totalTasks = data?.length ?? 0
-        const completedTasks = data?.filter((t: { completed?: boolean }) => t.completed === true).length ?? 0
-        const tasksComplete = totalTasks > 0 && completedTasks === totalTasks
-        console.debug("[Home Tasks completion]", { projectId: currentProjectId, totalTasks, completedTasks, tasksComplete })
-        setSectionCompletion(currentProjectId, "tasks", tasksComplete)
-        setRefreshTrigger((prev) => prev + 1)
-      } catch (e) {
-        if (!cancelled) {
-          console.error("[Home Tasks completion] error", e)
-          setSectionCompletion(currentProjectId, "tasks", false)
-          setRefreshTrigger((prev) => prev + 1)
-        }
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [activeView, currentProjectId])
-
-  useEffect(() => {
-    if (!projects.length) {
-      setNotifications([])
-      return
-    }
-
-    const newNotifications: Notification[] = []
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    projects.forEach((project) => {
-      if (project.deadline) {
-        const deadline = new Date(project.deadline)
-        deadline.setHours(0, 0, 0, 0)
-        const daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-        if (daysUntilDeadline < 0) {
-          // Overdue
-          newNotifications.push({
-            id: `${project.id}-overdue`,
-            projectId: project.id,
-            projectName: project.name,
-            message: `Project deadline passed ${Math.abs(daysUntilDeadline)} day${Math.abs(daysUntilDeadline) === 1 ? "" : "s"} ago`,
-            type: "deadline-overdue",
-            date: project.deadline,
-          })
-        } else if (daysUntilDeadline <= 7) {
-          // Within 7 days
-          newNotifications.push({
-            id: `${project.id}-warning`,
-            projectId: project.id,
-            projectName: project.name,
-            message:
-              daysUntilDeadline === 0
-                ? "Deadline is today!"
-                : `Deadline in ${daysUntilDeadline} day${daysUntilDeadline === 1 ? "" : "s"}`,
-            type: "deadline-warning",
-            date: project.deadline,
-          })
-        }
-      }
-    })
-
-    setNotifications(newNotifications)
-  }, [projects])
-
   const NavItem = ({ icon: Icon, label, view, badge }: NavItemProps) => {
     const isActive = activeView === view
     const isDisabled = view !== "home" && !currentProjectId
@@ -797,10 +715,12 @@ function DashboardContent() {
     return viewMap[sectionId] || sectionId
   }
 
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside
+  function DashboardWithCompletion() {
+    const { completion: sectionCompletion, completionPercentage } = useSectionCompletion(currentProjectId)
+    return (
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar */}
+        <aside
         className={cn(
           "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
           sidebarCollapsed ? "w-20" : "w-64",
@@ -920,54 +840,92 @@ function DashboardContent() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5 text-gray-600" />
-                  {notifications.length > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full text-white text-xs flex items-center justify-center px-1">
-                      {notifications.length}
+                      {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <div className="px-3 py-2 border-b">
+                <div className="px-3 py-2 border-b flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                  {notifications.length > 0 && unreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-emerald-600 hover:text-emerald-700"
+                      onClick={() => markAllRead()}
+                    >
+                      Mark all read
+                    </Button>
+                  )}
                 </div>
-                {notifications.length === 0 ? (
+                {notificationsLoading ? (
+                  <div className="px-3 py-8 text-center">
+                    <p className="text-sm text-gray-500">Loading…</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="px-3 py-8 text-center">
                     <Bell className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">No notifications</p>
                   </div>
                 ) : (
                   <ScrollArea className="max-h-[400px]">
-                    {notifications.map((notification) => (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className="px-3 py-3 cursor-pointer hover:bg-gray-50 flex-col items-start gap-1"
-                        onClick={() => {
-                          // Switch to the project and close notifications
-                          handleSelectProject(notification.projectId)
-                          setShowNotifications(false)
-                        }}
-                      >
-                        <div className="flex items-start gap-2 w-full">
-                          {notification.type === "deadline-overdue" ? (
-                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <Calendar className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                    {notifications.map((notification) => {
+                      const isOverdue = notification.type === "deadline" && notification.title === "Deadline passed"
+                      return (
+                        <DropdownMenuItem
+                          key={notification.id}
+                          className={cn(
+                            "px-3 py-3 cursor-pointer hover:bg-gray-50 flex-col items-start gap-1",
+                            !notification.is_read && "border-l-2 border-l-emerald-500",
                           )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{notification.projectName}</p>
-                            <p
-                              className={cn(
-                                "text-sm",
-                                notification.type === "deadline-overdue" ? "text-red-600" : "text-amber-600",
+                          onClick={() => {
+                            if (notification.url) {
+                              const u = new URL(notification.url, typeof window !== "undefined" ? window.location.origin : "http://localhost")
+                              const projectId = u.searchParams.get("project")
+                              const view = u.searchParams.get("view") as typeof activeView | null
+                              if (projectId) handleSelectProject(projectId)
+                              if (view) setActiveView(view as typeof activeView)
+                              router.replace(notification.url!)
+                            }
+                            markRead(notification.id)
+                            setShowNotifications(false)
+                          }}
+                        >
+                          <div className="flex items-start gap-2 w-full">
+                            {notification.type === "deadline" ? (
+                              isOverdue ? (
+                                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                              ) : (
+                                <Calendar className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                              )
+                            ) : (
+                              <Pencil className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                              {notification.body && (
+                                <p className="text-sm text-gray-600 truncate">{notification.body}</p>
                               )}
-                            >
-                              {notification.message}
-                            </p>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {(() => {
+                                  const d = new Date(notification.created_at)
+                                  const now = new Date()
+                                  const sec = Math.floor((now.getTime() - d.getTime()) / 1000)
+                                  if (sec < 60) return "Just now"
+                                  if (sec < 3600) return `${Math.floor(sec / 60)} min ago`
+                                  if (sec < 86400) return `${Math.floor(sec / 3600)} hr ago`
+                                  if (sec < 604800) return `${Math.floor(sec / 86400)} days ago`
+                                  return d.toLocaleDateString()
+                                })()}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
+                        </DropdownMenuItem>
+                      )
+                    })}
                   </ScrollArea>
                 )}
               </DropdownMenuContent>
@@ -1114,23 +1072,7 @@ function DashboardContent() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600">Completion</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                              {(() => {
-                                const sections = [
-                                  checkSectionCompletion(currentProjectId, "overview"),
-                                  checkSectionCompletion(currentProjectId, "mood"),
-                                  checkSectionCompletion(currentProjectId, "styleguide"),
-                                  checkSectionCompletion(currentProjectId, "wireframe"),
-                                  checkSectionCompletion(currentProjectId, "technical"),
-                                  checkSectionCompletion(currentProjectId, "content"),
-                                  checkSectionCompletion(currentProjectId, "assets"),
-                                  checkSectionCompletion(currentProjectId, "tasks"),
-                                ]
-                                const completedCount = sections.filter(Boolean).length
-                                const percentage = Math.round((completedCount / sections.length) * 100)
-                                return `${percentage}%`
-                              })()}
-                            </p>
+                            <p className="text-2xl font-bold text-gray-900">{completionPercentage}%</p>
                           </div>
                           <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
                             <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -1160,42 +1102,14 @@ function DashboardContent() {
                       if (!currentProject) return null
 
                       const sections = [
-                        {
-                          id: "overview",
-                          name: "Project Overview",
-                          completed: checkSectionCompletion(currentProject.id, "overview"),
-                        },
-                        {
-                          id: "mood-board",
-                          name: "Mood Board",
-                          completed: checkSectionCompletion(currentProject.id, "mood"),
-                        },
-                        {
-                          id: "style-guide",
-                          name: "Style Guide",
-                          completed: checkSectionCompletion(currentProject.id, "styleguide"),
-                        },
-                        {
-                          id: "sitemap",
-                          name: "Sitemap",
-                          completed: checkSectionCompletion(currentProject.id, "wireframe"),
-                        },
-                        {
-                          id: "technical",
-                          name: "Technical Specs",
-                          completed: checkSectionCompletion(currentProject.id, "technical"),
-                        },
-                        {
-                          id: "content",
-                          name: "Content",
-                          completed: checkSectionCompletion(currentProject.id, "content"),
-                        },
-                        {
-                          id: "assets",
-                          name: "Assets",
-                          completed: checkSectionCompletion(currentProject.id, "assets"),
-                        },
-                        { id: "tasks", name: "Tasks", completed: checkSectionCompletion(currentProject.id, "tasks") },
+                        { id: "overview", name: "Project Overview", completed: sectionCompletion.overview },
+                        { id: "mood-board", name: "Mood Board", completed: sectionCompletion.mood },
+                        { id: "style-guide", name: "Style Guide", completed: sectionCompletion.styleguide },
+                        { id: "sitemap", name: "Sitemap", completed: sectionCompletion.wireframe },
+                        { id: "technical", name: "Technical Specs", completed: sectionCompletion.technical },
+                        { id: "content", name: "Content", completed: sectionCompletion.content },
+                        { id: "assets", name: "Assets", completed: sectionCompletion.assets },
+                        { id: "tasks", name: "Tasks", completed: sectionCompletion.tasks },
                       ]
 
                       const incompleteSections = sections.filter((s) => !s.completed)
@@ -1417,38 +1331,14 @@ function DashboardContent() {
                     if (!currentProject) return null
 
                     const sections = [
-                      {
-                        id: "overview",
-                        name: "Project Overview",
-                        completed: checkSectionCompletion(currentProject.id, "overview"),
-                      },
-                      {
-                        id: "mood-board",
-                        name: "Mood Board",
-                        completed: checkSectionCompletion(currentProject.id, "mood"),
-                      },
-                      {
-                        id: "style-guide",
-                        name: "Style Guide",
-                        completed: checkSectionCompletion(currentProject.id, "styleguide"),
-                      },
-                      {
-                        id: "sitemap",
-                        name: "Sitemap",
-                        completed: checkSectionCompletion(currentProject.id, "wireframe"),
-                      },
-                      {
-                        id: "technical",
-                        name: "Technical Specs",
-                        completed: checkSectionCompletion(currentProject.id, "technical"),
-                      },
-                      {
-                        id: "content",
-                        name: "Content",
-                        completed: checkSectionCompletion(currentProject.id, "content"),
-                      },
-                      { id: "assets", name: "Assets", completed: checkSectionCompletion(currentProject.id, "assets") },
-                      { id: "tasks", name: "Tasks", completed: checkSectionCompletion(currentProject.id, "tasks") },
+                      { id: "overview", name: "Project Overview", completed: sectionCompletion.overview },
+                      { id: "mood-board", name: "Mood Board", completed: sectionCompletion.mood },
+                      { id: "style-guide", name: "Style Guide", completed: sectionCompletion.styleguide },
+                      { id: "sitemap", name: "Sitemap", completed: sectionCompletion.wireframe },
+                      { id: "technical", name: "Technical Specs", completed: sectionCompletion.technical },
+                      { id: "content", name: "Content", completed: sectionCompletion.content },
+                      { id: "assets", name: "Assets", completed: sectionCompletion.assets },
+                      { id: "tasks", name: "Tasks", completed: sectionCompletion.tasks },
                     ]
 
                     const completedCount = sections.filter((s) => s.completed).length
@@ -2327,6 +2217,13 @@ function DashboardContent() {
         {/* CHANGE> Removed Footer component */}
       </div>
     </div>
+    )
+  }
+
+  return (
+    <SectionCompletionProvider projectId={currentProjectId}>
+      <DashboardWithCompletion />
+    </SectionCompletionProvider>
   )
 }
 

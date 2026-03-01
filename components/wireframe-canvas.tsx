@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { setSectionCompletion, checkSectionCompletion } from "@/lib/completion-tracker"
+import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { useProjectRow } from "@/lib/useProjectRow"
 
 const BLOCK_LIBRARY = [
@@ -189,7 +189,8 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
   const [editingPageId, setEditingPageId] = useState<string | null>(null)
   const [editingPageName, setEditingPageName] = useState("")
-  const [isCompleted, setIsCompleted] = useState(false)
+  const { completion, setOverride } = useSectionCompletion(projectId)
+  const isCompleted = completion.wireframe
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null)
   const [dragOverPageId, setDragOverPageId] = useState<string | null>(null)
 
@@ -198,10 +199,6 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const [customDescription, setCustomDescription] = useState("")
   const [customCategory, setCustomCategory] = useState("Custom")
   const [editingCustomId, setEditingCustomId] = useState<string | null>(null)
-
-  useEffect(() => {
-    setIsCompleted(checkSectionCompletion(projectId, "wireframe"))
-  }, [projectId])
 
   useEffect(() => {
     if (pages.length > 0 && selectedPage === null) setSelectedPage(pages[0].id)
@@ -561,8 +558,7 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const selectedPageData = selectedPage ? findPage(pages, selectedPage) : null
 
   const handleCompletionToggle = (checked: boolean) => {
-    setIsCompleted(checked)
-    setSectionCompletion(projectId, "wireframe", checked)
+    setOverride("wireframe", checked)
   }
 
   return (
