@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -39,9 +39,16 @@ import { supabase } from "@/lib/supabase"
 
 interface DesignSummaryProps {
   projectId: string
+  /** When true, run export once after data is loaded (e.g. from Home "Download Summary"). */
+  triggerExportOnce?: boolean
+  /** Called after export completes (success or failure) so parent can clear trigger. */
+  onExportComplete?: () => void
 }
 
-export function DesignSummary({ projectId }: DesignSummaryProps) {
+export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }: DesignSummaryProps) {
+  const summaryRef = useRef<HTMLDivElement>(null)
+  const runExportAfterLoadRef = useRef(false)
+  const exportPdfRef = useRef<() => void>(() => {})
   const [summaryData, setSummaryData] = useState<any>({
     overview: {},
     moodBoard: {},
@@ -62,6 +69,8 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
     assets: true,
   })
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [exportImageWarning, setExportImageWarning] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!projectId) return
@@ -177,6 +186,11 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
         content,
         assets: { uploadedAssets: assets, tabs: organizedAssets },
       })
+
+      if (runExportAfterLoadRef.current) {
+        runExportAfterLoadRef.current = false
+        queueMicrotask(() => exportPdfRef.current?.())
+      }
     } catch (error) {
       console.error("[Design Summary] Error loading summary data:", error)
     }
@@ -187,6 +201,10 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
     const interval = setInterval(loadData, 2000)
     return () => clearInterval(interval)
   }, [loadData])
+
+  useEffect(() => {
+    if (triggerExportOnce && projectId) runExportAfterLoadRef.current = true
+  }, [triggerExportOnce, projectId])
 
   const hasContent = (value: any): boolean => {
     if (value === null || value === undefined) return false
@@ -239,69 +257,173 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
     alert(`${label} copied to clipboard!`)
   }
 
-  const handleExportPDF = async () => {
-    try {
-      const element = document.getElementById("summary-content")
-      if (!element) {
-        alert("Could not find summary content to export")
-        return
-      }
+  const handleExportPDF = useCallback(async () => {
+    const el = summaryRef.current ?? document.getElementById("summary-content")
+    const element = el as HTMLElement | null
+    if (!element) {
+      alert("Could not find summary content to export")
+      return
+    }
 
-      // Store original styles
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert("You must be signed in to download and save the summary.")
+      return
+    }
+
+    setIsDownloading(true)
+    setExportImageWarning(null)
+
+    const setCrossOriginOnImages = (root: HTMLElement) => {
+      root.querySelectorAll("img").forEach((img) => {
+        try {
+          img.setAttribute("crossorigin", "anonymous")
+          ;(img as HTMLImageElement).crossOrigin = "anonymous"
+        } catch {
+          // ignore per-image failures
+        }
+      })
+    }
+
+    const hideImages = (root: HTMLElement) => {
+      root.querySelectorAll("img").forEach((img) => {
+        ;(img as HTMLElement).style.setProperty("visibility", "hidden")
+      })
+    }
+
+    const restoreImagesVisibility = (root: HTMLElement) => {
+      root.querySelectorAll("img").forEach((img) => {
+        ;(img as HTMLElement).style.removeProperty("visibility")
+      })
+    }
+
+    let imagesSkipped = false
+
+    try {
+      setCrossOriginOnImages(element)
+
       const originalBackground = element.style.backgroundColor
       const originalColor = element.style.color
+      element.style.backgroundColor = "#fff"
 
-      // Apply simple colors to avoid oklch parsing
-      element.style.backgroundColor = "#ffffff"
-
-      // Dynamically import the libraries
       const html2canvas = (await import("html2canvas")).default
       const { jsPDF } = await import("jspdf")
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-      })
+      const a4WidthMm = 210
+      const a4HeightMm = 297
+      const captureWidthPx = element.clientWidth
+      const pageHeightPx = Math.floor((a4HeightMm / a4WidthMm) * captureWidthPx)
+      const totalSlices = Math.ceil(element.scrollHeight / pageHeightPx)
+      console.log("[summary export] total slices:", totalSlices, "pageHeightPx:", pageHeightPx, "scrollHeight:", element.scrollHeight)
 
-      // Restore original styles
+      const isCorsOrTaintedError = (err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        const lower = msg.toLowerCase()
+        return (
+          lower.includes("tainted") ||
+          lower.includes("cors") ||
+          lower.includes("cross-origin") ||
+          lower.includes("crossorigin") ||
+          lower.includes("securityerror") ||
+          lower.includes("failed to execute 'todataurl'")
+        )
+      }
+
+      const pdf = new jsPDF("p", "mm", "a4")
+
+      for (let index = 0, y = 0; y < element.scrollHeight; y += pageHeightPx, index += 1) {
+        console.log("[summary export] slice", index, "y-offset", y)
+
+        const sliceOpts = {
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#fff",
+          scale: 2,
+          logging: false,
+          width: captureWidthPx,
+          height: pageHeightPx,
+          windowWidth: captureWidthPx,
+          windowHeight: pageHeightPx,
+          scrollX: 0,
+          scrollY: -y,
+        }
+
+        let canvas: HTMLCanvasElement
+        try {
+          canvas = await html2canvas(element, sliceOpts)
+        } catch (captureErr) {
+          if (!isCorsOrTaintedError(captureErr)) {
+            throw captureErr
+          }
+          hideImages(element)
+          try {
+            canvas = await html2canvas(element, sliceOpts)
+            imagesSkipped = true
+          } finally {
+            restoreImagesVisibility(element)
+          }
+        }
+
+        const imgData = canvas.toDataURL("image/png")
+        if (index > 0) {
+          pdf.addPage()
+        }
+        pdf.addImage(imgData, "PNG", 0, 0, a4WidthMm, a4HeightMm)
+      }
+
       element.style.backgroundColor = originalBackground
       element.style.color = originalColor
 
-      // Calculate PDF dimensions
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const baseName = `${summaryData.overview?.projectName || "Untitled Project"}_Summary`.replace(/[^a-zA-Z0-9-_]/g, "_")
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+      const fileName = `${baseName}_${timestamp}.pdf`
+      const blob = pdf.output("blob") as Blob
 
-      // Create PDF
-      const pdf = new jsPDF("p", "mm", "a4")
-      const imgData = canvas.toDataURL("image/png")
-
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight)
-
-      // Download the PDF
-      const fileName = `${summaryData.overview?.projectName || "Untitled Project"}_Summary.pdf`
-      pdf.save(fileName)
-
-      // Track the download
-      const downloadRecord = {
-        projectId: projectId,
-        projectName: summaryData.overview?.projectName || "Untitled Project",
-        downloadedAt: new Date().toISOString(),
-        downloadId: `${projectId}-${Date.now()}`,
+      const storagePath = `${user.id}/${projectId}/${timestamp}-${baseName}.pdf`
+      const { error: uploadError } = await supabase.storage.from("summaries").upload(storagePath, blob, {
+        contentType: "application/pdf",
+        upsert: false,
+      })
+      if (uploadError) {
+        console.error("[summary export] upload failed", uploadError)
+        throw new Error(uploadError.message)
       }
 
-      const existingDownloads = JSON.parse(localStorage.getItem("downloadedSummaries") || "[]")
-      const updatedDownloads = [downloadRecord, ...existingDownloads].slice(0, 20)
-      localStorage.setItem("downloadedSummaries", JSON.stringify(updatedDownloads))
+      const { error: insertError } = await supabase.from("downloaded_summaries").insert({
+        user_id: user.id,
+        project_id: projectId,
+        file_path: storagePath,
+        file_name: fileName,
+        is_client_copy: false,
+      })
+      if (insertError) {
+        console.error("[summary export] insert failed", insertError)
+        throw new Error(insertError.message)
+      }
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
+
+      if (imagesSkipped) {
+        setExportImageWarning("Some images couldn't be embedded due to cross-domain restrictions.")
+        setTimeout(() => setExportImageWarning(null), 5000)
+      }
     } catch (error) {
-      console.error("Error generating PDF:", error)
+      const readable = error instanceof Error ? error.message : String(error)
+      console.error("[summary export] failed", error)
+      console.error("[summary export] readable message:", readable)
       alert("Failed to generate PDF. Please try again.")
+    } finally {
+      setIsDownloading(false)
+      onExportComplete?.()
     }
-  }
+  }, [projectId, summaryData.overview?.projectName, onExportComplete])
+
+  exportPdfRef.current = handleExportPDF
 
   const sections = [
     {
@@ -396,6 +518,14 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
 
   return (
     <div className="w-full mx-auto">
+      {exportImageWarning && (
+        <div
+          role="alert"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-md px-4 py-2 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 text-sm shadow-lg"
+        >
+          {exportImageWarning}
+        </div>
+      )}
       <Card className="w-full mx-auto bg-white">
         <CardHeader className="px-6 pt-6 pb-6">
           {/* Quick Reference Header */}
@@ -490,18 +620,24 @@ export function DesignSummary({ projectId }: DesignSummaryProps) {
                 {/* Export to PDF Button */}
                 <Button
                   onClick={handleExportPDF}
-                  disabled={!hasAnyContent}
+                  disabled={!hasAnyContent || isDownloading}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  <Download className="size-4 mr-2" />
-                  Download
+                  {isDownloading ? (
+                    <>Generating…</>
+                  ) : (
+                    <>
+                      <Download className="size-4 mr-2" />
+                      Download
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div id="summary-content" className="p-8">
+          <div id="summary-content" ref={summaryRef} className="p-8">
             <div className="space-y-8">
               {!hasAnyContent && (
                 <Card className="border-amber-200 bg-amber-50">

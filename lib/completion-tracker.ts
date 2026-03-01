@@ -16,13 +16,6 @@ export function setSectionCompletion(projectId: string, sectionId: string, compl
 }
 
 export function getAllSectionCompletions(projectId: string): SectionCompletion[] {
-  const tasksStorageKey = `project-${projectId}-manual-tasks`
-  const tasksData = localStorage.getItem(tasksStorageKey)
-  const tasks = tasksData ? JSON.parse(tasksData) : []
-  const hasTasks = tasks.length > 0
-  const allTasksCompleted = tasks.every((task: any) => task.completed)
-  const tasksCompleted = hasTasks ? allTasksCompleted : true
-
   return [
     {
       id: 'overview',
@@ -69,7 +62,7 @@ export function getAllSectionCompletions(projectId: string): SectionCompletion[]
     {
       id: 'tasks',
       name: 'Tasks',
-      completed: tasksCompleted,
+      completed: checkSectionCompletion(projectId, 'tasks'),
       category: 'management'
     }
   ]

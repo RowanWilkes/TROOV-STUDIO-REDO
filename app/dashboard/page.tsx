@@ -34,7 +34,6 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  Zap,
 } from "lucide-react"
 import { ProjectOverview } from "@/components/project-overview"
 import { MoodBoard } from "@/components/mood-board"
@@ -63,9 +62,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { checkSectionCompletion, setSectionCompletion } from "@/lib/completion-tracker"
+import { SettingsCard } from "@/components/settings-card"
+import { useProfile } from "@/lib/useProfile"
+import { AVATARS } from "@/lib/avatars"
+import { avatarSrcFromKey } from "@/lib/avatarUtils"
 import React from "react"
 import { getUserItem, setUserItem } from "@/lib/storage-utils"
 import { supabase } from "@/lib/supabase"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 type UserServiceUser = {
   id: string
@@ -94,9 +98,12 @@ export type Project = {
 }
 
 type DownloadedSummary = {
-  projectId: string
-  projectName: string
-  downloadedAt: string
+  id: string
+  project_id: string
+  file_path: string
+  file_name: string
+  created_at: string
+  project_title: string | null
 }
 
 type Notification = {
@@ -153,6 +160,31 @@ function DashboardContent() {
   const [refreshTrigger, setRefreshTrigger] = React.useState(0)
 
   const [showNewProject, setShowNewProject] = useState(false)
+  const [triggerExportOnce, setTriggerExportOnce] = useState(false)
+  const { profile, displayName, email: profileEmail, loading: profileLoading, save, saving: profileSaving, refetch: refetchProfile } = useProfile()
+  const [profileForm, setProfileForm] = useState({ full_name: "", company: "", role: "designer", avatar_key: "" })
+  const [showAvatarModal, setShowAvatarModal] = useState(false)
+  const [profileSavedMessage, setProfileSavedMessage] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [passwordError, setPasswordError] = useState<{ newPassword?: string; confirmPassword?: string; general?: string }>({})
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [resetEmailSent, setResetEmailSent] = useState(false)
+
+  type SubscriptionRow = {
+    user_id: string
+    stripe_customer_id: string | null
+    stripe_subscription_id: string | null
+    plan: string
+    status: string | null
+    current_period_end: string | null
+    updated_at: string
+  }
+  const [subscription, setSubscription] = useState<SubscriptionRow | null>(null)
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   React.useEffect(() => {
     if (activeView === "home") {
@@ -210,68 +242,22 @@ function DashboardContent() {
         sessionEmail.split("@")[0] ??
         "User"
 
-      // Prefer DB-backed profile for display + plan data.
-      type ProfileRow = Record<string, any> | null
-      let profile: ProfileRow = null
-
-      try {
-        const { data, error } = await supabase.from("profiles").select("*").eq("id", session.user.id).maybeSingle()
-        if (error) {
-          console.error("[dashboard] Failed to fetch profile:", error)
-        } else {
-          profile = data
-        }
-
-        if (!profile) {
-          const { error: upsertError } = await supabase
-            .from("profiles")
-            .upsert({ id: session.user.id, email: sessionEmail, name: sessionName }, { onConflict: "id" })
-
-          if (upsertError) {
-            console.error("[dashboard] Failed to create profile:", upsertError)
-          } else {
-            const { data: refetched, error: refetchError } = await supabase
-              .from("profiles")
-              .select("*")
-              .eq("id", session.user.id)
-              .maybeSingle()
-
-            if (refetchError) {
-              console.error("[dashboard] Failed to refetch profile:", refetchError)
-            } else {
-              profile = refetched
-            }
-          }
-        }
-      } catch (e) {
-        console.error("[dashboard] Profile load exception:", e)
-      }
-
       if (cancelled) return
-
-      const profileName = (profile?.name ?? profile?.full_name ?? sessionName) as string
-      const profilePlan = (profile?.plan ?? profile?.subscription_plan ?? profile?.subscriptionPlan) as string | undefined
-      const profileLifetimeProjectCount = (profile?.lifetime_project_count ??
-        profile?.lifetimeProjectCount) as number | undefined
 
       setUser({
         id: session.user.id,
         email: sessionEmail,
-        fullName: profileName,
-        plan: profilePlan,
-        lifetimeProjectCount: profileLifetimeProjectCount,
+        fullName: sessionName,
       })
 
-      // Keep localStorage in sync for legacy helpers (e.g. user-scoped storage keys and plan gating),
-      // but the dashboard should still work even if nothing was previously stored.
       try {
         const localUser = {
           email: sessionEmail,
-          fullName: profileName,
-          lifetimeProjectCount: Number.isFinite(profileLifetimeProjectCount) ? profileLifetimeProjectCount : 0,
-          subscriptionPlan: profilePlan ?? "free",
-          subscriptionStatus: (profile?.subscription_status ?? profile?.subscriptionStatus ?? "active") as string,
-          createdAt: (profile?.created_at ?? profile?.createdAt ?? new Date().toISOString()) as string,
+          fullName: sessionName,
+          lifetimeProjectCount: 0,
+          subscriptionPlan: "free",
+          subscriptionStatus: "active",
+          createdAt: new Date().toISOString(),
         }
         localStorage.setItem("design-studio-user", JSON.stringify(localUser))
       } catch (e) {
@@ -311,10 +297,6 @@ function DashboardContent() {
           console.log("[dashboard] active projectId:", initialId)
         }
 
-        const storedSummaries = getUserItem("downloadedSummaries")
-        if (storedSummaries) {
-          setDownloadedSummaries(JSON.parse(storedSummaries))
-        }
       } catch (err) {
         console.error("Error parsing stored data:", err)
       } finally {
@@ -333,6 +315,84 @@ function DashboardContent() {
       setCurrentProjectId(id)
     }
   }, [searchParams, projects])
+
+  const fetchDownloadedSummaries = React.useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: summaryRows, error } = await supabase
+      .from("downloaded_summaries")
+      .select("id, project_id, file_path, file_name, created_at, projects(title)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+    if (!error && summaryRows) {
+      setDownloadedSummaries(
+        summaryRows.map((row: any) => ({
+          id: row.id,
+          project_id: row.project_id,
+          file_path: row.file_path,
+          file_name: row.file_name,
+          created_at: row.created_at,
+          project_title: row.projects?.title ?? null,
+        })),
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeView === "home") fetchDownloadedSummaries()
+  }, [activeView, fetchDownloadedSummaries])
+
+  useEffect(() => {
+    if (profile) {
+      setProfileForm({
+        full_name: profile.full_name ?? "",
+        company: profile.company ?? "",
+        role: profile.role ?? "designer",
+        avatar_key: profile.avatar_key ?? "",
+      })
+    }
+  }, [profile])
+
+  useEffect(() => {
+    if (activeView !== "account-usage" || !user?.id) return
+    let cancelled = false
+    setSubscriptionLoading(true)
+    supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (!error) setSubscription(data as SubscriptionRow | null)
+        setSubscriptionLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeView, user?.id])
+
+  const handleManageBilling = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch("/api/stripe/create-portal-session", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        console.error("[portal]", data?.error ?? res.statusText)
+        setPortalLoading(false)
+        return
+      }
+      if (data?.url) window.location.href = data.url
+      else setPortalLoading(false)
+    } catch (e) {
+      console.error("[portal]", e)
+      setPortalLoading(false)
+    }
+  }
 
   useEffect(() => {
     setUserItem("downloadedSummaries", JSON.stringify(downloadedSummaries))
@@ -362,23 +422,37 @@ function DashboardContent() {
   }, [currentProjectId, activeView])
 
   useEffect(() => {
-    if (activeView === "home" && currentProjectId) {
-      // Force re-check of task completion when returning to home
-      const storageKey = `project-${currentProjectId}-manual-tasks`
-      const savedTasks = localStorage.getItem(storageKey)
-
-      if (savedTasks) {
-        try {
-          const tasks = JSON.parse(savedTasks)
-          const allCompleted = tasks.length === 0 || tasks.every((t: any) => t.completed)
-          setSectionCompletion(currentProjectId, "tasks", allCompleted)
-        } catch (e) {
-          console.error("Failed to parse tasks for completion check", e)
+    if (activeView !== "home" || !currentProjectId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("id, completed")
+          .eq("project_id", currentProjectId)
+        if (cancelled) return
+        if (error) {
+          console.error("[Home Tasks completion] fetch error", error)
+          setSectionCompletion(currentProjectId, "tasks", false)
+          setRefreshTrigger((prev) => prev + 1)
+          return
         }
-      } else {
-        // No tasks = section is complete
-        setSectionCompletion(currentProjectId, "tasks", true)
+        const totalTasks = data?.length ?? 0
+        const completedTasks = data?.filter((t: { completed?: boolean }) => t.completed === true).length ?? 0
+        const tasksComplete = totalTasks > 0 && completedTasks === totalTasks
+        console.debug("[Home Tasks completion]", { projectId: currentProjectId, totalTasks, completedTasks, tasksComplete })
+        setSectionCompletion(currentProjectId, "tasks", tasksComplete)
+        setRefreshTrigger((prev) => prev + 1)
+      } catch (e) {
+        if (!cancelled) {
+          console.error("[Home Tasks completion] error", e)
+          setSectionCompletion(currentProjectId, "tasks", false)
+          setRefreshTrigger((prev) => prev + 1)
+        }
       }
+    })()
+    return () => {
+      cancelled = true
     }
   }, [activeView, currentProjectId])
 
@@ -549,11 +623,70 @@ function DashboardContent() {
     router.push("/pricing")
   }
 
+  const resetPasswordFormState = () => {
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+    setPasswordError({})
+    setPasswordSuccess(false)
+    setPasswordSaving(false)
+  }
+
+  const handleUpdatePassword = async () => {
+    const errors: { newPassword?: string; confirmPassword?: string } = {}
+    if (newPassword.length < 8) {
+      errors.newPassword = "Password must be at least 8 characters"
+    }
+    if (newPassword !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match"
+    }
+    if (Object.keys(errors).length > 0) {
+      setPasswordError(errors)
+      return
+    }
+    setPasswordError({})
+    setPasswordSuccess(false)
+    setPasswordSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordSaving(false)
+    if (error) {
+      setPasswordError({ general: "Failed to update password. Try again." })
+      return
+    }
+    resetPasswordFormState()
+    setPasswordSuccess(true)
+    setTimeout(() => {
+      setPasswordSuccess(false)
+      supabase.auth.signOut()
+      router.push("/login")
+    }, 2000)
+  }
+
+  const handleForgotPassword = async () => {
+    setResetEmailSent(false)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) {
+      setPasswordError({ general: "No email on account." })
+      return
+    }
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${origin}/auth/reset-password`,
+    })
+    if (error) {
+      setPasswordError({ general: error.message })
+      return
+    }
+    setPasswordError({})
+    setResetEmailSent(true)
+  }
+
   const currentProject = projects.find((p) => p.id === currentProjectId)
   const userInitials =
-    user?.fullName
-      ?.split(" ")
+    displayName
+      .split(" ")
       .map((n) => n[0])
+      .filter(Boolean)
       .join("")
       .toUpperCase() || "U"
 
@@ -754,13 +887,25 @@ function DashboardContent() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-3 hover:bg-gray-100">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold">
-                      {userInitials}
-                    </AvatarFallback>
-                  </Avatar>
+                  {profile && avatarSrcFromKey(profile.avatar_key) ? (
+                    <div className="h-9 w-9 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                      <Image
+                        src={avatarSrcFromKey(profile.avatar_key)!}
+                        alt="Avatar"
+                        width={36}
+                        height={36}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div className="text-left hidden md:block">
-                    <p className="text-sm font-medium text-gray-900">{user?.fullName || "User"}</p>
+                    <p className="text-sm font-medium text-gray-900">{displayName || "User"}</p>
                     <p className="text-xs text-gray-500 capitalize">{user?.plan || "free"} Plan</p>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
@@ -768,7 +913,7 @@ function DashboardContent() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.fullName}</p>
+                  <p className="text-sm font-medium">{displayName}</p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
@@ -840,7 +985,7 @@ function DashboardContent() {
                   {/* Welcome Section */}
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900">
-                      Welcome back{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}!
+                      Welcome back{displayName ? `, ${displayName.split(" ")[0]}` : ""}!
                     </h1>
                     <p className="text-gray-600 mt-1">Here's what's happening with your projects today</p>
                   </div>
@@ -973,7 +1118,7 @@ function DashboardContent() {
                           {/* Next Recommended Step or Completion Celebration */}
                           {allComplete ? (
                             <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-                              <CardContent className="pt-6">
+                              <CardContent className="py-8">
                                 <div className="flex items-start gap-4">
                                   <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-md">
                                     <svg
@@ -990,12 +1135,12 @@ function DashboardContent() {
                                       />
                                     </svg>
                                   </div>
-                                  <div className="flex-1">
-                                    <h3 className="font-bold text-xl text-gray-900 mb-1 flex items-center gap-2">
+                                  <div className="flex-1 min-w-0 space-y-3">
+                                    <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
                                       Ready to Develop!
                                       <span className="text-2xl">🚀</span>
                                     </h3>
-                                    <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                                    <p className="text-sm text-gray-700 leading-relaxed">
                                       Congratulations! All design sections are complete. Your project is fully planned
                                       and ready for development. Download your summary to share with your development
                                       team.
@@ -1003,7 +1148,10 @@ function DashboardContent() {
                                     <div className="flex gap-2">
                                       <Button
                                         size="sm"
-                                        onClick={() => setActiveView("summary")}
+                                        onClick={() => {
+                                          setActiveView("summary")
+                                          setTriggerExportOnce(true)
+                                        }}
                                         className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md"
                                       >
                                         <Download className="h-4 w-4 mr-2" />
@@ -1276,12 +1424,12 @@ function DashboardContent() {
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">Downloaded Summaries</h2>
                     {downloadedSummaries.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {downloadedSummaries.slice(0, 6).map((summary, index) => (
+                        {downloadedSummaries.slice(0, 6).map((summary) => (
                           <Card
-                            key={`${summary.projectId}-${index}`}
+                            key={summary.id}
                             className="cursor-pointer hover:shadow-md transition-all hover:border-blue-200"
                             onClick={() => {
-                              const project = projects.find((p) => p.id === summary.projectId)
+                              const project = projects.find((p) => p.id === summary.project_id)
                               if (project) {
                                 setCurrentProjectId(project.id)
                                 setActiveView("summary")
@@ -1294,25 +1442,40 @@ function DashboardContent() {
                                   <Download className="h-5 w-5 text-blue-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-gray-900 mb-1 truncate">{summary.projectName}</h3>
-                                  <p className="text-sm text-gray-600">
+                                  <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                                    {summary.project_title || summary.file_name}
+                                  </h3>
+                                  <p className="text-sm text-gray-600 mb-2">
                                     {(() => {
-                                      const downloadDate = new Date(summary.downloadedAt)
+                                      const d = new Date(summary.created_at)
                                       const today = new Date()
-                                      const isToday = downloadDate.toDateString() === today.toDateString()
-                                      if (isToday) {
-                                        return `Today at ${downloadDate.toLocaleTimeString("en-US", {
-                                          hour: "numeric",
-                                          minute: "2-digit",
-                                        })}`
+                                      if (d.toDateString() === today.toDateString()) {
+                                        return `Today at ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
                                       }
-                                      return downloadDate.toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                      })
+                                      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                                     })()}
                                   </p>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      supabase.storage
+                                        .from("summaries")
+                                        .createSignedUrl(summary.file_path, 60)
+                                        .then(({ data, error }) => {
+                                          if (error) {
+                                            console.error("Signed URL error:", error)
+                                            return
+                                          }
+                                          if (data?.signedUrl) window.open(data.signedUrl, "_blank")
+                                        })
+                                    }}
+                                  >
+                                    <Download className="h-4 w-4 mr-1" />
+                                    Download
+                                  </Button>
                                 </div>
                               </div>
                             </CardContent>
@@ -1355,7 +1518,11 @@ function DashboardContent() {
               {/* Summary View */}
               {activeView === "summary" && (
                 <div className="p-6">
-                  <DesignSummary projectId={currentProjectId || ""} />
+                  <DesignSummary
+                    projectId={currentProjectId || ""}
+                    triggerExportOnce={triggerExportOnce}
+                    onExportComplete={() => setTriggerExportOnce(false)}
+                  />
                 </div>
               )}
 
@@ -1373,75 +1540,34 @@ function DashboardContent() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card
-                      className="cursor-pointer hover:shadow-md transition-all h-full"
+                    <SettingsCard
+                      title="Profile Settings"
+                      description="Update your personal information and profile details"
+                      icon={<User className="h-6 w-6 text-blue-600" />}
+                      iconBgClassName="bg-blue-100"
                       onClick={() => setActiveView("account-profile")}
-                    >
-                      <CardContent className="pt-6 min-h-[110px] flex items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <User className="h-6 w-6 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">Profile Settings</h3>
-                            <p className="text-sm text-gray-600">
-                              Update your personal information and profile details
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className="cursor-pointer hover:shadow-md transition-all h-full"
+                    />
+                    <SettingsCard
+                      title="Preferences"
+                      description="Customize your dashboard experience and settings"
+                      icon={<SlidersHorizontal className="h-6 w-6 text-purple-600" />}
+                      iconBgClassName="bg-purple-100"
                       onClick={() => setActiveView("account-preferences")}
-                    >
-                      <CardContent className="pt-6 min-h-[110px] flex items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                            <SlidersHorizontal className="h-6 w-6 text-purple-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">Preferences</h3>
-                            <p className="text-sm text-gray-600">Customize your dashboard experience and settings</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className="cursor-pointer hover:shadow-md transition-all h-full"
+                    />
+                    <SettingsCard
+                      title="Usage & Billing"
+                      description="View your plan details and usage statistics"
+                      icon={<BarChart2 className="h-6 w-6 text-emerald-600" />}
+                      iconBgClassName="bg-emerald-100"
                       onClick={() => setActiveView("account-usage")}
-                    >
-                      <CardContent className="pt-6 min-h-[110px] flex items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                            <BarChart2 className="h-6 w-6 text-emerald-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">Usage & Billing</h3>
-                            <p className="text-sm text-gray-600">View your plan details and usage statistics</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className="cursor-pointer hover:shadow-md transition-all h-full"
+                    />
+                    <SettingsCard
+                      title="Help & Support"
+                      description="Access guides, FAQs, and support resources"
+                      icon={<HelpCircle className="h-6 w-6 text-orange-600" />}
+                      iconBgClassName="bg-orange-100"
                       onClick={() => setActiveView("account-help")}
-                    >
-                      <CardContent className="pt-6 min-h-[110px] flex items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                            <HelpCircle className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">Help & Support</h3>
-                            <p className="text-sm text-gray-600">Access guides, FAQs, and support resources</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    />
                   </div>
                 </div>
               )}
@@ -1466,39 +1592,64 @@ function DashboardContent() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="flex items-center gap-6">
-                        <Avatar className="h-20 w-20">
-                          <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl font-semibold">
-                            {userInitials}
-                          </AvatarFallback>
-                        </Avatar>
+                        {avatarSrcFromKey(profileForm.avatar_key || null) ? (
+                          <div className="h-20 w-20 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                            <Image
+                              src={avatarSrcFromKey(profileForm.avatar_key!)!}
+                              alt="Avatar"
+                              width={80}
+                              height={80}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <Avatar className="h-20 w-20">
+                            <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl font-semibold">
+                              {userInitials}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
                         <div>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => setShowAvatarModal(true)}>
                             Change Avatar
                           </Button>
-                          <p className="text-xs text-gray-500 mt-2">JPG, GIF or PNG. Max size of 800KB</p>
+                          <p className="text-xs text-gray-500 mt-2">Choose a preset avatar</p>
                         </div>
                       </div>
 
                       <div className="grid gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="fullName">Full Name</Label>
-                          <Input id="fullName" defaultValue={user?.fullName} placeholder="Enter your full name" />
+                          <Input
+                            id="fullName"
+                            value={profileForm.full_name}
+                            onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))}
+                            placeholder="Enter your full name"
+                          />
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="email">Email Address</Label>
-                          <Input id="email" type="email" defaultValue={user?.email} disabled className="bg-gray-50" />
+                          <Input id="email" type="email" value={profileEmail} readOnly disabled className="bg-gray-50" />
                           <p className="text-xs text-gray-500">Email cannot be changed</p>
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="company">Company</Label>
-                          <Input id="company" placeholder="Your company name" />
+                          <Input
+                            id="company"
+                            value={profileForm.company}
+                            onChange={(e) => setProfileForm((p) => ({ ...p, company: e.target.value }))}
+                            placeholder="Your company name"
+                          />
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="role">Role</Label>
-                          <Select defaultValue="designer">
+                          <Select
+                            value={profileForm.role}
+                            onValueChange={(value) => setProfileForm((p) => ({ ...p, role: value }))}
+                          >
                             <SelectTrigger id="role">
                               <SelectValue />
                             </SelectTrigger>
@@ -1512,12 +1663,78 @@ function DashboardContent() {
                         </div>
                       </div>
 
-                      <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="outline">Cancel</Button>
-                        <Button>Save Changes</Button>
+                      <div className="flex justify-end gap-3 pt-4 items-center">
+                        {profileSavedMessage && (
+                          <span className="text-sm text-emerald-600 font-medium">Saved</span>
+                        )}
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setProfileSavedMessage(false)
+                            if (profile) {
+                              setProfileForm({
+                                full_name: profile.full_name ?? "",
+                                company: profile.company ?? "",
+                                role: profile.role ?? "designer",
+                                avatar_key: profile.avatar_key ?? "",
+                              })
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          disabled={profileSaving}
+                          onClick={async () => {
+                            await save({
+                              full_name: profileForm.full_name || null,
+                              company: profileForm.company || null,
+                              role: profileForm.role || null,
+                              avatar_key: profileForm.avatar_key || null,
+                            })
+                            setProfileSavedMessage(true)
+                            setTimeout(() => setProfileSavedMessage(false), 3000)
+                          }}
+                        >
+                          {profileSaving ? "Saving…" : "Save Changes"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
+
+                  <Dialog open={showAvatarModal} onOpenChange={setShowAvatarModal}>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Choose Avatar</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-4 gap-6 py-2">
+                        {AVATARS.map((option) => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            onClick={() => {
+                              setProfileForm((p) => ({ ...p, avatar_key: option.key }))
+                              setShowAvatarModal(false)
+                            }}
+                            className={cn(
+                              "h-16 w-16 rounded-full overflow-hidden border transition-all hover:border-gray-300",
+                              profileForm.avatar_key === option.key
+                                ? "ring-2 ring-black border-black"
+                                : "border-gray-200"
+                            )}
+                          >
+                            <Image
+                              src={option.src}
+                              alt={option.alt}
+                              width={64}
+                              height={64}
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   <Card>
                     <CardHeader>
@@ -1527,23 +1744,81 @@ function DashboardContent() {
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="current-password">Current Password</Label>
-                        <Input id="current-password" type="password" />
+                        <Input
+                          id="current-password"
+                          type="password"
+                          autoComplete="current-password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500">Optional; not verified client-side</p>
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="new-password">New Password</Label>
-                        <Input id="new-password" type="password" />
+                        <Input
+                          id="new-password"
+                          type="password"
+                          autoComplete="new-password"
+                          value={newPassword}
+                          onChange={(e) => {
+                            setNewPassword(e.target.value)
+                            setPasswordError((prev) => ({ ...prev, newPassword: undefined }))
+                          }}
+                        />
+                        {passwordError.newPassword && (
+                          <p className="text-sm text-red-600">{passwordError.newPassword}</p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input id="confirm-password" type="password" />
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          autoComplete="new-password"
+                          value={confirmPassword}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value)
+                            setPasswordError((prev) => ({ ...prev, confirmPassword: undefined }))
+                          }}
+                        />
+                        {passwordError.confirmPassword && (
+                          <p className="text-sm text-red-600">{passwordError.confirmPassword}</p>
+                        )}
                       </div>
 
+                      {passwordError.general && (
+                        <p className="text-sm text-red-600">{passwordError.general}</p>
+                      )}
+                      {passwordSuccess && (
+                        <p className="text-sm text-emerald-600">Password updated successfully. Signing you out…</p>
+                      )}
+
                       <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="outline">Cancel</Button>
-                        <Button>Update Password</Button>
+                        <Button variant="outline" onClick={resetPasswordFormState}>
+                          Cancel
+                        </Button>
+                        <Button
+                          disabled={passwordSaving || !newPassword.trim() || !confirmPassword.trim()}
+                          onClick={handleUpdatePassword}
+                        >
+                          {passwordSaving ? "Updating…" : "Update Password"}
+                        </Button>
                       </div>
+
+                      <p className="text-sm text-gray-600 pt-2">
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          className="text-emerald-600 hover:underline"
+                        >
+                          Forgot your password? Send a reset email
+                        </button>
+                      </p>
+                      {resetEmailSent && (
+                        <p className="text-sm text-emerald-600">Check your email for a reset link.</p>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -1688,163 +1963,148 @@ function DashboardContent() {
                     <p className="text-gray-600 mt-1">Monitor your subscription and usage limits</p>
                   </div>
 
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Current Plan: {(user?.plan || "FREE").toUpperCase()}</CardTitle>
-                          <CardDescription className="mt-1">Your subscription details and limits</CardDescription>
-                        </div>
-                        {user?.plan === "free" && (
-                          <Button onClick={handleUpgrade} size="sm">
-                            Upgrade Plan
-                          </Button>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Project Usage */}
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900">Projects</p>
-                            <p className="text-sm text-gray-600">Number of active projects</p>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {projects.length} / {user?.plan === "free" ? "1" : "Unlimited"}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div
-                            className={cn(
-                              "h-3 rounded-full transition-all",
-                              projects.length >= 1 && user?.plan === "free"
-                                ? "bg-red-500"
-                                : projects.length > 0
-                                  ? "bg-emerald-500"
-                                  : "bg-gray-300",
-                            )}
-                            style={{
-                              width: user?.plan === "free" ? `${Math.min((projects.length / 1) * 100, 100)}%` : "100%",
-                            }}
-                          />
-                        </div>
-                        {projects.length >= 1 && user?.plan === "free" && (
-                          <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <Shield className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-sm font-medium text-red-900">Project Limit Reached</p>
-                              <p className="text-sm text-red-700 mt-1">
-                                You've reached your project limit. Upgrade to create unlimited projects.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Storage Usage - Placeholder */}
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900">Storage</p>
-                            <p className="text-sm text-gray-600">Assets and files storage</p>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900">
-                            24 MB / {user?.plan === "free" ? "100 MB" : "Unlimited"}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div className="h-3 rounded-full bg-blue-500 transition-all" style={{ width: "24%" }} />
-                        </div>
-                      </div>
-
-                      {/* Collaborators - Placeholder */}
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900">Team Members</p>
-                            <p className="text-sm text-gray-600">Invited collaborators</p>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900">
-                            1 / {!user?.plan || user?.plan === "free" ? "1" : user?.plan === "pro" ? "5" : "Unlimited"}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div className="h-3 rounded-full bg-purple-500 transition-all" style={{ width: "100%" }} />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {user?.plan === "free" && (
-                    <Card className="border-gray-200 bg-gray-50">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
-                            <Zap className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-gray-900">Upgrade to Pro</CardTitle>
-                            <CardDescription className="text-gray-700 mt-1">
-                              Unlock unlimited projects, advanced features, and priority support
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <ul className="space-y-2 mb-4">
-                          <li className="flex items-center gap-2 text-sm text-gray-900">
-                            <CheckSquare className="h-4 w-4 text-gray-600" />
-                            Unlimited projects
-                          </li>
-                          <li className="flex items-center gap-2 text-sm text-gray-900">
-                            <CheckSquare className="h-4 w-4 text-gray-600" />
-                            Unlimited storage
-                          </li>
-                          <li className="flex items-center gap-2 text-sm text-gray-900">
-                            <CheckSquare className="h-4 w-4 text-gray-600" />
-                            Team collaboration (up to 5 members)
-                          </li>
-                          <li className="flex items-center gap-2 text-sm text-gray-900">
-                            <CheckSquare className="h-4 w-4 text-gray-600" />
-                            Priority support
-                          </li>
-                        </ul>
-                        <Button onClick={handleUpgrade} className="w-full bg-gray-800 hover:bg-gray-900 text-white">
-                          Upgrade to Pro
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {user?.plan !== "free" && (
+                  {subscriptionLoading ? (
                     <Card>
-                      <CardHeader>
-                        <CardTitle>Billing Information</CardTitle>
-                        <CardDescription>Manage your payment method and billing details</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                              <CreditCard className="h-5 w-5 text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">•••• •••• •••• 4242</p>
-                              <p className="text-sm text-gray-600">Expires 12/2024</p>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            Update
-                          </Button>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-4">
-                          <p className="text-sm text-gray-600">Next billing date: December 1, 2024</p>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                            Cancel Subscription
-                          </Button>
-                        </div>
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                        <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                        <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
                       </CardContent>
                     </Card>
+                  ) : (
+                    <>
+                      {(() => {
+                        const plan = subscription?.plan ?? "free"
+                        const projectLimit = plan === "free" ? 1 : "Unlimited"
+                        const teamLimit = plan === "free" ? 1 : 5
+                        return (
+                          <Card>
+                            <CardHeader>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle>Current Plan: {(plan || "FREE").toUpperCase()}</CardTitle>
+                                  <CardDescription className="mt-1">Your subscription details and limits</CardDescription>
+                                </div>
+                                {plan === "free" && (
+                                  <Button onClick={handleUpgrade} size="sm">
+                                    Upgrade Plan
+                                  </Button>
+                                )}
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                              {/* Project Usage */}
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <p className="font-medium text-gray-900">Projects</p>
+                                    <p className="text-sm text-gray-600">Number of active projects</p>
+                                  </div>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {projects.length} / {projectLimit}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div
+                                    className={cn(
+                                      "h-3 rounded-full transition-all",
+                                      projects.length >= 1 && plan === "free"
+                                        ? "bg-red-500"
+                                        : projects.length > 0
+                                          ? "bg-emerald-500"
+                                          : "bg-gray-300",
+                                    )}
+                                    style={{
+                                      width: plan === "free" ? `${Math.min((projects.length / 1) * 100, 100)}%` : "100%",
+                                    }}
+                                  />
+                                </div>
+                                {projects.length >= 1 && plan === "free" && (
+                                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <Shield className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <p className="text-sm font-medium text-red-900">Project Limit Reached</p>
+                                      <p className="text-sm text-red-700 mt-1">
+                                        You've reached your project limit. Upgrade to create unlimited projects.
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Team Members - TODO: when collaboration/invites table exists, count accepted members for projects owned by auth.uid() */}
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <p className="font-medium text-gray-900">Team Members</p>
+                                    <p className="text-sm text-gray-600">Invited collaborators</p>
+                                  </div>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    1 / {teamLimit}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div className="h-3 rounded-full bg-purple-500 transition-all" style={{ width: plan === "free" ? "100%" : "20%" }} />
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })()}
+
+                      {(() => {
+                        const plan = subscription?.plan ?? "free"
+                        const isPaid = plan !== "free" && !!subscription?.stripe_customer_id
+                        if (isPaid) {
+                          const status = subscription?.status ?? "active"
+                          const nextBilling = subscription?.current_period_end
+                            ? new Date(subscription.current_period_end).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                            : null
+                          return (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle>Billing Information</CardTitle>
+                                <CardDescription>Manage your payment method and billing details</CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <p className="text-sm text-gray-600">
+                                  Plan status: <span className="font-medium capitalize">{status.replace("_", " ")}</span>
+                                </p>
+                                {nextBilling && (
+                                  <p className="text-sm text-gray-600">Next billing date: {nextBilling}</p>
+                                )}
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                  <Button onClick={handleManageBilling} disabled={portalLoading} variant="outline" size="sm">
+                                    {portalLoading ? "Opening…" : "Manage Billing"}
+                                  </Button>
+                                  <Button
+                                    onClick={handleManageBilling}
+                                    disabled={portalLoading}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    Cancel Subscription
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        }
+                        return (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Billing Information</CardTitle>
+                              <CardDescription>You're currently on the Free plan. Upgrade to add a payment method and unlock more projects and team members.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Button onClick={handleUpgrade}>Upgrade</Button>
+                            </CardContent>
+                          </Card>
+                        )
+                      })()}
+                    </>
                   )}
                 </div>
               )}

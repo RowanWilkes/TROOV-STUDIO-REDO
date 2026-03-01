@@ -43,7 +43,7 @@ export function TaskManager({ projectId }: TaskManagerProps) {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
 
   useEffect(() => {
-    const allCompleted = tasks.length === 0 || tasks.every((t) => t.completed)
+    const allCompleted = tasks.length > 0 && tasks.every((t) => t.completed)
     setSectionCompletion(projectId, "tasks", allCompleted)
   }, [tasks, projectId])
 
