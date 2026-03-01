@@ -566,8 +566,8 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
+    <div className="flex flex-col min-h-0 max-h-[calc(100vh-64px)]">
+      <div className="shrink-0 mb-4">
         <h2 className="text-3xl font-bold text-foreground mb-2">Sitemap</h2>
         <p className="text-sm text-gray-600 mt-1 mb-3">Build your website structure by adding pages and blocks</p>
 
@@ -588,14 +588,15 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-[280px_1fr_320px] gap-6 h-[338px]">
-        {/* Pages Sidebar */}
-        <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm flex flex-col overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-foreground dark:text-white text-base">Pages</CardTitle>
-            <CardDescription className="text-xs dark:text-gray-400">Your site structure</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 overflow-y-auto flex-1 min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="grid grid-cols-[280px_1fr_320px] gap-6 h-full min-h-0">
+          {/* Pages Sidebar */}
+          <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm h-full flex flex-col min-h-0 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-foreground dark:text-white text-base">Pages</CardTitle>
+              <CardDescription className="text-xs dark:text-gray-400">Your site structure</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto min-h-0 space-y-2">
             {renderPageTree(pages)}
 
             <Dialog open={showAddPage} onOpenChange={setShowAddPage}>
@@ -636,17 +637,17 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
           </CardContent>
         </Card>
 
-        {/* Page Canvas */}
-        <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm flex flex-col overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-foreground dark:text-white">
-              {selectedPageData ? selectedPageData.name : "Select a page"}
-            </CardTitle>
-            <CardDescription className="dark:text-gray-400">
-              {selectedPageData ? `${selectedPageData.blocks.length} sections` : "Choose a page to view its structure"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="overflow-y-auto flex-1 min-h-0">
+          {/* Page Canvas */}
+          <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm h-full flex flex-col min-h-0 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-foreground dark:text-white">
+                {selectedPageData ? selectedPageData.name : "Select a page"}
+              </CardTitle>
+              <CardDescription className="dark:text-gray-400">
+                {selectedPageData ? `${selectedPageData.blocks.length} sections` : "Choose a page to view its structure"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto min-h-0">
             {selectedPageData ? (
               <div className="space-y-3">
                 {selectedPageData.blocks.length === 0 ? (
@@ -691,18 +692,18 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
                 <p>Select a page from the sidebar</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Block Library */}
-        <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-foreground dark:text-white text-base">Block Library</CardTitle>
-            <CardDescription className="text-xs dark:text-gray-400">Click to add to page</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0 flex flex-col">
+          {/* Block Library */}
+          <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#024039] shadow-sm h-full flex flex-col min-h-0 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-foreground dark:text-white text-base">Block Library</CardTitle>
+              <CardDescription className="text-xs dark:text-gray-400">Click to add to page</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 flex flex-col overflow-hidden">
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-1 mb-4">
+            <div className="flex flex-wrap gap-1 mb-4 shrink-0">
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -845,7 +846,8 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
               )}
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   )
