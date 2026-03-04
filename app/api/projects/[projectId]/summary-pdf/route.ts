@@ -63,7 +63,9 @@ export async function GET(
       },
     })
   } catch (err) {
-    console.error("[summary-pdf] error:", err)
+    console.error("[summary-pdf] FULL ERROR:", err)
+    console.error("[summary-pdf] MESSAGE:", err instanceof Error ? err.message : String(err))
+    console.error("[summary-pdf] STACK:", err instanceof Error ? err.stack : "no stack")
     return NextResponse.json(
       { error: "Failed to generate PDF. Please try again." },
       { status: 500 }

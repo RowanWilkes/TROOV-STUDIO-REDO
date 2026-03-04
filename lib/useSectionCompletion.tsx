@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { isSupabaseConnectionError } from "@/lib/supabaseConnection"
+import { useSupabaseConnection } from "@/components/SupabaseConnectionProvider"
 import {
   hasOverviewContent,
   hasMoodBoardContent,
@@ -48,19 +50,78 @@ const SECTION_IDS = [
 
 export type SectionId = (typeof SECTION_IDS)[number]
 
+/** Fetch only project_overview + section_completion_overrides for fast initial render. */
+export async function fetchCriticalSectionCompletion(projectId: string): Promise<SectionCompletionMap> {
+  const [overviewResult, overridesResult] = await Promise.all([
+    supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
+    supabase.from("section_completion_overrides").select("section, is_complete").eq("project_id", projectId),
+  ])
+  if (overviewResult.error) throw overviewResult.error
+  if (overridesResult.error) throw overridesResult.error
+  const overviewRow = overviewResult.data
+  const overridesRows = overridesResult.data
+
+  const row = overviewRow as Record<string, unknown> | null
+  const overview = row
+    ? {
+        projectName: row.project_name ?? row.name ?? "",
+        client: row.client_name ?? row.client ?? "",
+        description: row.description ?? "",
+        goal: row.project_goal ?? row.goal ?? "",
+        primaryAction: row.primary_action ?? "",
+        audience: row.target_audience ?? row.audience ?? "",
+        deadline: row.launch_target ?? row.deadline ?? "",
+        budget: row.budget_range ?? row.budget ?? "",
+        constraints: row.constraints_requirements ?? row.constraints ?? "",
+        successMetrics: row.success_criteria ?? row.success_metrics ?? "",
+        kpis: row.kpis ?? "",
+        kickoffDate: row.kickoff_date ?? "",
+        priorityLevel: row.priority_level ?? "Medium",
+        estimatedDevTime: row.estimated_dev_time ?? "",
+        teamMembers: row.team_members ?? "",
+        clientReviewDate: row.client_review_date ?? "",
+        projectType: row.project_type ?? "",
+        websiteFeatures: Array.isArray(row.website_features_required)
+          ? row.website_features_required
+          : Array.isArray(row.website_features)
+            ? row.website_features
+            : [],
+        deliverables: row.deliverables ?? "",
+      }
+    : {}
+
+  const overrideBySection = new Map<string, boolean>()
+  for (const r of overridesRows ?? []) {
+    const o = r as { section: string; is_complete: boolean }
+    overrideBySection.set(o.section, o.is_complete)
+  }
+
+  const contentBased: SectionCompletionMap = {
+    overview: hasOverviewContent(overview),
+    mood: false,
+    styleguide: false,
+    wireframe: false,
+    technical: false,
+    content: false,
+    assets: false,
+    tasks: false,
+  }
+
+  const merged: SectionCompletionMap = { ...EMPTY_MAP }
+  for (const id of SECTION_IDS) {
+    if (id === "tasks") {
+      merged[id] = contentBased[id]
+    } else {
+      const override = overrideBySection.get(id)
+      merged[id] = override === true ? true : contentBased[id]
+    }
+  }
+  return merged
+}
+
 /** Fetch and compute content-based section completion, then merge with overrides. */
 export async function fetchSectionCompletion(projectId: string): Promise<SectionCompletionMap> {
-  const [
-    { data: overviewRow },
-    { data: moodBoardRow },
-    { data: moodBoardItems },
-    { data: styleGuideRow },
-    { data: sitemapRow },
-    { data: technicalRow },
-    { data: contentRow },
-    { data: assetRow },
-    { data: tasksData },
-  ] = await Promise.all([
+  const results = await Promise.all([
     supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("mood_board").select("*").eq("project_id", projectId).maybeSingle(),
     supabase
@@ -75,6 +136,18 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
     supabase.from("asset_section").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("tasks").select("id, completed").eq("project_id", projectId),
   ])
+  const firstError = results.find((r) => r.error)
+  if (firstError?.error) throw firstError.error
+
+  const overviewRow = results[0].data
+  const moodBoardRow = results[1].data
+  const moodBoardItems = results[2].data
+  const styleGuideRow = results[3].data
+  const sitemapRow = results[4].data
+  const technicalRow = results[5].data
+  const contentRow = results[6].data
+  const assetRow = results[7].data
+  const tasksData = results[8].data
 
   const row = overviewRow as Record<string, unknown> | null
   const overview = row
@@ -173,10 +246,12 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
     tasks: hasTasksCompletion(tasks),
   }
 
-  const { data: overridesRows } = await supabase
+  const overridesResult = await supabase
     .from("section_completion_overrides")
     .select("section, is_complete")
     .eq("project_id", projectId)
+  if (overridesResult.error) throw overridesResult.error
+  const overridesRows = overridesResult.data
 
   const overrideBySection = new Map<string, boolean>()
   for (const row of overridesRows ?? []) {
@@ -219,6 +294,7 @@ export function SectionCompletionProvider({
   children: React.ReactNode
 }) {
   const [completion, setCompletion] = useState<SectionCompletionMap>(EMPTY_MAP)
+  const connection = useSupabaseConnection()
 
   const refetchCompletion = useCallback(async () => {
     if (!projectId) return
@@ -232,13 +308,34 @@ export function SectionCompletionProvider({
       return
     }
     let cancelled = false
-    fetchSectionCompletion(projectId).then((map) => {
-      if (!cancelled) setCompletion(map)
-    })
+    // Phase 1: critical data only (project_overview + section_completion_overrides) for fast first paint
+    fetchCriticalSectionCompletion(projectId)
+      .then((map) => {
+        if (!cancelled) setCompletion(map)
+      })
+      .catch((err) => {
+        if (!cancelled && connection?.setConnectionError && isSupabaseConnectionError(err)) {
+          connection.setConnectionError(true)
+        }
+      })
+    // Phase 2: full section data lazy-loads after page is visible
+    const t = setTimeout(() => {
+      if (cancelled) return
+      fetchSectionCompletion(projectId)
+        .then((map) => {
+          if (!cancelled) setCompletion(map)
+        })
+        .catch((err) => {
+          if (!cancelled && connection?.setConnectionError && isSupabaseConnectionError(err)) {
+            connection.setConnectionError(true)
+          }
+        })
+    }, 0)
     return () => {
       cancelled = true
+      clearTimeout(t)
     }
-  }, [projectId])
+  }, [projectId, connection?.retryTrigger])
 
   const setOverride = useCallback(
     async (section: SectionId, isComplete: boolean) => {

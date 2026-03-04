@@ -1,8 +1,7 @@
 import React from "react"
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer"
+import { Document, Page, View, Text, StyleSheet, Image } from "@react-pdf/renderer"
 import type { SummaryData } from "@/lib/summary/types"
 import {
-  hasContent,
   hasOverviewContent,
   hasMoodBoardContent,
   hasStyleGuideContent,
@@ -12,51 +11,477 @@ import {
   hasAssetsContent,
 } from "@/lib/summary/hasContent"
 
-const styles = StyleSheet.create({
+// ─── Colours ─────────────────────────────────────────────────────────────────
+const C = {
+  emerald:       "#059669",
+  emeraldBg:     "#ecfdf5",
+  emeraldBorder: "#6ee7b7",
+  purple:        "#7c3aed",
+  purpleBg:      "#f5f3ff",
+  purpleBorder:  "#c4b5fd",
+  pink:          "#db2777",
+  pinkBg:        "#fdf2f8",
+  pinkBorder:    "#f9a8d4",
+  orange:        "#ea580c",
+  orangeBg:      "#fff7ed",
+  orangeBorder:  "#fed7aa",
+  blue:          "#2563eb",
+  blueBg:        "#eff6ff",
+  blueBorder:    "#bfdbfe",
+  rose:          "#e11d48",
+  roseBg:        "#fff1f2",
+  roseBorder:    "#fda4af",
+  cyan:          "#0891b2",
+  cyanBg:        "#ecfeff",
+  cyanBorder:    "#a5f3fc",
+  white:         "#ffffff",
+  gray50:        "#f9fafb",
+  gray100:       "#f3f4f6",
+  gray200:       "#e5e7eb",
+  gray300:       "#d1d5db",
+  gray400:       "#9ca3af",
+  gray500:       "#6b7280",
+  gray700:       "#374151",
+  gray900:       "#111827",
+  black:         "#0a0a0a",
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 10,
+    backgroundColor: C.gray50,
     fontFamily: "Helvetica",
-  },
-  title: {
-    fontSize: 18,
-    marginBottom: 4,
-    fontWeight: "bold",
-  },
-  subtitle: {
     fontSize: 10,
-    color: "#374151",
-    marginBottom: 24,
+    color: C.gray900,
+    paddingBottom: 52,
+  },
+  pageHeader: {
+    backgroundColor: C.black,
+    paddingHorizontal: 36,
+    paddingTop: 18,
+    paddingBottom: 14,
+  },
+  pageHeaderLabel: {
+    fontSize: 8,
+    color: "#71717a",
+    letterSpacing: 0.8,
+  },
+  coverBadge: {
+    backgroundColor: C.emerald,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+    marginBottom: 12,
+  },
+  coverBadgeText: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.white,
+    letterSpacing: 1.5,
+  },
+  coverTitle: {
+    fontSize: 28,
+    fontFamily: "Helvetica-Bold",
+    color: C.white,
+    marginBottom: 6,
+  },
+  coverSub: {
+    fontSize: 11,
+    color: "#a1a1aa",
+  },
+  metaBar: {
+    flexDirection: "row",
+    backgroundColor: C.white,
+    borderBottomWidth: 1,
+    borderBottomColor: C.gray200,
+    paddingHorizontal: 36,
+    paddingVertical: 12,
+  },
+  metaItem: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  metaLabel: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray400,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 3,
+  },
+  metaValue: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray900,
+  },
+  badgeHigh:   { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#dc2626", backgroundColor: "#fee2e2", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: "flex-start" },
+  badgeMedium: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#d97706", backgroundColor: "#fef3c7", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: "flex-start" },
+  badgeLow:    { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.emerald, backgroundColor: C.emeraldBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: "flex-start" },
+  sectionHeaderBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    backgroundColor: C.white,
+    borderBottomWidth: 1,
+    borderBottomColor: C.gray100,
+  },
+  sectionAccent: {
+    width: 4,
+    height: 32,
+    borderRadius: 2,
+    marginRight: 12,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 16,
+    fontSize: 14,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray900,
+  },
+  sectionSubtitle: {
+    fontSize: 8.5,
+    color: C.gray500,
+    marginTop: 2,
+  },
+  body: {
+    paddingHorizontal: 36,
+    paddingTop: 18,
+    paddingBottom: 18,
+  },
+  card: {
+    backgroundColor: C.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray400,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
     marginBottom: 8,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
-  row: {
-    marginBottom: 4,
+  row2: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
   },
-  label: {
-    fontSize: 9,
-    color: "#6b7280",
-    marginBottom: 1,
-  },
-  value: {
-    fontSize: 10,
-    color: "#111827",
-  },
-  listItem: {
-    marginLeft: 12,
+  col: { flex: 1 },
+  field: { marginBottom: 10 },
+  fieldLabel: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray400,
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
     marginBottom: 2,
   },
-  bullet: {
+  fieldValue: {
+    fontSize: 10,
+    color: C.gray900,
+    lineHeight: 1.4,
+  },
+  highlight: {
+    borderRadius: 6,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+  },
+  highlightName: {
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 5,
+  },
+  highlightDesc: {
+    fontSize: 10,
+    lineHeight: 1.5,
+  },
+  tagRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 3,
+  },
+  tag: {
+    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderWidth: 1,
+  },
+  tagText: { fontSize: 8.5 },
+  subHeading: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray500,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  // Colour swatch
+  swatchRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
     marginBottom: 4,
   },
+  swatch: { alignItems: "center", width: 60 },
+  swatchBox: {
+    width: 52,
+    height: 40,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    marginBottom: 4,
+  },
+  swatchName: {
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray700,
+    textAlign: "center",
+    textTransform: "capitalize",
+  },
+  swatchHex: { fontSize: 7, color: C.gray400, textAlign: "center" },
+  // Typography
+  typoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: C.gray100,
+    gap: 10,
+  },
+  typoBadge: {
+    width: 32,
+    height: 18,
+    borderRadius: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typoBadgeText: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.white },
+  typoName: { fontSize: 9, color: C.gray700, flex: 1 },
+  typoMeta: { fontSize: 8, color: C.gray400 },
+  typoColorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    marginRight: 3,
+  },
+  // Button styles
+  btnCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+  },
+  btnCardTitle: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    marginBottom: 8,
+  },
+  btnRow: {
+    flexDirection: "row",
+    marginBottom: 3,
+  },
+  btnKey: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray500,
+    width: 80,
+  },
+  btnVal: { fontSize: 8, color: C.gray700, flex: 1 },
+  btnPreview: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnPreviewText: { fontSize: 10, fontFamily: "Helvetica-Bold" },
+  // Sitemap
+  sitemapGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  sitemapPage: {
+    width: "22%",
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 4,
+  },
+  sitemapPageName: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 2,
+  },
+  sitemapPagePath: {
+    fontSize: 7.5,
+    color: C.gray400,
+    marginBottom: 6,
+  },
+  sitemapBlock: {
+    backgroundColor: C.white,
+    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    marginBottom: 3,
+    borderWidth: 1,
+    borderColor: C.gray200,
+  },
+  sitemapBlockText: { fontSize: 7.5, color: C.gray700 },
+  // Technical
+  techCard: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderLeftWidth: 3,
+    borderColor: "#e5e7eb",
+    borderRadius: 6,
+    padding: 14,
+    paddingBottom: 16,
+    marginBottom: 10,
+  },
+  techCardTitle: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  techRow: { flexDirection: "row", marginBottom: 4 },
+  techKey: { fontSize: 8.5, fontFamily: "Helvetica-Bold", width: 90 },
+  techVal: { fontSize: 8.5, color: C.gray700, flex: 1, lineHeight: 1.4 },
+  // Content
+  msgCard: {
+    borderWidth: 1,
+    borderLeftWidth: 3,
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 0,
+  },
+  msgCardTitle: {
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    marginBottom: 4,
+  },
+  msgCardValue: { fontSize: 9.5, color: C.gray700, lineHeight: 1.4 },
+  // Mood board image grid
+  imgGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 4,
+  },
+  imgBox: {
+    width: "30%",
+    height: 130,
+    borderRadius: 6,
+    backgroundColor: C.gray100,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    overflow: "hidden",
+  },
+  imgBoxImg: {
+    width: "100%",
+    height: "100%",
+  },
+  imgCaption: {
+    fontSize: 7.5,
+    color: C.gray500,
+    textAlign: "center",
+    marginTop: 3,
+  },
+  // Ref card
+  refCard: {
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  refDot: { width: 7, height: 7, borderRadius: 4, marginTop: 1 },
+  refUrl: { fontSize: 9, fontFamily: "Helvetica-Bold" },
+  refNote: { fontSize: 8, color: C.gray500, marginTop: 2 },
+  // Assets
+  assetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: C.gray100,
+    gap: 10,
+  },
+  assetBadge: {
+    width: 32,
+    height: 22,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  assetBadgeText: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.white },
+  assetName: { fontSize: 9, color: C.gray900, flex: 1 },
+  assetCat: { fontSize: 7.5, color: C.gray400, textTransform: "uppercase", letterSpacing: 0.5 },
+  // Tasks
+  taskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: C.gray100,
+    gap: 10,
+  },
+  taskBox: {
+    width: 15,
+    height: 15,
+    borderRadius: 3,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  taskCheck: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.white },
+  taskText: { fontSize: 9.5, flex: 1 },
+  progressBg: {
+    height: 7,
+    backgroundColor: C.gray100,
+    borderRadius: 4,
+    marginBottom: 6,
+    overflow: "hidden",
+  },
+  progressFill: { height: 7, borderRadius: 4, backgroundColor: C.emerald },
+  // Footer
+  footer: {
+    position: "absolute",
+    bottom: 16,
+    left: 36,
+    right: 36,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: C.gray200,
+    paddingTop: 7,
+  },
+  footerText: { fontSize: 7.5, color: C.gray400 },
 })
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function str(v: unknown): string {
+  if (v == null) return ""
+  return String(v).trim()
+}
 
 function hasVal(v: unknown): boolean {
   if (v == null) return false
@@ -66,6 +491,69 @@ function hasVal(v: unknown): boolean {
   return true
 }
 
+function fmtDate(d: string | undefined): string {
+  if (!d) return ""
+  try { return new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) }
+  catch { return d }
+}
+
+function ext(filename: string): string {
+  const parts = filename.split(".")
+  return parts.length > 1 ? parts[parts.length - 1].toUpperCase().slice(0, 3) : "IMG"
+}
+
+// ─── Shared components ────────────────────────────────────────────────────────
+
+function Footer({ projName, date }: { projName: string; date: string }) {
+  return (
+    <View style={S.footer} fixed>
+      <Text style={S.footerText}>Troov Studio · {projName}</Text>
+      <Text style={S.footerText}>Generated {date}</Text>
+    </View>
+  )
+}
+
+function SectionPageHeader({ title, subtitle, accent, projName }: { title: string; subtitle: string; accent: string; projName: string }) {
+  return (
+    <>
+      <View style={S.pageHeader}>
+        <Text style={S.pageHeaderLabel}>{projName.toUpperCase()} · DESIGN PROJECT SUMMARY</Text>
+      </View>
+      <View style={S.sectionHeaderBar}>
+        <View style={[S.sectionAccent, { backgroundColor: accent }]} />
+        <View>
+          <Text style={S.sectionTitle}>{title}</Text>
+          <Text style={S.sectionSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+    </>
+  )
+}
+
+function Field({ label, value }: { label: string; value?: unknown }) {
+  const v = str(value)
+  if (!v) return null
+  return (
+    <View style={S.field}>
+      <Text style={S.fieldLabel}>{label}</Text>
+      <Text style={S.fieldValue}>{v}</Text>
+    </View>
+  )
+}
+
+function MsgCard({ title, value, accent }: { title: string; value?: unknown; accent: string }) {
+  const v = str(value)
+  if (!v) return null
+  return (
+    <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: accent, marginBottom: 0 }]}>
+      <Text style={[S.cardTitle, { color: accent }]}>{title}</Text>
+      <Text style={S.fieldValue}>{v}</Text>
+    </View>
+  )
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+
 interface ProjectSummaryPdfProps {
   data: SummaryData
   projectName?: string
@@ -73,335 +561,583 @@ interface ProjectSummaryPdfProps {
 }
 
 export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSummaryPdfProps) {
-  const projName = projectName ?? data.projectTitle ?? (data.overview as Record<string, unknown>)?.projectName
+  const ov = data.overview as Record<string, unknown>
+  const mb = data.moodBoard as {
+    inspirationImages?: Array<{ url?: string; title?: string; notes?: string }>
+    websiteReferences?: Array<{ url?: string; title?: string; notes?: string }>
+    notes?: string
+  }
+  const sg = data.styleGuide as {
+    colors?: Record<string, string>
+    customColors?: Array<{ label?: string; value?: string }>
+    typography?: Array<{ level?: string; label?: string; fontFamily?: string; fontSize?: number; color?: string }>
+    buttonStyles?: Record<string, {
+      backgroundColor?: string; textColor?: string; borderColor?: string
+      borderWidth?: number; borderRadius?: number; fontSize?: number
+      fontFamily?: string; bold?: boolean; padding?: string
+    }>
+  }
+  const tech = data.technical as Record<string, string>
+  const content = data.content as Record<string, unknown>
+  const assets = data.assets
+  const tasks = data.tasks ?? []
+
+  const projName = (projectName ?? data.projectTitle ?? str(ov?.projectName)) || "Untitled Project"
   const created = createdAt ?? data.projectCreatedAt
-  const subtitle = [projName, created ? new Date(created).toLocaleDateString() : null].filter(Boolean).join(" · ")
+  const generatedDate = new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })
+
+  const priority = str(ov?.priorityLevel) || "Medium"
+  const priorityBadgeStyle = priority === "High" ? S.badgeHigh : priority === "Low" ? S.badgeLow : S.badgeMedium
+
+  // All colours
+  const allColors: Array<{ name: string; hex: string }> = []
+  if (sg?.colors && typeof sg.colors === "object") {
+    Object.entries(sg.colors).forEach(([k, v]) => { if (v) allColors.push({ name: k, hex: str(v) }) })
+  }
+  if (Array.isArray(sg?.customColors)) {
+    sg.customColors!.forEach((c) => { if (c.value) allColors.push({ name: c.label || "Color", hex: str(c.value) }) })
+  }
+
+  // Content fields
+  const brandMsg = content?.brandMessaging as Record<string, unknown> | undefined
+  // SEO fields are stored directly on content, not nested under content.seo
+  const seoMetaTitle = str(content?.metaTitle)
+  const seoMetaDescription = str(content?.metaDescription)
+  const seoFocusKeyword = str(content?.focusKeyword)
+  const seoKeywords = Array.isArray(content?.seoKeywords) ? content.seoKeywords as string[] : []
+  const seoCompetitorAnalysis = str(content?.competitorAnalysis)
+  const hasSeoData = !!(seoMetaTitle || seoMetaDescription || seoFocusKeyword || seoKeywords.length > 0 || seoCompetitorAnalysis)
+  const snippets = Array.isArray(content?.contentSnippets) ? content.contentSnippets as Array<{ type?: string; content?: string }> : []
+  const pillars = Array.isArray(content?.messagingPillars) ? content.messagingPillars as Array<{ title?: string; description?: string }> : []
+  const guidelines = Array.isArray(content?.contentGuidelines) ? content.contentGuidelines as Array<{ category?: string; guideline?: string }> : []
+
+  // Sitemap — blocks have a `label` field
+  const sitemapPages = data.sitemapPages as Array<{ name?: string; path?: string; blocks?: Array<{ label?: string; description?: string; blockId?: string }> }>
+
+  const completedTasks = tasks.filter(t => t.completed).length
+  const organizedAssets = assets?.tabs ?? {}
+  const assetCategories = Object.keys(organizedAssets)
+
+  // Mood board images — filter to ones with valid-looking src
+  const inspirationImages = mb?.inspirationImages ?? []
+  const websiteRefs = mb?.websiteReferences ?? []
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <View>
-          <Text style={styles.title}>Design Project Summary</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 
-          {hasOverviewContent(data.overview as Record<string, unknown>) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              {hasContent((data.overview as Record<string, unknown>).projectName) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Project name</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).projectName as string}</Text>
+      {/* ══════════════ COVER ══════════════ */}
+      <Page size="A4" style={S.page}>
+        <View style={[S.pageHeader, { paddingTop: 40, paddingBottom: 36 }]}>
+          <View style={S.coverBadge}>
+            <Text style={S.coverBadgeText}>TROOV STUDIO</Text>
+          </View>
+          <Text style={S.coverTitle}>Design Project Summary</Text>
+          <Text style={S.coverSub}>{projName}{created ? ` · ${fmtDate(created)}` : ""}</Text>
+        </View>
+
+        <View style={S.metaBar}>
+          {str(ov?.client) && <View style={S.metaItem}><Text style={S.metaLabel}>Client</Text><Text style={S.metaValue}>{str(ov.client)}</Text></View>}
+          {str(ov?.kickoffDate) && <View style={S.metaItem}><Text style={S.metaLabel}>Kick-off</Text><Text style={S.metaValue}>{fmtDate(str(ov.kickoffDate))}</Text></View>}
+          {str(ov?.deadline) && <View style={S.metaItem}><Text style={S.metaLabel}>Deadline</Text><Text style={S.metaValue}>{fmtDate(str(ov.deadline))}</Text></View>}
+          {str(ov?.budget) && <View style={S.metaItem}><Text style={S.metaLabel}>Budget</Text><Text style={S.metaValue}>{str(ov.budget)}</Text></View>}
+          {str(ov?.estimatedDevTime) && <View style={S.metaItem}><Text style={S.metaLabel}>Dev Time</Text><Text style={S.metaValue}>{str(ov.estimatedDevTime)}</Text></View>}
+          <View style={S.metaItem}><Text style={S.metaLabel}>Priority</Text><Text style={priorityBadgeStyle}>{priority}</Text></View>
+        </View>
+
+        {/* Table of contents */}
+        <View style={[S.body, { paddingTop: 28 }]}>
+          <Text style={[S.subHeading, { marginBottom: 16, fontSize: 9 }]}>Contents</Text>
+          {([
+            hasOverviewContent(ov) && { label: "Project Overview", accent: C.emerald },
+            hasMoodBoardContent(mb as Record<string, unknown>) && { label: "Visual Inspiration", accent: C.purple },
+            hasStyleGuideContent(sg as Record<string, unknown>) && { label: "Style Guide", accent: C.pink },
+            hasSitemapContent(sitemapPages) && { label: "Site Structure", accent: C.orange },
+            hasTechnicalContent(tech) && { label: "Technical Specs", accent: C.blue },
+            hasContentSectionContent(content) && { label: "Content & Copy", accent: C.rose },
+            hasAssetsContent(assets) && { label: "Assets Library", accent: C.cyan },
+            tasks.length > 0 && { label: "Project Tasks", accent: C.emerald },
+          ] as Array<false | { label: string; accent: string }>)
+            .filter(Boolean)
+            .map((item, idx) => {
+              const i = item as { label: string; accent: string }
+              return (
+                <View key={idx} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.gray100 }}>
+                  <View style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: i.accent, marginRight: 14 }} />
+                  <Text style={{ fontSize: 10, color: C.gray900 }}>{i.label}</Text>
                 </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).description) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Description</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).description as string}</Text>
+              )
+            })}
+        </View>
+        <Footer projName={projName} date={generatedDate} />
+      </Page>
+
+      {/* ══════════════ OVERVIEW ══════════════ */}
+      {hasOverviewContent(ov) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Project Overview" subtitle="Core project information" accent={C.emerald} projName={projName} />
+          <View style={S.body}>
+            {(str(ov?.projectName) || str(ov?.description)) && (
+              <View style={[S.highlight, { backgroundColor: C.emeraldBg, borderColor: C.emeraldBorder }]}>
+                {str(ov?.projectName) && <Text style={[S.highlightName, { color: C.emerald }]}>{str(ov.projectName)}</Text>}
+                {str(ov?.description) && <Text style={[S.highlightDesc, { color: C.gray700 }]}>{str(ov.description)}</Text>}
+              </View>
+            )}
+            <View style={S.row2}>
+              <View style={S.col}>
+                <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.emerald }]}>
+                  <Text style={[S.cardTitle, { color: C.emerald }]}>Goals &amp; Audience</Text>
+                  <Field label="Project Goal" value={ov?.goal} />
+                  <Field label="Primary Action" value={ov?.primaryAction} />
+                  <Field label="Target Audience" value={ov?.audience} />
+                  <Field label="Project Type" value={ov?.projectType} />
                 </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).client) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Client</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).client as string}</Text>
+              </View>
+              <View style={S.col}>
+                <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.emerald }]}>
+                  <Text style={[S.cardTitle, { color: C.emerald }]}>Success Criteria</Text>
+                  <Field label="Success Metrics" value={ov?.successMetrics} />
+                  <Field label="KPIs" value={ov?.kpis} />
+                  <Field label="Constraints" value={ov?.constraints} />
+                  <Field label="Deliverables" value={ov?.deliverables} />
                 </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).goal) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Goal</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).goal as string}</Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).primaryAction) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Primary action</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).primaryAction as string}</Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).audience) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Audience</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).audience as string}</Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).deadline) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Deadline</Text>
-                  <Text style={styles.value}>
-                    {new Date((data.overview as Record<string, unknown>).deadline as string).toLocaleDateString()}
-                  </Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).budget) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Budget</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).budget as string}</Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).projectType) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Project type</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).projectType as string}</Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).websiteFeatures) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Website features</Text>
-                  <Text style={styles.value}>
-                    {((data.overview as Record<string, unknown>).websiteFeatures as string[]).join(", ")}
-                  </Text>
-                </View>
-              )}
-              {hasContent((data.overview as Record<string, unknown>).deliverables) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Deliverables</Text>
-                  <Text style={styles.value}>{(data.overview as Record<string, unknown>).deliverables as string}</Text>
-                </View>
-              )}
-              {(hasContent((data.overview as Record<string, unknown>).successMetrics) ||
-                hasContent((data.overview as Record<string, unknown>).kpis)) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Success metrics / KPIs</Text>
-                  <Text style={styles.value}>
-                    {[
-                      (data.overview as Record<string, unknown>).successMetrics,
-                      (data.overview as Record<string, unknown>).kpis,
-                    ]
-                      .filter(Boolean)
-                      .map(String)
-                      .join(" · ")}
-                  </Text>
-                </View>
-              )}
+              </View>
             </View>
-          )}
-
-          {hasMoodBoardContent(data.moodBoard as { inspirationImages?: unknown[]; websiteReferences?: unknown[]; notes?: unknown }) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Mood Board</Text>
-              {(data.moodBoard as { notes?: string }).notes?.trim() && (
-                <View style={styles.row}>
-                  <Text style={styles.value}>{(data.moodBoard as { notes?: string }).notes}</Text>
+            {(str(ov?.teamMembers) || str(ov?.clientReviewDate)) && (
+              <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.emerald }]}>
+                <Text style={[S.cardTitle, { color: C.emerald }]}>Team &amp; Timeline</Text>
+                <View style={S.row2}>
+                  <View style={S.col}><Field label="Team Members" value={ov?.teamMembers} /></View>
+                  <View style={S.col}><Field label="Client Review Date" value={fmtDate(str(ov?.clientReviewDate))} /></View>
                 </View>
-              )}
-              {((data.moodBoard as { inspirationImages?: Array<{ url?: string; title?: string; notes?: string }> }).inspirationImages?.length ?? 0) > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Inspiration images</Text>
-                  {(data.moodBoard as { inspirationImages?: Array<{ url?: string; title?: string; notes?: string }> }).inspirationImages?.map((img, idx) => (
-                    <Text key={idx} style={styles.listItem}>
-                      {img.title || img.url || "Image"} {img.notes ? `— ${img.notes}` : ""}
-                    </Text>
+              </View>
+            )}
+            {Array.isArray(ov?.websiteFeatures) && (ov.websiteFeatures as string[]).length > 0 && (
+              <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.emerald }]}>
+                <Text style={[S.cardTitle, { color: C.emerald }]}>Website Features</Text>
+                <View style={S.tagRow}>
+                  {(ov.websiteFeatures as string[]).map((f, i) => (
+                    <View key={i} style={[S.tag, { backgroundColor: C.emeraldBg, borderColor: C.emeraldBorder }]}>
+                      <Text style={[S.tagText, { color: C.emerald }]}>{f}</Text>
+                    </View>
                   ))}
                 </View>
-              )}
-              {((data.moodBoard as { websiteReferences?: Array<{ url?: string; title?: string; notes?: string }> }).websiteReferences?.length ?? 0) > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Website references</Text>
-                  {(data.moodBoard as { websiteReferences?: Array<{ url?: string; title?: string; notes?: string }> }).websiteReferences?.map((ref, idx) => (
-                    <Text key={idx} style={styles.listItem}>
-                      {ref.title || ref.url || "Link"} {ref.notes ? `— ${ref.notes}` : ""}
-                    </Text>
+              </View>
+            )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
+
+      {/* ══════════════ MOOD BOARD ══════════════ */}
+      {hasMoodBoardContent(mb as Record<string, unknown>) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Visual Inspiration" subtitle="Mood board and references" accent={C.purple} projName={projName} />
+          <View style={S.body}>
+            {mb?.notes && (
+              <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.purple, marginBottom: 14 }]}>
+                <Text style={[S.cardTitle, { color: C.purple }]}>Style Notes</Text>
+                <Text style={S.fieldValue}>{mb.notes}</Text>
+              </View>
+            )}
+
+            {/* Inspiration images — rendered visually */}
+            {inspirationImages.length > 0 && (
+              <>
+                <Text style={S.subHeading}>Inspiration Images</Text>
+                <View style={S.imgGrid}>
+                  {inspirationImages.map((img, idx) => (
+                    <View key={idx} style={{ width: "30%", marginBottom: 8 }}>
+                      {img.url ? (
+                        <View style={S.imgBox}>
+                          <Image
+                            style={S.imgBoxImg}
+                            src={img.url}
+                          />
+                        </View>
+                      ) : (
+                        <View style={[S.imgBox, { alignItems: "center", justifyContent: "center" }]}>
+                          <Text style={{ fontSize: 8, color: C.gray400 }}>Image</Text>
+                        </View>
+                      )}
+                      {img.title && <Text style={S.imgCaption}>{img.title}</Text>}
+                      {img.notes && <Text style={[S.imgCaption, { color: C.purple }]}>{img.notes}</Text>}
+                    </View>
                   ))}
                 </View>
-              )}
-            </View>
-          )}
+              </>
+            )}
 
-          {hasStyleGuideContent(data.styleGuide as Record<string, unknown>) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Style Guide</Text>
-              {data.styleGuide && typeof data.styleGuide === "object" && (
-                <>
-                  {(data.styleGuide as { colors?: Record<string, string> }).colors &&
-                    Object.keys((data.styleGuide as { colors?: Record<string, string> }).colors ?? {}).length > 0 && (
-                      <View style={styles.row}>
-                        <Text style={styles.label}>Colors</Text>
-                        {Object.entries((data.styleGuide as { colors?: Record<string, string> }).colors ?? {}).map(([name, color]) => (
-                          <Text key={name} style={styles.listItem}>
-                            {name}: {String(color)}
-                          </Text>
-                        ))}
-                      </View>
-                    )}
-                  {Array.isArray((data.styleGuide as { customColors?: unknown[] }).customColors) &&
-                    (data.styleGuide as { customColors?: unknown[] }).customColors!.length > 0 && (
-                      <View style={styles.row}>
-                        <Text style={styles.label}>Custom colors</Text>
-                        {(data.styleGuide as { customColors?: Array<{ label?: string; value?: string }> }).customColors?.map((c, idx) => (
-                          <Text key={idx} style={styles.listItem}>
-                            {c.label ?? ""}: {String(c.value ?? "")}
-                          </Text>
-                        ))}
-                      </View>
-                    )}
-                  {Array.isArray((data.styleGuide as { typography?: unknown[] }).typography) &&
-                    (data.styleGuide as { typography?: Array<{ level?: string; label?: string; fontFamily?: string; fontSize?: number }> }).typography!.length > 0 && (
-                      <View style={styles.row}>
-                        <Text style={styles.label}>Typography</Text>
-                        {(data.styleGuide as { typography?: Array<{ level?: string; label?: string; fontFamily?: string; fontSize?: number }> }).typography?.map((t, idx) => (
-                          <Text key={idx} style={styles.listItem}>
-                            {t.label ?? t.level}: {t.fontFamily ?? ""} {t.fontSize ?? ""}
-                          </Text>
-                        ))}
-                      </View>
-                    )}
-                </>
-              )}
-            </View>
-          )}
+            {/* Website references */}
+            {websiteRefs.length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 12 }]}>Website References</Text>
+                {websiteRefs.map((ref, idx) => (
+                  <View key={idx} style={[S.refCard, { borderColor: C.purpleBorder, backgroundColor: C.purpleBg }]}>
+                    <View style={[S.refDot, { backgroundColor: C.purple }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[S.refUrl, { color: C.purple }]}>{ref.url || "—"}</Text>
+                      {ref.title && <Text style={S.refNote}>{ref.title}</Text>}
+                      {ref.notes && <Text style={S.refNote}>{ref.notes}</Text>}
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
 
-          {hasSitemapContent(data.sitemapPages) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Sitemap</Text>
-              {data.sitemapPages.map((page: { name?: string; path?: string; blocks?: unknown[]; children?: unknown[] }, idx: number) => (
-                <View key={idx} style={styles.bullet}>
-                  <Text style={styles.value}>
-                    {page.name ?? "Page"} {page.path ? `(${page.path})` : ""}
-                  </Text>
-                  {Array.isArray(page.blocks) && page.blocks.length > 0 && (
-                    <Text style={styles.label}>Blocks: {page.blocks.length}</Text>
+      {/* ══════════════ STYLE GUIDE ══════════════ */}
+      {hasStyleGuideContent(sg as Record<string, unknown>) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Style Guide" subtitle="Colors, typography, and components" accent={C.pink} projName={projName} />
+          <View style={S.body}>
+
+            {/* Colours */}
+            {allColors.length > 0 && (
+              <>
+                <Text style={S.subHeading}>{`Brand Colors · ${allColors.length} colors`}</Text>
+                <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.pink }]}>
+                  <View style={S.swatchRow}>
+                    {allColors.map((c, idx) => (
+                      <View key={idx} style={S.swatch}>
+                        <View style={[S.swatchBox, { backgroundColor: c.hex }]} />
+                        <Text style={S.swatchName}>{c.name}</Text>
+                        <Text style={S.swatchHex}>{c.hex}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
+
+            {/* Typography — show actual colour dot */}
+            {Array.isArray(sg?.typography) && sg.typography.length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 12 }]}>{`Typography · ${sg.typography.length} styles`}</Text>
+                <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.pink }]}>
+                  {sg.typography.map((t, idx) => (
+                    <View key={idx} style={S.typoRow}>
+                      <View style={[S.typoBadge, { backgroundColor: C.pink }]}>
+                        <Text style={S.typoBadgeText}>{(t.level ?? `T${idx + 1}`).toUpperCase()}</Text>
+                      </View>
+                      <Text style={S.typoName}>{t.label ?? t.level ?? "Style"}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        {t.color && (
+                          <View style={[S.typoColorDot, { backgroundColor: t.color }]} />
+                        )}
+                        <Text style={S.typoMeta}>
+                          {[t.fontFamily, t.fontSize ? `${t.fontSize}px` : null, t.color].filter(Boolean).join("  ·  ")}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Button styles */}
+            {sg?.buttonStyles && Object.keys(sg.buttonStyles).length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 12 }]}>{`Button Styles · ${Object.keys(sg.buttonStyles).length} styles`}</Text>
+                <View style={S.row2}>
+                  {Object.entries(sg.buttonStyles).map(([type, btn]) => {
+                    const bw = (typeof btn.borderWidth === "number" && btn.borderWidth > 0) ? btn.borderWidth : 1
+                    const bc = (typeof btn.borderWidth === "number" && btn.borderWidth > 0 && btn.borderColor) ? btn.borderColor : "transparent"
+                    const br = typeof btn.borderRadius === "number" ? Math.max(0.01, btn.borderRadius) : 4
+                    return (
+                      <View key={type} style={S.col}>
+                        <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: "#db2777", padding: 12 }]}>
+                          <Text style={[S.cardTitle, { color: "#db2777", marginBottom: 10 }]}>{type.charAt(0).toUpperCase() + type.slice(1)} Button</Text>
+                          <View style={{ backgroundColor: "#f9fafb", borderRadius: 6, padding: 14, alignItems: "center", marginBottom: 10 }}>
+                            <View style={{ backgroundColor: btn.backgroundColor || "#000000", borderColor: bc, borderWidth: bw, borderRadius: br, paddingVertical: 7, paddingHorizontal: 18 }}>
+                              <Text style={{ color: btn.textColor || "#ffffff", fontSize: 9, fontFamily: "Helvetica-Bold" }}>Button</Text>
+                            </View>
+                          </View>
+                          <View style={{ flexDirection: "row", marginBottom: 6, gap: 6 }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Background</Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.backgroundColor || "#000000", borderWidth: 1, borderColor: "#e5e7eb" }} />
+                                <Text style={{ fontSize: 8, color: "#374151" }}>{btn.backgroundColor || "#000000"}</Text>
+                              </View>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Text Colour</Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.textColor || "#ffffff", borderWidth: 1, borderColor: "#e5e7eb" }} />
+                                <Text style={{ fontSize: 8, color: "#374151" }}>{btn.textColor || "#ffffff"}</Text>
+                              </View>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 7.5, color: "#9ca3af" }}>{`${br}px radius · ${btn.fontFamily || "Inter"}${btn.fontSize ? ` · ${btn.fontSize}px` : ""}`}</Text>
+                        </View>
+                      </View>
+                    )
+                  })}
+                </View>
+              </>
+            )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
+
+      {/* ══════════════ SITEMAP ══════════════ */}
+      {hasSitemapContent(sitemapPages) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Site Structure" subtitle="Pages and navigation" accent={C.orange} projName={projName} />
+          <View style={S.body}>
+            <View style={S.sitemapGrid}>
+              {sitemapPages.map((page, idx) => (
+                <View key={idx} style={[S.sitemapPage, { borderColor: C.orangeBorder, backgroundColor: C.orangeBg }]}>
+                  <Text style={[S.sitemapPageName, { color: C.orange }]}>{page.name ?? "Page"}</Text>
+                  {page.path && <Text style={S.sitemapPagePath}>{page.path}</Text>}
+                  {Array.isArray(page.blocks) && page.blocks.slice(0, 7).map((block, bi) => (
+                    <View key={bi} style={S.sitemapBlock}>
+                      {/* blocks have a `label` field from the wireframe canvas */}
+                      <Text style={S.sitemapBlockText}>{block.label ?? "Block"}</Text>
+                    </View>
+                  ))}
+                  {Array.isArray(page.blocks) && page.blocks.length > 7 && (
+                    <Text style={{ fontSize: 7.5, color: C.orange, marginTop: 3 }}>+{page.blocks.length - 7} more</Text>
                   )}
                 </View>
               ))}
             </View>
-          )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
 
-          {hasTechnicalContent(data.technical) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Technical</Text>
-              {data.technical.currentHosting && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Current hosting</Text>
-                  <Text style={styles.value}>{String(data.technical.currentHosting)}</Text>
+      {/* ══════════════ TECHNICAL ══════════════ */}
+      {hasTechnicalContent(tech) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Technical Specs" subtitle="Platform and hosting details" accent={C.blue} projName={projName} />
+          <View style={S.body}>
+            <View style={S.row2}>
+              {(str(tech?.currentHosting) || str(tech?.proposedHosting) || str(tech?.hostingNotes)) && (
+                <View style={S.col}>
+                  <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
+                    <Text style={[S.techCardTitle, { color: C.blue }]}>Hosting</Text>
+                    {str(tech?.currentHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Current:</Text><Text style={S.techVal}>{str(tech.currentHosting)}</Text></View>}
+                    {str(tech?.proposedHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Proposed:</Text><Text style={S.techVal}>{str(tech.proposedHosting)}</Text></View>}
+                    {str(tech?.hostingNotes) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Notes:</Text><Text style={S.techVal}>{str(tech.hostingNotes)}</Text></View>}
+                  </View>
                 </View>
               )}
-              {data.technical.proposedHosting && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Proposed hosting</Text>
-                  <Text style={styles.value}>{String(data.technical.proposedHosting)}</Text>
-                </View>
-              )}
-              {data.technical.hostingNotes && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Hosting notes</Text>
-                  <Text style={styles.value}>{String(data.technical.hostingNotes)}</Text>
-                </View>
-              )}
-              {data.technical.cms && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>CMS</Text>
-                  <Text style={styles.value}>{String(data.technical.cms)}</Text>
-                </View>
-              )}
-              {data.technical.contentManagers && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Content managers</Text>
-                  <Text style={styles.value}>{String(data.technical.contentManagers)}</Text>
-                </View>
-              )}
-              {data.technical.thirdPartyIntegrations && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Third-party integrations</Text>
-                  <Text style={styles.value}>{String(data.technical.thirdPartyIntegrations)}</Text>
-                </View>
-              )}
-              {data.technical.technicalRequirements && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Technical requirements</Text>
-                  <Text style={styles.value}>{String(data.technical.technicalRequirements)}</Text>
-                </View>
-              )}
-              {data.technical.performanceRequirements && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Performance</Text>
-                  <Text style={styles.value}>{String(data.technical.performanceRequirements)}</Text>
-                </View>
-              )}
-              {data.technical.browserSupport && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Browser support</Text>
-                  <Text style={styles.value}>{String(data.technical.browserSupport)}</Text>
+              {(str(tech?.cms) || str(tech?.contentManagers) || str(tech?.contentUpdateFrequency) || str(tech?.editableContent)) && (
+                <View style={S.col}>
+                  <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
+                    <Text style={[S.techCardTitle, { color: C.blue }]}>Content Management</Text>
+                    {str(tech?.cms) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>CMS:</Text><Text style={S.techVal}>{str(tech.cms)}</Text></View>}
+                    {str(tech?.contentManagers) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Managed by:</Text><Text style={S.techVal}>{str(tech.contentManagers)}</Text></View>}
+                    {str(tech?.contentUpdateFrequency) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Frequency:</Text><Text style={S.techVal}>{str(tech.contentUpdateFrequency)}</Text></View>}
+                    {str(tech?.editableContent) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Editable:</Text><Text style={S.techVal}>{str(tech.editableContent)}</Text></View>}
+                  </View>
                 </View>
               )}
             </View>
-          )}
+            {str(tech?.thirdPartyIntegrations) && (
+              <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
+                <Text style={[S.techCardTitle, { color: C.blue }]}>Third-party Integrations</Text>
+                <Text style={S.techVal}>{str(tech.thirdPartyIntegrations)}</Text>
+              </View>
+            )}
+            {(str(tech?.technicalRequirements) || str(tech?.performanceRequirements) || str(tech?.browserSupport) || str(tech?.seoRequirements)) && (
+              <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
+                <Text style={[S.techCardTitle, { color: C.blue }]}>Performance &amp; Compatibility</Text>
+                {str(tech?.technicalRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Requirements:</Text><Text style={S.techVal}>{str(tech.technicalRequirements)}</Text></View>}
+                {str(tech?.performanceRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Performance:</Text><Text style={S.techVal}>{str(tech.performanceRequirements)}</Text></View>}
+                {str(tech?.browserSupport) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Browsers:</Text><Text style={S.techVal}>{str(tech.browserSupport)}</Text></View>}
+                {str(tech?.seoRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>SEO:</Text><Text style={S.techVal}>{str(tech.seoRequirements)}</Text></View>}
+              </View>
+            )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
 
-          {hasContentSectionContent(data.content) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Content</Text>
-              {data.content?.brandMessaging && hasContent(data.content.brandMessaging) && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Brand messaging</Text>
-                  <Text style={styles.value}>
-                    {typeof data.content.brandMessaging === "object"
-                      ? Object.entries(data.content.brandMessaging as Record<string, unknown>)
-                          .filter(([, v]) => hasVal(v))
-                          .map(([k, v]) => `${k}: ${String(v)}`)
-                          .join(" · ")
-                      : String(data.content.brandMessaging)}
-                  </Text>
-                </View>
-              )}
-              {data.content?.metaTitle && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Meta title</Text>
-                  <Text style={styles.value}>{String(data.content.metaTitle)}</Text>
-                </View>
-              )}
-              {data.content?.metaDescription && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Meta description</Text>
-                  <Text style={styles.value}>{String(data.content.metaDescription)}</Text>
-                </View>
-              )}
-              {data.content?.focusKeyword && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Focus keyword</Text>
-                  <Text style={styles.value}>{String(data.content.focusKeyword)}</Text>
-                </View>
-              )}
-              {Array.isArray(data.content?.seoKeywords) && data.content.seoKeywords.length > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>SEO keywords</Text>
-                  <Text style={styles.value}>{(data.content.seoKeywords as string[]).join(", ")}</Text>
-                </View>
-              )}
-              {data.content?.competitorAnalysis && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Competitor analysis</Text>
-                  <Text style={styles.value}>{String(data.content.competitorAnalysis)}</Text>
-                </View>
-              )}
-            </View>
-          )}
+      {/* ══════════════ CONTENT & COPY ══════════════ */}
+      {hasContentSectionContent(content) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Content &amp; Copy" subtitle="Brand messaging and content strategy" accent={C.rose} projName={projName} />
+          <View style={S.body}>
 
-          {hasAssetsContent(data.assets) && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Assets</Text>
-              {Array.isArray(data.assets?.uploadedAssets) &&
-                data.assets.uploadedAssets.map((asset: { name?: string; label?: string; url?: string }, idx: number) => (
-                  <View key={idx} style={styles.listItem}>
-                    <Text style={styles.value}>
-                      {asset.name ?? asset.label ?? "Asset"} {asset.url ? `— ${asset.url}` : ""}
-                    </Text>
+            {/* Brand messaging */}
+            {brandMsg && hasVal(brandMsg) && (
+              <>
+                <Text style={S.subHeading}>Brand Messaging</Text>
+                <View style={S.row2}>
+                  <View style={S.col}>
+                    <MsgCard title="Mission Statement" value={brandMsg?.missionStatement} accent={C.rose} />
+                  </View>
+                  <View style={S.col}>
+                    <MsgCard title="Tagline" value={brandMsg?.tagline} accent={C.rose} />
+                  </View>
+                </View>
+                <View style={S.row2}>
+                  <View style={S.col}>
+                    <MsgCard title="Brand Voice" value={brandMsg?.brandVoice} accent={C.rose} />
+                  </View>
+                  <View style={S.col}>
+                    <MsgCard title="Brand Promise" value={brandMsg?.brandPromise} accent={C.rose} />
+                  </View>
+                </View>
+                <View style={S.row2}>
+                  <View style={S.col}>
+                    <MsgCard title="Vision Statement" value={brandMsg?.visionStatement} accent={C.rose} />
+                  </View>
+                  <View style={S.col}>
+                    <MsgCard title="Value Proposition" value={brandMsg?.valueProposition} accent={C.rose} />
+                  </View>
+                </View>
+                {/* Key messages */}
+                {Array.isArray(brandMsg?.keyMessages) && (brandMsg.keyMessages as string[]).length > 0 && (
+                  <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.rose, marginTop: 4 }]}>
+                    <Text style={[S.cardTitle, { color: C.rose }]}>Key Messages</Text>
+                    {(brandMsg.keyMessages as string[]).map((msg, i) => (
+                      <View key={i} style={{ flexDirection: "row", marginBottom: 4, gap: 6 }}>
+                        <Text style={{ fontSize: 9, color: C.rose, fontFamily: "Helvetica-Bold" }}>·</Text>
+                        <Text style={{ fontSize: 9.5, color: C.gray700, flex: 1, lineHeight: 1.4 }}>{msg}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+
+            {/* SEO */}
+            {hasSeoData && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 10 }]}>SEO Strategy</Text>
+                <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.rose }]}>
+                  {seoMetaTitle && <View style={S.techRow}><Text style={[S.techKey, { color: C.rose }]}>Meta Title:</Text><Text style={S.techVal}>{seoMetaTitle}</Text></View>}
+                  {seoMetaDescription && <View style={S.techRow}><Text style={[S.techKey, { color: C.rose }]}>Meta Desc:</Text><Text style={S.techVal}>{seoMetaDescription}</Text></View>}
+                  {seoFocusKeyword && <View style={S.techRow}><Text style={[S.techKey, { color: C.rose }]}>Focus Keyword:</Text><Text style={S.techVal}>{seoFocusKeyword}</Text></View>}
+                  {seoCompetitorAnalysis && <View style={[S.techRow, { marginTop: 4 }]}><Text style={[S.techKey, { color: C.rose }]}>Competitors:</Text><Text style={S.techVal}>{seoCompetitorAnalysis}</Text></View>}
+                  {seoKeywords.length > 0 && (
+                    <View style={{ marginTop: 6 }}>
+                      <Text style={[S.fieldLabel, { color: C.rose }]}>Keywords</Text>
+                      <View style={S.tagRow}>
+                        {seoKeywords.map((kw, i) => (
+                          <View key={i} style={[S.tag, { backgroundColor: C.white, borderColor: C.roseBorder }]}>
+                            <Text style={[S.tagText, { color: C.rose }]}>{kw}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
+
+            {/* Messaging pillars */}
+            {pillars.length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 10 }]}>Messaging Pillars</Text>
+                <View style={S.row2}>
+                  {pillars.map((p, i) => (
+                    <View key={i} style={S.col}>
+                      <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.rose, marginBottom: 0 }]}>
+                        <Text style={[S.cardTitle, { color: C.rose }]}>{p.title || `Pillar ${i + 1}`}</Text>
+                        {p.description && <Text style={S.fieldValue}>{p.description}</Text>}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Content snippets */}
+            {snippets.length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 10 }]}>Content Snippets</Text>
+                {snippets.map((s, i) => (
+                  <View key={i} style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.rose, marginBottom: 8 }]}>
+                    {s.type && <Text style={[S.cardTitle, { color: C.rose }]}>{s.type.toUpperCase()}</Text>}
+                    <Text style={[S.fieldValue, { fontFamily: "Helvetica-Bold" }]}>{s.content}</Text>
                   </View>
                 ))}
-            </View>
-          )}
+              </>
+            )}
 
-          {data.tasks && data.tasks.length > 0 && (
-            <View wrap={false}>
-              <Text style={styles.sectionTitle}>Tasks</Text>
-              {data.tasks.map((task, idx) => (
-                <View key={idx} style={styles.listItem}>
-                  <Text style={styles.value}>
-                    {task.completed ? "✓ " : "○ "} {task.title}
-                  </Text>
+            {/* Content guidelines */}
+            {guidelines.length > 0 && (
+              <>
+                <Text style={[S.subHeading, { marginTop: 10 }]}>Content Guidelines</Text>
+                {guidelines.map((g, i) => (
+                  <View key={i} style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.rose, marginBottom: 8 }]}>
+                    {g.category && <Text style={[S.cardTitle, { color: C.rose }]}>{g.category.toUpperCase()}</Text>}
+                    {g.guideline && <Text style={S.fieldValue}>{g.guideline}</Text>}
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
+
+      {/* ══════════════ ASSETS ══════════════ */}
+      {hasAssetsContent(assets) && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Assets Library" subtitle="Images and resources" accent={C.cyan} projName={projName} />
+          <View style={S.body}>
+            {assetCategories.map((cat) => {
+              const catAssets = organizedAssets[cat] as Array<{ name?: string; fileName?: string; type?: string; category?: string; label?: string }>
+              return (
+                <View key={cat} style={{ marginBottom: 16 }}>
+                  <Text style={S.subHeading}>{`${cat.toUpperCase()} · ${catAssets.length} ${catAssets.length === 1 ? "asset" : "assets"}`}</Text>
+                  <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.cyan, padding: 0, overflow: "hidden" }]}>
+                    {catAssets.map((asset, idx) => (
+                      <View key={idx} style={[S.assetRow, { paddingHorizontal: 12, borderBottomColor: idx === catAssets.length - 1 ? "transparent" : C.gray100 }]}>
+                        <View style={[S.assetBadge, { backgroundColor: C.cyan }]}>
+                          <Text style={S.assetBadgeText}>{ext(asset.name || asset.fileName || asset.label || "file")}</Text>
+                        </View>
+                        <Text style={S.assetName}>{asset.label || asset.name || asset.fileName || "Asset"}</Text>
+                        <Text style={S.assetCat}>{asset.category || cat}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )
+            })}
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
+
+      {/* ══════════════ TASKS ══════════════ */}
+      {tasks.length > 0 && (
+        <Page size="A4" style={S.page}>
+          <SectionPageHeader title="Project Tasks" subtitle={`${completedTasks} of ${tasks.length} completed`} accent={C.emerald} projName={projName} />
+          <View style={S.body}>
+            <View style={{ marginBottom: 16 }}>
+              <View style={S.progressBg}>
+                <View style={[S.progressFill, { width: `${tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0}%` }]} />
+              </View>
+              <Text style={[S.fieldLabel, { marginTop: 4 }]}>
+                <Text style={[S.fieldLabel, { marginTop: 4 }]}>{`${tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0}% complete`}</Text>
+              </Text>
+            </View>
+            <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.emerald, padding: 0, overflow: "hidden" }]}>
+              {tasks.map((task, idx) => (
+                <View key={idx} style={[S.taskRow, { paddingHorizontal: 12, borderBottomColor: idx === tasks.length - 1 ? "transparent" : C.gray100 }]}>
+                  <View style={[S.taskBox, { borderColor: task.completed ? C.emerald : C.gray300, backgroundColor: task.completed ? C.emerald : C.white }]}>
+                    {task.completed && <Text style={S.taskCheck}>✓</Text>}
+                  </View>
+                  <Text style={[S.taskText, { color: task.completed ? C.gray400 : C.gray900 }]}>{task.title}</Text>
                 </View>
               ))}
             </View>
-          )}
-        </View>
-      </Page>
+          </View>
+          <Footer projName={projName} date={generatedDate} />
+        </Page>
+      )}
+
     </Document>
   )
 }
+

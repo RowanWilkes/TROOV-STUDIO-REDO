@@ -62,7 +62,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useSectionCompletion, fetchSectionCompletion, SectionCompletionProvider } from "@/lib/useSectionCompletion"
+import { useSectionCompletion, fetchCriticalSectionCompletion, SectionCompletionProvider } from "@/lib/useSectionCompletion"
 import { useNotifications } from "@/lib/useNotifications"
 import { SettingsCard } from "@/components/settings-card"
 import { useProfile } from "@/lib/useProfile"
@@ -72,6 +72,8 @@ import { avatarSrcFromKey } from "@/lib/avatarUtils"
 import React from "react"
 import { getUserItem, setUserItem } from "@/lib/storage-utils"
 import { supabase } from "@/lib/supabase"
+import { isSupabaseConnectionError } from "@/lib/supabaseConnection"
+import { useSupabaseConnection } from "@/components/SupabaseConnectionProvider"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 
@@ -147,12 +149,13 @@ function DashboardContent() {
 
   const [downloadedSummaries, setDownloadedSummaries] = useState<DownloadedSummary[]>([])
   const [activeTasks, setActiveTasks] = useState(0)
-  const { notifications, unreadCount, loading: notificationsLoading, markRead, markAllRead } = useNotifications()
+  const { notifications, unreadCount, loading: notificationsLoading, unavailable: notificationsUnavailable, markRead, markAllRead } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
 
   const [projectCompletionCounts, setProjectCompletionCounts] = React.useState<Record<string, number>>({})
 
   const [refreshTrigger, setRefreshTrigger] = React.useState(0)
+  const connection = useSupabaseConnection()
 
   const [showNewProject, setShowNewProject] = useState(false)
   const [triggerExportOnce, setTriggerExportOnce] = useState(false)
@@ -200,7 +203,7 @@ function DashboardContent() {
       const counts: Record<string, number> = {}
       await Promise.all(
         projects.map(async (project) => {
-          const map = await fetchSectionCompletion(project.id)
+          const map = await fetchCriticalSectionCompletion(project.id)
           const completedCount = [
             map.overview,
             map.mood,
@@ -234,6 +237,9 @@ function DashboardContent() {
       if (cancelled) return
 
       if (sessionError || !session) {
+        if (sessionError && connection?.setConnectionError && isSupabaseConnectionError(sessionError)) {
+          connection.setConnectionError(true)
+        }
         router.push("/login")
         setIsLoading(false)
         return
@@ -279,6 +285,9 @@ function DashboardContent() {
 
         if (projectsError) {
           console.error("[dashboard] list projects error:", projectsError)
+          if (connection?.setConnectionError && isSupabaseConnectionError(projectsError)) {
+            connection.setConnectionError(true)
+          }
           setProjects([])
           setCurrentProjectId(null)
         } else {
@@ -313,7 +322,7 @@ function DashboardContent() {
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [router, connection?.retryTrigger])
 
   useEffect(() => {
     const id = searchParams.get("project")
@@ -861,7 +870,12 @@ function DashboardContent() {
                     </Button>
                   )}
                 </div>
-                {notificationsLoading ? (
+                {notificationsUnavailable ? (
+                  <div className="px-3 py-6 text-center">
+                    <p className="text-sm text-amber-600">Notifications unavailable</p>
+                    <p className="text-xs text-gray-500 mt-1">Use Retry in the banner above to try again.</p>
+                  </div>
+                ) : notificationsLoading ? (
                   <div className="px-3 py-8 text-center">
                     <p className="text-sm text-gray-500">Loading…</p>
                   </div>

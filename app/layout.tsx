@@ -4,6 +4,8 @@ import { Poppins, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "sonner"
 import { PreferencesProvider } from "@/components/PreferencesProvider"
+import { SupabaseConnectionProvider } from "@/components/SupabaseConnectionProvider"
+import { SupabaseConnectionBanner } from "@/components/SupabaseConnectionBanner"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -44,9 +46,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased ${poppins.className}`}>
-        <PreferencesProvider>
-          {children}
-        </PreferencesProvider>
+        <SupabaseConnectionProvider>
+          <SupabaseConnectionBanner />
+          <PreferencesProvider>
+            {children}
+          </PreferencesProvider>
+        </SupabaseConnectionProvider>
         <Toaster />
         <Analytics />
       </body>
