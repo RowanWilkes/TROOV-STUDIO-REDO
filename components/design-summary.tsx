@@ -37,6 +37,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
+import { queryCache } from "@/lib/query-cache"
 import {
   hasContent,
   hasOverviewContent,
@@ -89,25 +90,55 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
   const loadData = useCallback(async () => {
     if (!projectId) return
     try {
+      // Check for a fully assembled cache hit first — avoids all 8 queries on repeat visits
+      const summaryCacheKey = `summary:${projectId}`
+      const cachedSummary = queryCache.get<typeof summaryData>(summaryCacheKey)
+      if (cachedSummary) {
+        setSummaryData(cachedSummary)
+        if (runExportAfterLoadRef.current) {
+          runExportAfterLoadRef.current = false
+          queueMicrotask(() => exportPdfRef.current?.())
+        }
+        return
+      }
+
       const loaded: string[] = []
+
+      // Use per-table cache entries (shared with useProjectRow) when available,
+      // only hitting Supabase for tables not yet cached.
+      const fetchOrCache = async (table: string) => {
+        const cached = queryCache.get<Record<string, unknown>>(`row:${table}:${projectId}`)
+        if (cached !== null) return cached
+        const { data } = await supabase.from(table).select("*").eq("project_id", projectId).maybeSingle()
+        if (data) queryCache.set(`row:${table}:${projectId}`, data as Record<string, unknown>)
+        return data
+      }
+      const fetchListOrCache = async (table: string) => {
+        const cached = queryCache.get<unknown[]>(`list:${table}:${projectId}`)
+        if (cached !== null) return cached
+        const { data } = await supabase.from(table).select("*").eq("project_id", projectId).order("created_at", { ascending: true })
+        if (data) queryCache.set(`list:${table}:${projectId}`, data)
+        return data
+      }
+
       const [
-        { data: overviewRow },
-        { data: moodBoardRow },
-        { data: moodBoardItems },
-        { data: styleGuideRow },
-        { data: sitemapRow },
-        { data: technicalRow },
-        { data: contentRow },
-        { data: assetRow },
+        overviewRow,
+        moodBoardRow,
+        moodBoardItems,
+        styleGuideRow,
+        sitemapRow,
+        technicalRow,
+        contentRow,
+        assetRow,
       ] = await Promise.all([
-        supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("mood_board").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("mood_board_items").select("*").eq("project_id", projectId).order("created_at", { ascending: true }),
-        supabase.from("style_guide").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("sitemap").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("technical_specs").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("content_section").select("*").eq("project_id", projectId).maybeSingle(),
-        supabase.from("asset_section").select("*").eq("project_id", projectId).maybeSingle(),
+        fetchOrCache("project_overview"),
+        fetchOrCache("mood_board"),
+        fetchListOrCache("mood_board_items"),
+        fetchOrCache("style_guide"),
+        fetchOrCache("sitemap"),
+        fetchOrCache("technical_specs"),
+        fetchOrCache("content_section"),
+        fetchOrCache("asset_section"),
       ])
 
       const row = overviewRow as Record<string, unknown> | null
@@ -191,7 +222,7 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
 
       console.log("[Design Summary] projectId=", projectId, "tables loaded:", loaded.join(", ") || "none")
 
-      setSummaryData({
+      const assembled = {
         overview,
         moodBoard,
         styleGuide,
@@ -199,7 +230,9 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
         technical,
         content,
         assets: { uploadedAssets: assets, tabs: organizedAssets },
-      })
+      }
+      queryCache.set(`summary:${projectId}`, assembled)
+      setSummaryData(assembled)
 
       if (runExportAfterLoadRef.current) {
         runExportAfterLoadRef.current = false
@@ -212,8 +245,6 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
 
   useEffect(() => {
     loadData()
-    const interval = setInterval(loadData, 2000)
-    return () => clearInterval(interval)
   }, [loadData])
 
   useEffect(() => {

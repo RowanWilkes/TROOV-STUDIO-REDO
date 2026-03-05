@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { queryCache } from "@/lib/query-cache"
 
 const DEBOUNCE_MS = 500
 
@@ -45,6 +46,16 @@ export function useProjectRow<T>(options: UseProjectRowOptions<T>) {
       return
     }
     let cancelled = false
+    const cacheKey = `row:${tableName}:${projectId}`
+
+    // Serve from cache immediately — no loading flash, no network hit
+    const cached = queryCache.get<Record<string, unknown>>(cacheKey)
+    if (cached !== null) {
+      setDataState(fromRowRef.current(cached))
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -75,6 +86,7 @@ export function useProjectRow<T>(options: UseProjectRowOptions<T>) {
       const defaultsVal = defaultsRef.current
       if (row) {
         console.log(`[useProjectRow] load ${tableName} projectId=${projectId} success`)
+        queryCache.set(cacheKey, row as Record<string, unknown>)
         setDataState(fromRowFn(row as Record<string, unknown>))
       } else {
         console.log(`[useProjectRow] load ${tableName} projectId=${projectId} none`)
@@ -126,6 +138,7 @@ export function useProjectRow<T>(options: UseProjectRowOptions<T>) {
         console.log(`[useProjectRow] upsert ${tableName} error`, upsertError)
       } else {
         console.log(`[useProjectRow] upsert ${tableName} success`)
+        queryCache.set(`row:${tableName}:${projectId}`, payload)
       }
       setIsSaving(false)
     }, DEBOUNCE_MS)

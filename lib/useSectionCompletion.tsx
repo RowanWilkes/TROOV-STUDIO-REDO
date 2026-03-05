@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { queryCache } from "@/lib/query-cache"
 import { isSupabaseConnectionError } from "@/lib/supabaseConnection"
 import { useSupabaseConnection } from "@/components/SupabaseConnectionProvider"
 import {
@@ -50,14 +51,34 @@ const SECTION_IDS = [
 
 export type SectionId = (typeof SECTION_IDS)[number]
 
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 /** Fetch only project_overview + section_completion_overrides for fast initial render. */
 export async function fetchCriticalSectionCompletion(projectId: string): Promise<SectionCompletionMap> {
+  const cacheKey = `section_completion:critical:${projectId}`
+  const cached = queryCache.get<SectionCompletionMap>(cacheKey)
+  if (cached) return cached
+
   const [overviewResult, overridesResult] = await Promise.all([
     supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("section_completion_overrides").select("section, is_complete").eq("project_id", projectId),
   ])
-  if (overviewResult.error) throw overviewResult.error
-  if (overridesResult.error) throw overridesResult.error
+  if (overviewResult.error) {
+    const e = overviewResult.error as { message?: string; code?: string }
+    const err = new Error(e.message ?? "Failed to load project overview")
+    ;(err as any).code = e.code
+    throw err
+  }
+  if (overridesResult.error) {
+    const e = overridesResult.error as { message?: string; code?: string }
+    const err = new Error(e.message ?? "Failed to load section completion overrides")
+    ;(err as any).code = e.code
+    throw err
+  }
   const overviewRow = overviewResult.data
   const overridesRows = overridesResult.data
 
@@ -109,19 +130,31 @@ export async function fetchCriticalSectionCompletion(projectId: string): Promise
 
   const merged: SectionCompletionMap = { ...EMPTY_MAP }
   for (const id of SECTION_IDS) {
-    if (id === "tasks") {
-      merged[id] = contentBased[id]
+    const override = overrideBySection.get(id)
+    if (override !== undefined) {
+      merged[id] = override
     } else {
-      const override = overrideBySection.get(id)
-      merged[id] = override === true ? true : contentBased[id]
+      merged[id] = contentBased[id]
     }
   }
+  queryCache.set(cacheKey, merged)
   return merged
 }
 
 /** Fetch and compute content-based section completion, then merge with overrides. */
 export async function fetchSectionCompletion(projectId: string): Promise<SectionCompletionMap> {
-  const results = await Promise.all([
+  const cacheKey = `section_completion:full:${projectId}`
+  const cached = queryCache.get<SectionCompletionMap>(cacheKey)
+  if (cached) return cached
+
+  // Fetch in two batches. Overrides are included in batch 2 (parallel, not sequential).
+  const [
+    overviewResult,
+    moodBoardResult,
+    moodBoardItemsResult,
+    styleGuideResult,
+    sitemapResult,
+  ] = await Promise.all([
     supabase.from("project_overview").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("mood_board").select("*").eq("project_id", projectId).maybeSingle(),
     supabase
@@ -131,23 +164,55 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
       .order("created_at", { ascending: true }),
     supabase.from("style_guide").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("sitemap").select("*").eq("project_id", projectId).maybeSingle(),
+  ])
+
+  // Small delay between batches to reduce likelihood of statement timeouts under load.
+  await delay(10)
+
+  const [
+    technicalResult,
+    contentResult,
+    assetResult,
+    tasksResult,
+    overridesResult,
+  ] = await Promise.all([
     supabase.from("technical_specs").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("content_section").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("asset_section").select("*").eq("project_id", projectId).maybeSingle(),
     supabase.from("tasks").select("id, completed").eq("project_id", projectId),
+    supabase.from("section_completion_overrides").select("section, is_complete").eq("project_id", projectId),
   ])
-  const firstError = results.find((r) => r.error)
-  if (firstError?.error) throw firstError.error
 
-  const overviewRow = results[0].data
-  const moodBoardRow = results[1].data
-  const moodBoardItems = results[2].data
-  const styleGuideRow = results[3].data
-  const sitemapRow = results[4].data
-  const technicalRow = results[5].data
-  const contentRow = results[6].data
-  const assetRow = results[7].data
-  const tasksData = results[8].data
+  const results = [
+    overviewResult,
+    moodBoardResult,
+    moodBoardItemsResult,
+    styleGuideResult,
+    sitemapResult,
+    technicalResult,
+    contentResult,
+    assetResult,
+    tasksResult,
+    overridesResult,
+  ]
+
+  const firstError = results.find((r) => r.error)
+  if (firstError?.error) {
+    const e = firstError.error as { message?: string; code?: string }
+    const err = new Error(e.message ?? "Failed to load section completion data")
+    ;(err as any).code = e.code
+    throw err
+  }
+
+  const overviewRow = overviewResult.data
+  const moodBoardRow = moodBoardResult.data
+  const moodBoardItems = moodBoardItemsResult.data
+  const styleGuideRow = styleGuideResult.data
+  const sitemapRow = sitemapResult.data
+  const technicalRow = technicalResult.data
+  const contentRow = contentResult.data
+  const assetRow = assetResult.data
+  const tasksData = tasksResult.data
 
   const row = overviewRow as Record<string, unknown> | null
   const overview = row
@@ -246,28 +311,22 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
     tasks: hasTasksCompletion(tasks),
   }
 
-  const overridesResult = await supabase
-    .from("section_completion_overrides")
-    .select("section, is_complete")
-    .eq("project_id", projectId)
-  if (overridesResult.error) throw overridesResult.error
-  const overridesRows = overridesResult.data
-
   const overrideBySection = new Map<string, boolean>()
-  for (const row of overridesRows ?? []) {
+  for (const row of overridesResult.data ?? []) {
     const r = row as { section: string; is_complete: boolean }
     overrideBySection.set(r.section, r.is_complete)
   }
 
   const merged: SectionCompletionMap = { ...EMPTY_MAP }
   for (const id of SECTION_IDS) {
-    if (id === "tasks") {
-      merged[id] = contentBased[id]
+    const override = overrideBySection.get(id)
+    if (override !== undefined) {
+      merged[id] = override
     } else {
-      const override = overrideBySection.get(id)
-      merged[id] = override === true ? true : contentBased[id]
+      merged[id] = contentBased[id]
     }
   }
+  queryCache.set(cacheKey, merged)
   return merged
 }
 
@@ -298,9 +357,20 @@ export function SectionCompletionProvider({
 
   const refetchCompletion = useCallback(async () => {
     if (!projectId) return
-    const map = await fetchSectionCompletion(projectId)
-    setCompletion(map)
-  }, [projectId])
+    try {
+      const map = await fetchSectionCompletion(projectId)
+      setCompletion(map)
+    } catch (err) {
+      const message = (err as Error)?.message ?? ""
+      if (/timeout|canceling statement/i.test(message)) {
+        console.warn("[useSectionCompletion] Section completion fetch timed out; keeping existing state", err)
+        return
+      }
+      if (connection?.setConnectionError && isSupabaseConnectionError(err)) {
+        connection.setConnectionError(true)
+      }
+    }
+  }, [projectId, connection])
 
   useEffect(() => {
     if (!projectId) {
@@ -326,6 +396,11 @@ export function SectionCompletionProvider({
           if (!cancelled) setCompletion(map)
         })
         .catch((err) => {
+          const message = (err as Error)?.message ?? ""
+          if (/timeout|canceling statement/i.test(message)) {
+            console.warn("[useSectionCompletion] Section completion fetch timed out; keeping existing state", err)
+            return
+          }
           if (!cancelled && connection?.setConnectionError && isSupabaseConnectionError(err)) {
             connection.setConnectionError(true)
           }
@@ -341,6 +416,9 @@ export function SectionCompletionProvider({
     async (section: SectionId, isComplete: boolean) => {
       if (!projectId) return
       setCompletion((prev) => ({ ...prev, [section]: isComplete }))
+      // Invalidate so the next fetch reflects the new override
+      queryCache.invalidate(`section_completion:critical:${projectId}`)
+      queryCache.invalidate(`section_completion:full:${projectId}`)
       await supabase.from("section_completion_overrides").upsert(
         { project_id: projectId, section, is_complete: isComplete, updated_at: new Date().toISOString() },
         { onConflict: "project_id,section" },
@@ -373,26 +451,41 @@ export function useSectionCompletion(projectId: string | null): {
   setOverride: (section: SectionId, isComplete: boolean) => Promise<void>
 } {
   const context = useSectionCompletionContext()
+  // If the provider already covers this project, skip the independent fetch entirely
+  const hasContext = context !== null && context.projectId === projectId
   const [completion, setCompletion] = useState<SectionCompletionMap>(EMPTY_MAP)
 
   useEffect(() => {
+    // Provider covers this project — no need for a duplicate fetch
+    if (hasContext) return
     if (!projectId) {
       setCompletion(EMPTY_MAP)
       return
     }
     let cancelled = false
-    fetchSectionCompletion(projectId).then((map) => {
-      if (!cancelled) setCompletion(map)
-    })
+    fetchSectionCompletion(projectId)
+      .then((map) => {
+        if (!cancelled) setCompletion(map)
+      })
+      .catch((err) => {
+        const message = (err as Error)?.message ?? ""
+        if (/timeout|canceling statement/i.test(message)) {
+          console.warn("[useSectionCompletion] Section completion fetch timed out in hook; keeping existing state", err)
+          return
+        }
+        console.error("[useSectionCompletion] Failed to fetch section completion in hook", err)
+      })
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  }, [projectId, hasContext])
 
   const setOverride = useCallback(
     async (section: SectionId, isComplete: boolean) => {
       if (!projectId) return
       setCompletion((prev) => ({ ...prev, [section]: isComplete }))
+      queryCache.invalidate(`section_completion:critical:${projectId}`)
+      queryCache.invalidate(`section_completion:full:${projectId}`)
       await supabase.from("section_completion_overrides").upsert(
         { project_id: projectId, section, is_complete: isComplete, updated_at: new Date().toISOString() },
         { onConflict: "project_id,section" },
@@ -404,12 +497,12 @@ export function useSectionCompletion(projectId: string | null): {
   const completedCount = SECTION_IDS.filter((id) => completion[id]).length
   const completionPercentage = SECTION_IDS.length > 0 ? Math.round((completedCount / SECTION_IDS.length) * 100) : 0
 
-  if (context && context.projectId === projectId) {
+  if (hasContext) {
     return {
-      completion: context.completion,
-      completedCount: context.completedCount,
-      completionPercentage: context.completionPercentage,
-      setOverride: context.setOverride,
+      completion: context!.completion,
+      completedCount: context!.completedCount,
+      completionPercentage: context!.completionPercentage,
+      setOverride: context!.setOverride,
     }
   }
 

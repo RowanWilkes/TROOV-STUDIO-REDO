@@ -73,6 +73,7 @@ import React from "react"
 import { getUserItem, setUserItem } from "@/lib/storage-utils"
 import { supabase } from "@/lib/supabase"
 import { isSupabaseConnectionError } from "@/lib/supabaseConnection"
+import { prefetchProjectSections } from "@/lib/prefetch"
 import { useSupabaseConnection } from "@/components/SupabaseConnectionProvider"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
@@ -310,6 +311,8 @@ function DashboardContent() {
                 : null
           setCurrentProjectId(initialId)
           console.log("[dashboard] active projectId:", initialId)
+          // Background prefetch — populates cache so section views and summary are instant
+          if (initialId) prefetchProjectSections(initialId).catch(() => {})
         }
 
       } catch (err) {
