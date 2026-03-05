@@ -93,7 +93,7 @@ export default function SignupPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="contact@troov-marketing.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 border-gray-200 focus:border-[#2DCE73] focus:ring-[#2DCE73]"

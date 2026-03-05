@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     try {
       const resend = new Resend(resendKey)
       const from =
-        process.env.SUPPORT_FROM_EMAIL ?? "Troov Studio <onboarding@resend.dev>"
+        process.env.SUPPORT_FROM_EMAIL ?? "Troov Studio <contact@troov-marketing.com>"
       await resend.emails.send({
         from,
         to: [supportInbox],

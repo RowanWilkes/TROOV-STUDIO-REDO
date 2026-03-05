@@ -342,9 +342,9 @@ const S = StyleSheet.create({
   // Technical
   techCard: {
     backgroundColor: "#ffffff",
+    borderColor: "#e5e7eb",
     borderWidth: 1,
     borderLeftWidth: 3,
-    borderColor: "#e5e7eb",
     borderRadius: 6,
     padding: 14,
     paddingBottom: 16,
@@ -622,6 +622,9 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
   const inspirationImages = mb?.inspirationImages ?? []
   const websiteRefs = mb?.websiteReferences ?? []
 
+  // Precise guard — only show the Content & Copy page when at least one rendered section has data
+  const hasContentToRender = !!(brandMsg && hasVal(brandMsg)) || hasSeoData || pillars.length > 0 || snippets.length > 0 || guidelines.length > 0
+
   return (
     <Document>
 
@@ -848,30 +851,33 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
                     const br = typeof btn.borderRadius === "number" ? Math.max(0.01, btn.borderRadius) : 4
                     return (
                       <View key={type} style={S.col}>
-                        <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: "#db2777", padding: 12 }]}>
-                          <Text style={[S.cardTitle, { color: "#db2777", marginBottom: 10 }]}>{type.charAt(0).toUpperCase() + type.slice(1)} Button</Text>
-                          <View style={{ backgroundColor: "#f9fafb", borderRadius: 6, padding: 14, alignItems: "center", marginBottom: 10 }}>
-                            <View style={{ backgroundColor: btn.backgroundColor || "#000000", borderColor: bc, borderWidth: bw, borderRadius: br, paddingVertical: 7, paddingHorizontal: 18 }}>
-                              <Text style={{ color: btn.textColor || "#ffffff", fontSize: 9, fontFamily: "Helvetica-Bold" }}>Button</Text>
+                        <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.pink, padding: 12 }]}>
+                          <Text style={[S.cardTitle, { color: C.pink, marginBottom: 10 }]}>{type.charAt(0).toUpperCase() + type.slice(1)} Button</Text>
+                          {/* Preview */}
+                          <View style={{ backgroundColor: C.gray50, borderRadius: 6, padding: 14, alignItems: "center", marginBottom: 10 }}>
+                            <View style={{ backgroundColor: btn.backgroundColor || C.black, borderColor: bc, borderWidth: bw, borderRadius: br, paddingVertical: 7, paddingHorizontal: 18 }}>
+                              <Text style={{ color: btn.textColor || C.white, fontSize: 9, fontFamily: "Helvetica-Bold" }}>Button</Text>
                             </View>
                           </View>
-                          <View style={{ flexDirection: "row", marginBottom: 6, gap: 6 }}>
-                            <View style={{ flex: 1 }}>
-                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Background</Text>
-                              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.backgroundColor || "#000000", borderWidth: 1, borderColor: "#e5e7eb" }} />
-                                <Text style={{ fontSize: 8, color: "#374151" }}>{btn.backgroundColor || "#000000"}</Text>
+                          {/* Colour swatches — no gap, use marginRight */}
+                          <View style={{ flexDirection: "row", marginBottom: 6 }}>
+                            <View style={{ flex: 1, marginRight: 6 }}>
+                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray400, textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Background</Text>
+                              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.backgroundColor || C.black, borderWidth: 1, borderColor: C.gray200, marginRight: 4 }} />
+                                <Text style={{ fontSize: 8, color: C.gray700 }}>{btn.backgroundColor || C.black}</Text>
                               </View>
                             </View>
                             <View style={{ flex: 1 }}>
-                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Text Colour</Text>
-                              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.textColor || "#ffffff", borderWidth: 1, borderColor: "#e5e7eb" }} />
-                                <Text style={{ fontSize: 8, color: "#374151" }}>{btn.textColor || "#ffffff"}</Text>
+                              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray400, textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 3 }}>Text</Text>
+                              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: btn.textColor || C.white, borderWidth: 1, borderColor: C.gray200, marginRight: 4 }} />
+                                <Text style={{ fontSize: 8, color: C.gray700 }}>{btn.textColor || C.white}</Text>
                               </View>
                             </View>
                           </View>
-                          <Text style={{ fontSize: 7.5, color: "#9ca3af" }}>{`${br}px radius · ${btn.fontFamily || "Inter"}${btn.fontSize ? ` · ${btn.fontSize}px` : ""}`}</Text>
+                          {/* Meta */}
+                          <Text style={{ fontSize: 7.5, color: C.gray400 }}>{`${br}px radius · ${btn.fontFamily || "Inter"}${btn.fontSize ? ` · ${btn.fontSize}px` : ""}`}</Text>
                         </View>
                       </View>
                     )
@@ -960,7 +966,7 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
       )}
 
       {/* ══════════════ CONTENT & COPY ══════════════ */}
-      {hasContentSectionContent(content) && (
+      {hasContentToRender && (
         <Page size="A4" style={S.page}>
           <SectionPageHeader title="Content &amp; Copy" subtitle="Brand messaging and content strategy" accent={C.rose} projName={projName} />
           <View style={S.body}>

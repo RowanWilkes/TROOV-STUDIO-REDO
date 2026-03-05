@@ -179,11 +179,6 @@ export function SiteFooter() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/contact" className="text-sm text-white/70 hover:text-white transition-colors">
-                      Contact
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/privacy" className="text-sm text-white/70 hover:text-white transition-colors">
                       Privacy Policy
                     </Link>
@@ -219,7 +214,7 @@ export function SiteFooter() {
 
           {/* Bottom Bar */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mt-16 pt-8 border-t border-white/10">
-            <p className="text-sm text-white/60">©2025 All rights reserved</p>
+            <p className="text-sm text-white/60">©2026 All rights reserved</p>
 
             <div className="flex items-center gap-4">
               <Button

@@ -59,7 +59,7 @@ export default function HelpPage() {
                         id="email"
                         type="email"
                         className="w-full h-11 px-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                        placeholder="your.email@example.com"
+                        placeholder="contact@troov-marketing.com"
                       />
                     </div>
 
