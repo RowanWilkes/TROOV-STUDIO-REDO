@@ -17,6 +17,11 @@ CREATE INDEX IF NOT EXISTS idx_downloaded_summaries_user_created
 CREATE INDEX IF NOT EXISTS idx_downloaded_summaries_project_created
   ON public.downloaded_summaries (project_id, created_at DESC);
 
+-- Ensure one row per (user, project) so we can upsert by these keys.
+ALTER TABLE public.downloaded_summaries
+  ADD CONSTRAINT downloaded_summaries_user_project_unique
+  UNIQUE (user_id, project_id);
+
 ALTER TABLE public.downloaded_summaries ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "user_select_downloaded_summaries"

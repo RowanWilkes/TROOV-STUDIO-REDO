@@ -12,6 +12,7 @@ import { Mail, Lock } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { getUser, initializeUser } from "@/lib/user-service"
 import { supabase } from "@/lib/supabase"
+import { getInitialSession } from "@/lib/auth-session"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,7 +21,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getInitialSession().then((session) => {
       if (session) {
         router.replace("/dashboard")
       }

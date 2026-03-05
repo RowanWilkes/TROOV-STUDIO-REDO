@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { getInitialSession } from "@/lib/auth-session"
 
 type Props = { children: React.ReactNode }
 
@@ -12,17 +13,20 @@ export default function AuthGuard({ children }: Props) {
   const [isAuthed, setIsAuthed] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsAuthed(true)
-      } else {
+    getInitialSession()
+      .then((session) => {
+        if (session) {
+          setIsAuthed(true)
+        } else {
+          router.replace("/login")
+        }
+      })
+      .catch(() => {
         router.replace("/login")
-      }
-    }).catch(() => {
-      router.replace("/login")
-    }).finally(() => {
-      setIsLoading(false)
-    })
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [router])
 
   if (isLoading) {

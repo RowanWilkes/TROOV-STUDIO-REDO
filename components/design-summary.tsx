@@ -270,19 +270,13 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
         toast.error(message)
         return
       }
-      const blob = await res.blob()
-      const disposition = res.headers.get("Content-Disposition")
-      let filename = "troov-summary.pdf"
-      if (disposition) {
-        const match = /filename="?([^";\n]+)"?/.exec(disposition)
-        if (match?.[1]) filename = match[1]
+      const body = (await res.json().catch(() => ({}))) as { signedUrl?: string; filename?: string }
+      if (!body.signedUrl) {
+        toast.error("Failed to generate PDF. Please try again.")
+        return
       }
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = filename
-      a.click()
-      URL.revokeObjectURL(url)
+      // Use the signed URL from Supabase Storage so behavior matches "Re-download" from Downloaded Summaries.
+      window.open(body.signedUrl, "_blank")
     } catch {
       toast.error("Failed to generate PDF. Please try again.")
     } finally {
@@ -376,7 +370,7 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
         </div>
       )}
       <Card className="w-full mx-auto bg-white">
-        <CardHeader className="px-6 pt-6 pb-6">
+        <CardHeader className="p-6">
           {/* Quick Reference Header */}
           <div className="space-y-6">
             <h2 className="text-3xl font-bold text-gray-900">Design Project Summary</h2>

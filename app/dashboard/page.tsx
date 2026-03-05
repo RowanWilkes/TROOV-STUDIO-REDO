@@ -35,6 +35,7 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  X,
 } from "lucide-react"
 import { ProjectOverview } from "@/components/project-overview"
 import { MoodBoard } from "@/components/mood-board"
@@ -355,6 +356,17 @@ function DashboardContent() {
       )
     }
   }, [])
+
+  const handleRemoveDownloadedSummary = React.useCallback(async (id: string) => {
+    // Optimistic UI update
+    setDownloadedSummaries((prev) => prev.filter((s) => s.id !== id))
+    const { error } = await supabase.from("downloaded_summaries").delete().eq("id", id)
+    if (error) {
+      console.error("[dashboard] failed to delete downloaded summary:", error)
+      // Revert on failure
+      await fetchDownloadedSummaries()
+    }
+  }, [fetchDownloadedSummaries])
 
   useEffect(() => {
     if (activeView === "home") fetchDownloadedSummaries()
@@ -1423,7 +1435,7 @@ function DashboardContent() {
                         {downloadedSummaries.slice(0, 6).map((summary) => (
                           <Card
                             key={summary.id}
-                            className="cursor-pointer hover:shadow-md transition-all hover:border-blue-200"
+                            className="cursor-pointer hover:shadow-md transition-all hover:border-blue-200 relative"
                             onClick={() => {
                               const project = projects.find((p) => p.id === summary.project_id)
                               if (project) {
@@ -1432,7 +1444,18 @@ function DashboardContent() {
                               }
                             }}
                           >
-                            <CardContent className="pt-6">
+                            <CardContent className="p-4">
+                              <button
+                                type="button"
+                                aria-label="Remove summary"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleRemoveDownloadedSummary(summary.id)
+                                }}
+                                className="absolute top-2 right-2 rounded-full p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
                               <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                                   <Download className="h-5 w-5 text-blue-600" />
@@ -1454,7 +1477,7 @@ function DashboardContent() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                                    className="border-blue-200 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       supabase.storage
