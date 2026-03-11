@@ -119,9 +119,322 @@ type NavItemProps = {
   label: string
   view: string
   badge?: string
+  activeView: string
+  currentProjectId: string | null
+  setActiveView: (view: any) => void
+  sidebarCollapsed: boolean
 }
 
-function DashboardContent() {
+function NavItem({ icon: Icon, label, view, badge, activeView, currentProjectId, setActiveView, sidebarCollapsed }: NavItemProps) {
+  const isActive = activeView === view
+  const isDisabled = view !== "home" && !currentProjectId
+
+  return (
+    <button
+      onClick={() => !isDisabled && setActiveView(view)}
+      disabled={isDisabled}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all w-full relative",
+        isActive
+          ? "bg-emerald-100 text-gray-900 font-medium border-l-4 border-emerald-600"
+          : isDisabled
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-gray-700 hover:bg-gray-50",
+      )}
+    >
+      <Icon className={cn("h-4 w-4", isActive && "text-emerald-700")} />
+      {!sidebarCollapsed && (
+        <>
+          <span className="flex-1 text-left">{label}</span>
+          {badge && <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">{badge}</span>}
+        </>
+      )}
+    </button>
+  )
+}
+
+interface DashboardContentProps {
+  currentProjectId: string | null
+  setCurrentProjectId: (id: string | null) => void
+}
+
+interface ProfileFormProps {
+  profileForm: { full_name: string; company: string; role: string; avatar_key: string }
+  setProfileForm: React.Dispatch<
+    React.SetStateAction<{ full_name: string; company: string; role: string; avatar_key: string }>
+  >
+  profileEmail: string
+  profileSaving: boolean
+  profileSavedMessage: boolean
+  showAvatarModal: boolean
+  setShowAvatarModal: (v: boolean) => void
+  onSave: () => void
+  onCancel: () => void
+  userInitials: string
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+  passwordError: { newPassword?: string; confirmPassword?: string; general?: string }
+  passwordSuccess: boolean
+  passwordSaving: boolean
+  resetEmailSent: boolean
+  setCurrentPassword: React.Dispatch<React.SetStateAction<string>>
+  setNewPassword: React.Dispatch<React.SetStateAction<string>>
+  setConfirmPassword: React.Dispatch<React.SetStateAction<string>>
+  setPasswordError: React.Dispatch<
+    React.SetStateAction<{ newPassword?: string; confirmPassword?: string; general?: string }>
+  >
+  resetPasswordFormState: () => void
+  handleUpdatePassword: () => void
+  handleForgotPassword: () => void
+  onBack: () => void
+}
+
+function ProfileSettingsForm({
+  profileForm,
+  setProfileForm,
+  profileEmail,
+  profileSaving,
+  profileSavedMessage,
+  showAvatarModal,
+  setShowAvatarModal,
+  onSave,
+  onCancel,
+  userInitials,
+  currentPassword,
+  newPassword,
+  confirmPassword,
+  passwordError,
+  passwordSuccess,
+  passwordSaving,
+  resetEmailSent,
+  setCurrentPassword,
+  setNewPassword,
+  setConfirmPassword,
+  setPasswordError,
+  resetPasswordFormState,
+  handleUpdatePassword,
+  handleForgotPassword,
+  onBack,
+}: ProfileFormProps) {
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <Button variant="ghost" onClick={onBack}>
+        <ChevronLeft className="h-4 w-4 mr-2" />
+        Back to Account
+      </Button>
+
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
+        <p className="text-gray-600 mt-1">Manage your personal information and account details</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Personal Information</CardTitle>
+          <CardDescription>Update your profile details and contact information</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-6">
+            {avatarSrcFromKey(profileForm.avatar_key || null) ? (
+              <div className="h-20 w-20 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                <Image
+                  src={avatarSrcFromKey(profileForm.avatar_key!)!}
+                  alt="Avatar"
+                  width={80}
+                  height={80}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <Avatar className="h-20 w-20">
+                <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl font-semibold">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <div>
+              <Button variant="outline" size="sm" onClick={() => setShowAvatarModal(true)}>
+                Change Avatar
+              </Button>
+              <p className="text-xs text-gray-500 mt-2">Choose a preset avatar</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={profileForm.full_name}
+                onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))}
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input id="email" type="email" value={profileEmail} readOnly disabled className="bg-gray-50" />
+              <p className="text-xs text-gray-500">Email cannot be changed</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company">Company</Label>
+              <Input
+                id="company"
+                value={profileForm.company}
+                onChange={(e) => setProfileForm((p) => ({ ...p, company: e.target.value }))}
+                placeholder="Your company name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select
+                value={profileForm.role}
+                onValueChange={(value) => setProfileForm((p) => ({ ...p, role: value }))}
+              >
+                <SelectTrigger id="role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="designer">Designer</SelectItem>
+                  <SelectItem value="developer">Developer</SelectItem>
+                  <SelectItem value="manager">Project Manager</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 items-center">
+            {profileSavedMessage && <span className="text-sm text-emerald-600 font-medium">Saved</span>}
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button disabled={profileSaving} onClick={onSave}>
+              {profileSaving ? "Saving…" : "Save Changes"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showAvatarModal} onOpenChange={setShowAvatarModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Avatar</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-4 gap-6 py-2">
+            {AVATARS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => {
+                  setProfileForm((p) => ({ ...p, avatar_key: option.key }))
+                  setShowAvatarModal(false)
+                }}
+                className={cn(
+                  "h-16 w-16 rounded-full overflow-hidden border transition-all hover:border-gray-300",
+                  profileForm.avatar_key === option.key ? "ring-2 ring-black border-black" : "border-gray-200",
+                )}
+              >
+                <Image
+                  src={option.src}
+                  alt={option.alt}
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Security</CardTitle>
+          <CardDescription>Manage your password and security settings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Current Password</Label>
+            <Input
+              id="current-password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+            <p className="text-xs text-gray-500">Optional; not verified client-side</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
+              id="new-password"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value)
+                setPasswordError((prev) => ({ ...prev, newPassword: undefined }))
+              }}
+            />
+            {passwordError.newPassword && <p className="text-sm text-red-600">{passwordError.newPassword}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                setPasswordError((prev) => ({ ...prev, confirmPassword: undefined }))
+              }}
+            />
+            {passwordError.confirmPassword && (
+              <p className="text-sm text-red-600">{passwordError.confirmPassword}</p>
+            )}
+          </div>
+
+          {passwordError.general && <p className="text-sm text-red-600">{passwordError.general}</p>}
+          {passwordSuccess && (
+            <p className="text-sm text-emerald-600">Password updated successfully. Signing you out…</p>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={resetPasswordFormState}>
+              Cancel
+            </Button>
+            <Button
+              disabled={passwordSaving || !newPassword.trim() || !confirmPassword.trim()}
+              onClick={handleUpdatePassword}
+            >
+              {passwordSaving ? "Updating…" : "Update Password"}
+            </Button>
+          </div>
+
+          <p className="text-sm text-gray-600 pt-2">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-emerald-600 hover:underline"
+            >
+              Forgot your password? Send a reset email
+            </button>
+          </p>
+          {resetEmailSent && <p className="text-sm text-emerald-600">Check your email for a reset link.</p>}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeView, setActiveView] = useState<
@@ -142,7 +455,6 @@ function DashboardContent() {
     | "admin-settings"
   >("home")
   const [projects, setProjects] = useState<Project[]>([])
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   const [user, setUser] = useState<UserServiceUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -180,6 +492,7 @@ function DashboardContent() {
   const { profile, displayName, email: profileEmail, loading: profileLoading, save, saving: profileSaving, refetch: refetchProfile } = useProfile()
   const { prefs, loading: prefsLoading, updatePrefs, saving: prefsSaving } = usePreferences()
   const defaultViewAppliedRef = useRef(false)
+  const profileInitialisedRef = useRef(false)
   const [profileForm, setProfileForm] = useState({ full_name: "", company: "", role: "designer", avatar_key: "" })
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [profileSavedMessage, setProfileSavedMessage] = useState(false)
@@ -389,7 +702,8 @@ function DashboardContent() {
   }, [activeView, fetchDownloadedSummaries])
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !profileInitialisedRef.current) {
+      profileInitialisedRef.current = true
       setProfileForm({
         full_name: profile.full_name ?? "",
         company: profile.company ?? "",
@@ -511,34 +825,6 @@ function DashboardContent() {
       setActiveTasks(0)
     }
   }, [currentProjectId, activeView])
-
-  const NavItem = ({ icon: Icon, label, view, badge }: NavItemProps) => {
-    const isActive = activeView === view
-    const isDisabled = view !== "home" && !currentProjectId
-
-    return (
-      <button
-        onClick={() => !isDisabled && setActiveView(view)}
-        disabled={isDisabled}
-        className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all w-full relative",
-          isActive
-            ? "bg-emerald-100 text-gray-900 font-medium border-l-4 border-emerald-600"
-            : isDisabled
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-700 hover:bg-gray-50",
-        )}
-      >
-        <Icon className={cn("h-4 w-4", isActive && "text-emerald-700")} />
-        {!sidebarCollapsed && (
-          <>
-            <span className="flex-1 text-left">{label}</span>
-            {badge && <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">{badge}</span>}
-          </>
-        )}
-      </button>
-    )
-  }
 
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId)
@@ -730,6 +1016,56 @@ function DashboardContent() {
       .join("")
       .toUpperCase() || "U"
 
+  const { completion: sectionCompletion, completionPercentage } = useSectionCompletion(currentProjectId)
+  const prevCompletionRef = useRef<{ projectId: string | null; was100: boolean }>({ projectId: null, was100: false })
+
+  useEffect(() => {
+    if (!currentProjectId) return
+
+    const isNow100 = completionPercentage === 100
+    const prev = prevCompletionRef.current
+
+    if (prev.projectId !== currentProjectId) {
+      prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
+      return
+    }
+
+    if (isNow100 && !prev.was100) {
+      prevCompletionRef.current = { projectId: currentProjectId, was100: true }
+
+      const sendNotification = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user?.id || !currentProjectId) return
+
+        const { data: existing } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .eq("project_id", currentProjectId)
+          .eq("type", "summary_ready")
+          .limit(1)
+
+        if (existing && existing.length > 0) return
+
+        const projectName = projects.find(p => p.id === currentProjectId)?.name ?? "Your project"
+
+        await supabase.from("notifications").insert({
+          user_id: session.user.id,
+          project_id: currentProjectId,
+          type: "summary_ready",
+          title: "Summary ready to download",
+          body: `${projectName} is complete. Go to Summary to export your PDF.`,
+          url: `/dashboard?project=${currentProjectId}&view=summary`,
+          is_read: false,
+        })
+      }
+
+      sendNotification()
+    } else {
+      prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
+    }
+  }, [completionPercentage, currentProjectId])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -755,58 +1091,7 @@ function DashboardContent() {
     return viewMap[sectionId] || sectionId
   }
 
-  function DashboardWithCompletion() {
-    const { completion: sectionCompletion, completionPercentage } = useSectionCompletion(currentProjectId)
-    const prevCompletionRef = useRef<{ projectId: string | null; was100: boolean }>({ projectId: null, was100: false })
-
-    useEffect(() => {
-      if (!currentProjectId) return
-
-      const isNow100 = sectionCompletion.completionPercentage === 100
-      const prev = prevCompletionRef.current
-
-      if (prev.projectId !== currentProjectId) {
-        prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
-        return
-      }
-
-      if (isNow100 && !prev.was100) {
-        prevCompletionRef.current = { projectId: currentProjectId, was100: true }
-
-        const sendNotification = async () => {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (!session?.user?.id || !currentProjectId) return
-
-          const { data: existing } = await supabase
-            .from("notifications")
-            .select("id")
-            .eq("user_id", session.user.id)
-            .eq("project_id", currentProjectId)
-            .eq("type", "summary_ready")
-            .limit(1)
-
-          if (existing && existing.length > 0) return
-
-          const projectName = projects.find(p => p.id === currentProjectId)?.name ?? "Your project"
-
-          await supabase.from("notifications").insert({
-            user_id: session.user.id,
-            project_id: currentProjectId,
-            type: "summary_ready",
-            title: "Summary ready to download",
-            body: `${projectName} is complete. Go to Summary to export your PDF.`,
-            url: `/dashboard?project=${currentProjectId}&view=summary`,
-            is_read: false,
-          })
-        }
-
-        sendNotification()
-      } else {
-        prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
-      }
-    }, [sectionCompletion.completionPercentage, currentProjectId])
-
-    return (
+  return (
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar */}
         <aside
@@ -846,34 +1131,34 @@ function DashboardContent() {
             <nav className="space-y-6">
               <div>
                 <div className="space-y-1">
-                  <NavItem icon={Home} label="Home" view="home" />
+                  <NavItem icon={Home} label="Home" view="home" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                 </div>
               </div>
 
               <div>
                 {!sidebarCollapsed && <p className="text-xs font-semibold text-gray-500 mb-2 px-3">NAVIGATION</p>}
                 <div className="space-y-1">
-                  <NavItem icon={LayoutDashboard} label="Overview" view="overview" />
-                  <NavItem icon={ImageIcon} label="Mood Board" view="moodboard" />
-                  <NavItem icon={Palette} label="Style Guide" view="styleguide" />
-                  <NavItem icon={Globe} label="Sitemap" view="sitemap" />
-                  <NavItem icon={Code} label="Technical" view="technical" />
+                  <NavItem icon={LayoutDashboard} label="Overview" view="overview" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={ImageIcon} label="Mood Board" view="moodboard" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={Palette} label="Style Guide" view="styleguide" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={Globe} label="Sitemap" view="sitemap" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={Code} label="Technical" view="technical" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                 </div>
               </div>
 
               <div>
                 {!sidebarCollapsed && <p className="text-xs font-semibold text-gray-500 mb-2 px-3">CONTENT & ASSETS</p>}
                 <div className="space-y-1">
-                  <NavItem icon={FileText} label="Content" view="content" />
-                  <NavItem icon={Package} label="Assets" view="assets" />
+                  <NavItem icon={FileText} label="Content" view="content" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={Package} label="Assets" view="assets" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                 </div>
               </div>
 
               <div>
                 {!sidebarCollapsed && <p className="text-xs font-semibold text-gray-500 mb-2 px-3">MANAGEMENT</p>}
                 <div className="space-y-1">
-                  <NavItem icon={CheckSquare} label="Tasks" view="tasks" />
-                  <NavItem icon={ClipboardList} label="Summary" view="summary" />
+                  <NavItem icon={CheckSquare} label="Tasks" view="tasks" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={ClipboardList} label="Summary" view="summary" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                 </div>
               </div>
             </nav>
@@ -1661,254 +1946,54 @@ function DashboardContent() {
 
               {/* Profile Page */}
               {activeView === "account-profile" && (
-                <div className="space-y-6 max-w-2xl">
-                  <Button variant="ghost" onClick={() => setActiveView("account")}>
-                    <ChevronLeft className="h-4 w-4 mr-2" />
-                    Back to Account
-                  </Button>
-
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-                    <p className="text-gray-600 mt-1">Manage your personal information and account details</p>
-                  </div>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Personal Information</CardTitle>
-                      <CardDescription>Update your profile details and contact information</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex items-center gap-6">
-                        {avatarSrcFromKey(profileForm.avatar_key || null) ? (
-                          <div className="h-20 w-20 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
-                            <Image
-                              src={avatarSrcFromKey(profileForm.avatar_key!)!}
-                              alt="Avatar"
-                              width={80}
-                              height={80}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <Avatar className="h-20 w-20">
-                            <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl font-semibold">
-                              {userInitials}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div>
-                          <Button variant="outline" size="sm" onClick={() => setShowAvatarModal(true)}>
-                            Change Avatar
-                          </Button>
-                          <p className="text-xs text-gray-500 mt-2">Choose a preset avatar</p>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="fullName">Full Name</Label>
-                          <Input
-                            id="fullName"
-                            value={profileForm.full_name}
-                            onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))}
-                            placeholder="Enter your full name"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email Address</Label>
-                          <Input id="email" type="email" value={profileEmail} readOnly disabled className="bg-gray-50" />
-                          <p className="text-xs text-gray-500">Email cannot be changed</p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="company">Company</Label>
-                          <Input
-                            id="company"
-                            value={profileForm.company}
-                            onChange={(e) => setProfileForm((p) => ({ ...p, company: e.target.value }))}
-                            placeholder="Your company name"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="role">Role</Label>
-                          <Select
-                            value={profileForm.role}
-                            onValueChange={(value) => setProfileForm((p) => ({ ...p, role: value }))}
-                          >
-                            <SelectTrigger id="role">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="designer">Designer</SelectItem>
-                              <SelectItem value="developer">Developer</SelectItem>
-                              <SelectItem value="manager">Project Manager</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end gap-3 pt-4 items-center">
-                        {profileSavedMessage && (
-                          <span className="text-sm text-emerald-600 font-medium">Saved</span>
-                        )}
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setProfileSavedMessage(false)
-                            if (profile) {
-                              setProfileForm({
-                                full_name: profile.full_name ?? "",
-                                company: profile.company ?? "",
-                                role: profile.role ?? "designer",
-                                avatar_key: profile.avatar_key ?? "",
-                              })
-                            }
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          disabled={profileSaving}
-                          onClick={async () => {
-                            await save({
-                              full_name: profileForm.full_name || null,
-                              company: profileForm.company || null,
-                              role: profileForm.role || null,
-                              avatar_key: profileForm.avatar_key || null,
-                            })
-                            setProfileSavedMessage(true)
-                            setTimeout(() => setProfileSavedMessage(false), 3000)
-                          }}
-                        >
-                          {profileSaving ? "Saving…" : "Save Changes"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Dialog open={showAvatarModal} onOpenChange={setShowAvatarModal}>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Choose Avatar</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid grid-cols-4 gap-6 py-2">
-                        {AVATARS.map((option) => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            onClick={() => {
-                              setProfileForm((p) => ({ ...p, avatar_key: option.key }))
-                              setShowAvatarModal(false)
-                            }}
-                            className={cn(
-                              "h-16 w-16 rounded-full overflow-hidden border transition-all hover:border-gray-300",
-                              profileForm.avatar_key === option.key
-                                ? "ring-2 ring-black border-black"
-                                : "border-gray-200"
-                            )}
-                          >
-                            <Image
-                              src={option.src}
-                              alt={option.alt}
-                              width={64}
-                              height={64}
-                              className="h-full w-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Account Security</CardTitle>
-                      <CardDescription>Manage your password and security settings</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="current-password">Current Password</Label>
-                        <Input
-                          id="current-password"
-                          type="password"
-                          autoComplete="current-password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                        />
-                        <p className="text-xs text-gray-500">Optional; not verified client-side</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-password">New Password</Label>
-                        <Input
-                          id="new-password"
-                          type="password"
-                          autoComplete="new-password"
-                          value={newPassword}
-                          onChange={(e) => {
-                            setNewPassword(e.target.value)
-                            setPasswordError((prev) => ({ ...prev, newPassword: undefined }))
-                          }}
-                        />
-                        {passwordError.newPassword && (
-                          <p className="text-sm text-red-600">{passwordError.newPassword}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          autoComplete="new-password"
-                          value={confirmPassword}
-                          onChange={(e) => {
-                            setConfirmPassword(e.target.value)
-                            setPasswordError((prev) => ({ ...prev, confirmPassword: undefined }))
-                          }}
-                        />
-                        {passwordError.confirmPassword && (
-                          <p className="text-sm text-red-600">{passwordError.confirmPassword}</p>
-                        )}
-                      </div>
-
-                      {passwordError.general && (
-                        <p className="text-sm text-red-600">{passwordError.general}</p>
-                      )}
-                      {passwordSuccess && (
-                        <p className="text-sm text-emerald-600">Password updated successfully. Signing you out…</p>
-                      )}
-
-                      <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="outline" onClick={resetPasswordFormState}>
-                          Cancel
-                        </Button>
-                        <Button
-                          disabled={passwordSaving || !newPassword.trim() || !confirmPassword.trim()}
-                          onClick={handleUpdatePassword}
-                        >
-                          {passwordSaving ? "Updating…" : "Update Password"}
-                        </Button>
-                      </div>
-
-                      <p className="text-sm text-gray-600 pt-2">
-                        <button
-                          type="button"
-                          onClick={handleForgotPassword}
-                          className="text-emerald-600 hover:underline"
-                        >
-                          Forgot your password? Send a reset email
-                        </button>
-                      </p>
-                      {resetEmailSent && (
-                        <p className="text-sm text-emerald-600">Check your email for a reset link.</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                <ProfileSettingsForm
+                  profileForm={profileForm}
+                  setProfileForm={setProfileForm}
+                  profileEmail={profileEmail}
+                  profileSaving={profileSaving}
+                  profileSavedMessage={profileSavedMessage}
+                  showAvatarModal={showAvatarModal}
+                  setShowAvatarModal={setShowAvatarModal}
+                  userInitials={userInitials}
+                  currentPassword={currentPassword}
+                  newPassword={newPassword}
+                  confirmPassword={confirmPassword}
+                  passwordError={passwordError}
+                  passwordSuccess={passwordSuccess}
+                  passwordSaving={passwordSaving}
+                  resetEmailSent={resetEmailSent}
+                  setCurrentPassword={setCurrentPassword}
+                  setNewPassword={setNewPassword}
+                  setConfirmPassword={setConfirmPassword}
+                  setPasswordError={setPasswordError}
+                  resetPasswordFormState={resetPasswordFormState}
+                  handleUpdatePassword={handleUpdatePassword}
+                  handleForgotPassword={handleForgotPassword}
+                  onBack={() => setActiveView("account")}
+                  onSave={async () => {
+                    await save({
+                      full_name: profileForm.full_name || null,
+                      company: profileForm.company || null,
+                      role: profileForm.role || null,
+                      avatar_key: profileForm.avatar_key || null,
+                    })
+                    profileInitialisedRef.current = false
+                    setProfileSavedMessage(true)
+                    setTimeout(() => setProfileSavedMessage(false), 3000)
+                  }}
+                  onCancel={() => {
+                    setProfileSavedMessage(false)
+                    if (profile) {
+                      profileInitialisedRef.current = false
+                      setProfileForm({
+                        full_name: profile.full_name ?? "",
+                        company: profile.company ?? "",
+                        role: profile.role ?? "designer",
+                        avatar_key: profile.avatar_key ?? "",
+                      })
+                    }
+                  }}
+                />
               )}
 
               {/* Preferences Page */}
@@ -2325,16 +2410,18 @@ function DashboardContent() {
         {/* CHANGE> Removed Footer component */}
       </div>
     </div>
-    )
-  }
+  )
+}
 
+function DashboardRoot() {
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   return (
     <SectionCompletionProvider projectId={currentProjectId}>
-      <DashboardWithCompletion />
+      <DashboardContent currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId} />
     </SectionCompletionProvider>
   )
 }
 
 export default function DashboardPage() {
-  return <DashboardContent />
+  return <DashboardRoot />
 }

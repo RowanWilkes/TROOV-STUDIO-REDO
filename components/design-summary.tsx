@@ -245,6 +245,12 @@ export function DesignSummary({ projectId, triggerExportOnce, onExportComplete }
 
   useEffect(() => {
     loadData()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") loadData()
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => document.removeEventListener("visibilitychange", handleVisibility)
   }, [loadData])
 
   useEffect(() => {
