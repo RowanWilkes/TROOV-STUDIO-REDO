@@ -184,6 +184,26 @@ const S = StyleSheet.create({
     color: C.gray900,
     lineHeight: 1.4,
   },
+  heroBox: {
+    backgroundColor: C.white,
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#059669",
+    borderTopWidth: 1,
+    borderTopColor: "#d1fae5",
+    borderRightWidth: 1,
+    borderRightColor: "#d1fae5",
+    borderBottomWidth: 1,
+    borderBottomColor: "#d1fae5",
+  },
+  heroTitle: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
+    color: "#059669",
+    marginBottom: 4,
+  },
   highlight: {
     borderRadius: 6,
     padding: 14,
@@ -381,13 +401,14 @@ const S = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 4,
+    marginTop: 6,
+    marginBottom: 8,
   },
   imgBox: {
-    width: "30%",
-    height: 130,
-    borderRadius: 6,
-    backgroundColor: C.gray100,
+    width: "100%",
+    height: 160,
+    borderRadius: 4,
+    backgroundColor: C.gray50,
     borderWidth: 1,
     borderColor: C.gray200,
     overflow: "hidden",
@@ -395,9 +416,10 @@ const S = StyleSheet.create({
   imgBoxImg: {
     width: "100%",
     height: "100%",
+    objectFit: "contain",
   },
   imgCaption: {
-    fontSize: 7.5,
+    fontSize: 8,
     color: C.gray500,
     textAlign: "center",
     marginTop: 3,
@@ -434,6 +456,30 @@ const S = StyleSheet.create({
   assetBadgeText: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.white },
   assetName: { fontSize: 9, color: C.gray900, flex: 1 },
   assetCat: { fontSize: 7.5, color: C.gray400, textTransform: "uppercase", letterSpacing: 0.5 },
+  assetGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  assetContainer: {
+    width: "30%",
+    marginBottom: 10,
+  },
+  assetImage: {
+    width: "100%",
+    height: 120,
+    objectFit: "contain",
+    borderRadius: 4,
+    backgroundColor: "#f9fafb",
+  },
+  assetCaption: {
+    fontSize: 8,
+    color: "#6b7280",
+    marginTop: 3,
+    textAlign: "center",
+  },
   // Tasks
   taskRow: {
     flexDirection: "row",
@@ -680,9 +726,11 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
           <SectionPageHeader title="Project Overview" subtitle="Core project information" accent={C.emerald} projName={projName} />
           <View style={S.body}>
             {(str(ov?.projectName) || str(ov?.description)) && (
-              <View style={[S.highlight, { backgroundColor: C.emeraldBg, borderColor: C.emeraldBorder }]}>
-                {str(ov?.projectName) && <Text style={[S.highlightName, { color: C.emerald }]}>{str(ov.projectName)}</Text>}
-                {str(ov?.description) && <Text style={[S.highlightDesc, { color: C.gray700 }]}>{str(ov.description)}</Text>}
+              <View style={S.heroBox}>
+                {str(ov?.projectName) && <Text style={S.heroTitle}>{str(ov.projectName)}</Text>}
+                {str(ov?.description) && (
+                  <Text style={[S.highlightDesc, { color: C.gray700 }]}>{str(ov.description)}</Text>
+                )}
               </View>
             )}
             <View style={S.row2}>
@@ -749,7 +797,7 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
                 <Text style={S.subHeading}>Inspiration Images</Text>
                 <View style={S.imgGrid}>
                   {inspirationImages.map((img, idx) => (
-                    <View key={idx} style={{ width: "30%", marginBottom: 8 }}>
+                    <View key={idx} style={{ width: "47%", marginBottom: 10 }}>
                       {img.url ? (
                         <View style={S.imgBox}>
                           <Image
@@ -925,39 +973,39 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
             <View style={S.row2}>
               {(str(tech?.currentHosting) || str(tech?.proposedHosting) || str(tech?.hostingNotes)) && (
                 <View style={S.col}>
-                  <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
-                    <Text style={[S.techCardTitle, { color: C.blue }]}>Hosting</Text>
-                    {str(tech?.currentHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Current:</Text><Text style={S.techVal}>{str(tech.currentHosting)}</Text></View>}
-                    {str(tech?.proposedHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Proposed:</Text><Text style={S.techVal}>{str(tech.proposedHosting)}</Text></View>}
-                    {str(tech?.hostingNotes) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Notes:</Text><Text style={S.techVal}>{str(tech.hostingNotes)}</Text></View>}
+                  <View style={[S.techCard, { borderLeftColor: "#3b82f6", borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }]}>
+                    <Text style={[S.techCardTitle, { color: "#1d4ed8" }]}>Hosting</Text>
+                    {str(tech?.currentHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Current:</Text><Text style={S.techVal}>{str(tech.currentHosting)}</Text></View>}
+                    {str(tech?.proposedHosting) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Proposed:</Text><Text style={S.techVal}>{str(tech.proposedHosting)}</Text></View>}
+                    {str(tech?.hostingNotes) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Notes:</Text><Text style={S.techVal}>{str(tech.hostingNotes)}</Text></View>}
                   </View>
                 </View>
               )}
               {(str(tech?.cms) || str(tech?.contentManagers) || str(tech?.contentUpdateFrequency) || str(tech?.editableContent)) && (
                 <View style={S.col}>
-                  <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
-                    <Text style={[S.techCardTitle, { color: C.blue }]}>Content Management</Text>
-                    {str(tech?.cms) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>CMS:</Text><Text style={S.techVal}>{str(tech.cms)}</Text></View>}
-                    {str(tech?.contentManagers) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Managed by:</Text><Text style={S.techVal}>{str(tech.contentManagers)}</Text></View>}
-                    {str(tech?.contentUpdateFrequency) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Frequency:</Text><Text style={S.techVal}>{str(tech.contentUpdateFrequency)}</Text></View>}
-                    {str(tech?.editableContent) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Editable:</Text><Text style={S.techVal}>{str(tech.editableContent)}</Text></View>}
+                  <View style={[S.techCard, { borderLeftColor: "#3b82f6", borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }]}>
+                    <Text style={[S.techCardTitle, { color: "#1d4ed8" }]}>Content Management</Text>
+                    {str(tech?.cms) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>CMS:</Text><Text style={S.techVal}>{str(tech.cms)}</Text></View>}
+                    {str(tech?.contentManagers) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Managed by:</Text><Text style={S.techVal}>{str(tech.contentManagers)}</Text></View>}
+                    {str(tech?.contentUpdateFrequency) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Frequency:</Text><Text style={S.techVal}>{str(tech.contentUpdateFrequency)}</Text></View>}
+                    {str(tech?.editableContent) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Editable:</Text><Text style={S.techVal}>{str(tech.editableContent)}</Text></View>}
                   </View>
                 </View>
               )}
             </View>
             {str(tech?.thirdPartyIntegrations) && (
-              <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
-                <Text style={[S.techCardTitle, { color: C.blue }]}>Third-party Integrations</Text>
+              <View style={[S.techCard, { borderLeftColor: "#3b82f6", borderColor: "#bfdbfe", backgroundColor: "#eff6ff", paddingBottom: 18 }]}>
+                <Text style={[S.techCardTitle, { color: "#1d4ed8" }]}>Third-party Integrations</Text>
                 <Text style={S.techVal}>{str(tech.thirdPartyIntegrations)}</Text>
               </View>
             )}
             {(str(tech?.technicalRequirements) || str(tech?.performanceRequirements) || str(tech?.browserSupport) || str(tech?.seoRequirements)) && (
-              <View style={[S.techCard, { borderLeftColor: C.blue, borderColor: C.blueBorder, backgroundColor: C.blueBg }]}>
-                <Text style={[S.techCardTitle, { color: C.blue }]}>Performance &amp; Compatibility</Text>
-                {str(tech?.technicalRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Requirements:</Text><Text style={S.techVal}>{str(tech.technicalRequirements)}</Text></View>}
-                {str(tech?.performanceRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Performance:</Text><Text style={S.techVal}>{str(tech.performanceRequirements)}</Text></View>}
-                {str(tech?.browserSupport) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>Browsers:</Text><Text style={S.techVal}>{str(tech.browserSupport)}</Text></View>}
-                {str(tech?.seoRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: C.blue }]}>SEO:</Text><Text style={S.techVal}>{str(tech.seoRequirements)}</Text></View>}
+              <View style={[S.techCard, { borderLeftColor: "#3b82f6", borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }]}>
+                <Text style={[S.techCardTitle, { color: "#1d4ed8" }]}>Performance &amp; Compatibility</Text>
+                {str(tech?.technicalRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Requirements:</Text><Text style={S.techVal}>{str(tech.technicalRequirements)}</Text></View>}
+                {str(tech?.performanceRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Performance:</Text><Text style={S.techVal}>{str(tech.performanceRequirements)}</Text></View>}
+                {str(tech?.browserSupport) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>Browsers:</Text><Text style={S.techVal}>{str(tech.browserSupport)}</Text></View>}
+                {str(tech?.seoRequirements) && <View style={S.techRow}><Text style={[S.techKey, { color: "#2563eb" }]}>SEO:</Text><Text style={S.techVal}>{str(tech.seoRequirements)}</Text></View>}
               </View>
             )}
           </View>
@@ -1092,20 +1140,30 @@ export function ProjectSummaryPdf({ data, projectName, createdAt }: ProjectSumma
           <SectionPageHeader title="Assets Library" subtitle="Images and resources" accent={C.cyan} projName={projName} />
           <View style={S.body}>
             {assetCategories.map((cat) => {
-              const catAssets = organizedAssets[cat] as Array<{ name?: string; fileName?: string; type?: string; category?: string; label?: string }>
+              const catAssets = organizedAssets[cat] as Array<{
+                name?: string
+                fileName?: string
+                type?: string
+                category?: string
+                label?: string
+                data?: string
+                url?: string
+              }>
               return (
                 <View key={cat} style={{ marginBottom: 16 }}>
                   <Text style={S.subHeading}>{`${cat.toUpperCase()} · ${catAssets.length} ${catAssets.length === 1 ? "asset" : "assets"}`}</Text>
-                  <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.cyan, padding: 0, overflow: "hidden" }]}>
-                    {catAssets.map((asset, idx) => (
-                      <View key={idx} style={[S.assetRow, { paddingHorizontal: 12, borderBottomColor: idx === catAssets.length - 1 ? "transparent" : C.gray100 }]}>
-                        <View style={[S.assetBadge, { backgroundColor: C.cyan }]}>
-                          <Text style={S.assetBadgeText}>{ext(asset.name || asset.fileName || asset.label || "file")}</Text>
-                        </View>
-                        <Text style={S.assetName}>{asset.label || asset.name || asset.fileName || "Asset"}</Text>
-                        <Text style={S.assetCat}>{asset.category || cat}</Text>
-                      </View>
-                    ))}
+                  <View style={[S.card, { borderLeftWidth: 3, borderLeftColor: C.cyan }]}>
+                    <View style={S.assetGrid}>
+                      {catAssets.map((asset, idx) => {
+                        const src = asset.data || asset.url
+                        return src ? (
+                          <View key={idx} style={S.assetContainer}>
+                            <Image style={S.assetImage} src={src} />
+                            <Text style={S.assetCaption}>{asset.label || asset.name || asset.fileName || "Asset"}</Text>
+                          </View>
+                        ) : null
+                      })}
+                    </View>
                   </View>
                 </View>
               )
