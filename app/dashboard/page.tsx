@@ -151,8 +151,24 @@ function DashboardContent() {
 
   const [downloadedSummaries, setDownloadedSummaries] = useState<DownloadedSummary[]>([])
   const [activeTasks, setActiveTasks] = useState(0)
-  const { notifications, unreadCount, loading: notificationsLoading, unavailable: notificationsUnavailable, markRead, markAllRead } = useNotifications()
+  const { notifications, unreadCount, loading: notificationsLoading, unavailable: notificationsUnavailable, markRead, markAllRead, clearRead } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
+  const prevShowNotificationsRef = useRef(false)
+
+  useEffect(() => {
+    if (showNotifications && unreadCount > 0) {
+      markAllRead()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showNotifications])
+
+  useEffect(() => {
+    if (prevShowNotificationsRef.current && !showNotifications) {
+      clearRead()
+    }
+    prevShowNotificationsRef.current = showNotifications
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showNotifications])
 
   const [projectCompletionCounts, setProjectCompletionCounts] = React.useState<Record<string, number>>({})
 
@@ -741,6 +757,55 @@ function DashboardContent() {
 
   function DashboardWithCompletion() {
     const { completion: sectionCompletion, completionPercentage } = useSectionCompletion(currentProjectId)
+    const prevCompletionRef = useRef<{ projectId: string | null; was100: boolean }>({ projectId: null, was100: false })
+
+    useEffect(() => {
+      if (!currentProjectId) return
+
+      const isNow100 = sectionCompletion.completionPercentage === 100
+      const prev = prevCompletionRef.current
+
+      if (prev.projectId !== currentProjectId) {
+        prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
+        return
+      }
+
+      if (isNow100 && !prev.was100) {
+        prevCompletionRef.current = { projectId: currentProjectId, was100: true }
+
+        const sendNotification = async () => {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session?.user?.id || !currentProjectId) return
+
+          const { data: existing } = await supabase
+            .from("notifications")
+            .select("id")
+            .eq("user_id", session.user.id)
+            .eq("project_id", currentProjectId)
+            .eq("type", "summary_ready")
+            .limit(1)
+
+          if (existing && existing.length > 0) return
+
+          const projectName = projects.find(p => p.id === currentProjectId)?.name ?? "Your project"
+
+          await supabase.from("notifications").insert({
+            user_id: session.user.id,
+            project_id: currentProjectId,
+            type: "summary_ready",
+            title: "Summary ready to download",
+            body: `${projectName} is complete. Go to Summary to export your PDF.`,
+            url: `/dashboard?project=${currentProjectId}&view=summary`,
+            is_read: false,
+          })
+        }
+
+        sendNotification()
+      } else {
+        prevCompletionRef.current = { projectId: currentProjectId, was100: isNow100 }
+      }
+    }, [sectionCompletion.completionPercentage, currentProjectId])
+
     return (
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar */}
@@ -910,8 +975,9 @@ function DashboardContent() {
                             "px-3 py-3 cursor-pointer hover:bg-gray-50 flex-col items-start gap-1",
                             !notification.is_read && "border-l-2 border-l-emerald-500",
                           )}
+                          style={{ cursor: notification.type === "summary_ready" ? "default" : "pointer" }}
                           onClick={() => {
-                            if (notification.url) {
+                            if (notification.type !== "summary_ready" && notification.url) {
                               const u = new URL(notification.url, typeof window !== "undefined" ? window.location.origin : "http://localhost")
                               const projectId = u.searchParams.get("project")
                               const view = u.searchParams.get("view") as typeof activeView | null
@@ -924,7 +990,9 @@ function DashboardContent() {
                           }}
                         >
                           <div className="flex items-start gap-2 w-full">
-                            {notification.type === "deadline" ? (
+                            {notification.type === "summary_ready" ? (
+                              <Download className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                            ) : notification.type === "deadline" ? (
                               isOverdue ? (
                                 <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                               ) : (
@@ -934,9 +1002,9 @@ function DashboardContent() {
                               <Pencil className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                              <p className="text-sm font-medium text-gray-900 line-clamp-1">{notification.title}</p>
                               {notification.body && (
-                                <p className="text-sm text-gray-600 truncate">{notification.body}</p>
+                                <p className="text-sm text-gray-600 line-clamp-2 whitespace-normal break-words">{notification.body}</p>
                               )}
                               <p className="text-xs text-gray-400 mt-0.5">
                                 {(() => {
