@@ -1546,7 +1546,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                         size="sm"
                                         variant="outline"
                                         onClick={() => setActiveView("overview")}
-                                        className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                                        className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-600"
                                       >
                                         Review Project
                                       </Button>

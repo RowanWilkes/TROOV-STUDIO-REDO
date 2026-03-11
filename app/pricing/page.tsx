@@ -97,31 +97,25 @@ export default function PricingPage() {
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
                           <Check className="size-4 text-emerald-600 stroke-[3]" />
                         </div>
+                        <span className="text-gray-700 text-base">All 8 dashboard sections</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
+                          <Check className="size-4 text-emerald-600 stroke-[3]" />
+                        </div>
+                        <span className="text-gray-700 text-base">PDF summary export</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
+                          <Check className="size-4 text-emerald-600 stroke-[3]" />
+                        </div>
                         <span className="text-gray-700 text-base">1 team member</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
                           <Check className="size-4 text-emerald-600 stroke-[3]" />
                         </div>
-                        <span className="text-gray-700 text-base">All dashboard sections</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Mood board & style guide</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Project overview tools</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Sitemap & technical specs</span>
+                        <span className="text-gray-700 text-base">Project progress tracking</span>
                       </li>
                     </ul>
                   </div>
@@ -135,9 +129,12 @@ export default function PricingPage() {
                     <h3 className="text-lg font-medium text-gray-900">Pro</h3>
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl font-bold text-gray-900">
-                        ${billingPeriod === "monthly" ? "20" : "16"}
+                        ${billingPeriod === "monthly" ? "10" : "8"}
                       </span>
                       <span className="text-gray-500 text-lg">/month</span>
+                      {billingPeriod === "yearly" && (
+                        <span className="text-sm text-gray-500">(billed $96/year)</span>
+                      )}
                     </div>
                     <p className="text-gray-600 text-base leading-relaxed">
                       Unlimited everything for professionals and teams who need to scale their design workflow.
@@ -155,25 +152,13 @@ export default function PricingPage() {
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
                           <Check className="size-4 text-emerald-600 stroke-[3]" />
                         </div>
-                        <span className="text-gray-700 text-base font-medium">Unlimited projects</span>
+                        <span className="text-gray-700 text-base">Unlimited projects</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
                           <Check className="size-4 text-emerald-600 stroke-[3]" />
                         </div>
-                        <span className="text-gray-700 text-base font-medium">Unlimited team members</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Unlimited summary downloads</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Advanced collaboration</span>
+                        <span className="text-gray-700 text-base">Unlimited PDF summary exports</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
@@ -185,7 +170,28 @@ export default function PricingPage() {
                         <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
                           <Check className="size-4 text-emerald-600 stroke-[3]" />
                         </div>
-                        <span className="text-gray-700 text-base">Custom branding options</span>
+                        <span className="text-gray-700 text-base flex items-center gap-2">
+                          AI-assisted project suggestions
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
+                          <Check className="size-4 text-emerald-600 stroke-[3]" />
+                        </div>
+                        <span className="text-gray-700 text-base flex items-center gap-2">
+                          Client sharing & collaboration
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
+                          <Check className="size-4 text-emerald-600 stroke-[3]" />
+                        </div>
+                        <span className="text-gray-700 text-base flex items-center gap-2">
+                          Custom branding on exports
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
+                        </span>
                       </li>
                     </ul>
                   </div>
