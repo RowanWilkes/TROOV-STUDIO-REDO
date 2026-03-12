@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,11 +16,13 @@ import { supabase } from "@/lib/supabase"
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-   const [emailSent, setEmailSent] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,19 +41,23 @@ export default function SignupPage() {
 
     if (error) {
       console.error("[signup] Supabase error:", error)
+      setErrorMessage(error.message || "Something went wrong. Please try again.")
       setIsLoading(false)
       return
     }
 
-    setEmailSent(true)
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      initializeUser(email, name)
-      router.push("/dashboard")
-    } else {
+    // If identities is empty, the email is already in use (Supabase pattern)
+    if (data?.user?.identities?.length === 0) {
+      setErrorMessage("An account with this email already exists. Please sign in.")
       setIsLoading(false)
+      return
     }
+
+    // Require email confirmation: sign out immediately so unconfirmed users can't access dashboard
+    await supabase.auth.signOut()
+
+    setEmailSent(true)
+    setIsLoading(false)
   }
 
   useEffect(() => {
@@ -78,6 +84,12 @@ export default function SignupPage() {
 
     return () => clearInterval(interval)
   }, [emailSent, router])
+
+  useEffect(() => {
+    if (searchParams.get("confirm") === "pending") {
+      setEmailSent(true)
+    }
+  }, [searchParams])
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-white via-gray-50 to-white flex items-center justify-center p-6 overflow-hidden">
@@ -156,6 +168,8 @@ export default function SignupPage() {
               </div>
               <p className="text-xs text-gray-500">Must be at least 8 characters</p>
             </div>
+
+            {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
             <Button
               type="submit"

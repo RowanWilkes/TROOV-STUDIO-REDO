@@ -21,7 +21,20 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // If the user is logged in but email is not confirmed, keep them on the signup flow
+  if (user && !user.email_confirmed_at) {
+    const url = request.nextUrl.clone()
+    if (!url.pathname.startsWith("/signup")) {
+      url.pathname = "/signup"
+      url.searchParams.set("confirm", "pending")
+      return NextResponse.redirect(url)
+    }
+  }
+
   return response
 }
 
