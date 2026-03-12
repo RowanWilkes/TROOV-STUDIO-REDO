@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { initializeUser } from "@/lib/user-service"
 import { supabase } from "@/lib/supabase"
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [name, setName] = useState("")
@@ -242,5 +242,19 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
   )
 }
