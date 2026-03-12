@@ -19,17 +19,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
     if (theme === "dark") {
       root.classList.add("dark")
-    } else if (theme === "light") {
-      root.classList.remove("dark")
     } else {
-      const media = window.matchMedia("(prefers-color-scheme: dark)")
-      const apply = () => {
-        if (media.matches) root.classList.add("dark")
-        else root.classList.remove("dark")
-      }
-      apply()
-      media.addEventListener("change", apply)
-      return () => media.removeEventListener("change", apply)
+      root.classList.remove("dark")
     }
   }, [theme])
 
