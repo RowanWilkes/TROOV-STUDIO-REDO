@@ -60,29 +60,49 @@ function SignupContent() {
     setIsLoading(false)
   }
 
+  const handleResend = async () => {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    })
+    if (error) {
+      setErrorMessage(error.message ?? "Failed to resend. Try again.")
+      return
+    }
+    setErrorMessage(null)
+  }
+
   useEffect(() => {
     if (!emailSent) return
 
-    let attempts = 0
-    const maxAttempts = 200 // 10 minutes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        router.push("/dashboard")
+      }
+    })
 
+    let attempts = 0
     const interval = setInterval(async () => {
       attempts++
-      if (attempts >= maxAttempts) {
+      if (attempts >= 200) {
         clearInterval(interval)
         return
       }
-
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      if (session) {
+      if (session?.user?.email_confirmed_at) {
         clearInterval(interval)
         router.push("/dashboard")
       }
     }, 3000)
 
-    return () => clearInterval(interval)
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(interval)
+    }
   }, [emailSent, router])
 
   useEffect(() => {
@@ -90,6 +110,56 @@ function SignupContent() {
       setEmailSent(true)
     }
   }, [searchParams])
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+            <svg
+              className="w-10 h-10 text-emerald-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
+            <p className="text-gray-500 text-sm">We sent a confirmation link to</p>
+            <p className="font-semibold text-gray-900">{email}</p>
+          </div>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            Click the link in the email to activate your account. This page will
+            automatically take you to your dashboard once confirmed.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-emerald-600 text-sm">
+            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span>Waiting for confirmation...</span>
+          </div>
+          {errorMessage && (
+            <p className="text-sm text-red-600">{errorMessage}</p>
+          )}
+          <p className="text-xs text-gray-400">
+            Didn&apos;t receive it?{" "}
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-emerald-600 underline hover:text-emerald-700"
+            >
+              Resend email
+            </button>
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-white via-gray-50 to-white flex items-center justify-center p-6 overflow-hidden">
@@ -214,13 +284,6 @@ function SignupContent() {
               Continue with Google
             </Button>
           </div>
-
-          {emailSent && (
-            <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
-              <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              Waiting for confirmation...
-            </p>
-          )}
 
           <p className="text-center text-sm text-gray-600">
             Already have an account?{" "}
