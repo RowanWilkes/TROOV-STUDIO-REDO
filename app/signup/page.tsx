@@ -41,7 +41,13 @@ function SignupContent() {
 
     if (error) {
       console.error("[signup] Supabase error:", error)
-      setErrorMessage(error.message || "Something went wrong. Please try again.")
+      if (error.message.toLowerCase().includes("rate limit") || (error as { status?: number }).status === 429) {
+        setErrorMessage("Too many attempts. Please wait a few minutes before trying again.")
+      } else if (error.message.toLowerCase().includes("already registered") || error.message.toLowerCase().includes("already exists")) {
+        setErrorMessage("An account with this email already exists. Please sign in instead.")
+      } else {
+        setErrorMessage(error.message)
+      }
       setIsLoading(false)
       return
     }
