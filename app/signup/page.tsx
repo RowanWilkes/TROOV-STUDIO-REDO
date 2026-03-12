@@ -143,6 +143,9 @@ function SignupContent() {
             <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span>Waiting for confirmation...</span>
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Confirming on your phone? This desktop page will update automatically.
+          </p>
           {errorMessage && (
             <p className="text-sm text-red-600">{errorMessage}</p>
           )}
