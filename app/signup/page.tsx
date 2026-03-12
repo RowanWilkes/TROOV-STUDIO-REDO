@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+   const [emailSent, setEmailSent] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +43,8 @@ export default function SignupPage() {
       return
     }
 
+    setEmailSent(true)
+
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       initializeUser(email, name)
@@ -50,6 +53,31 @@ export default function SignupPage() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!emailSent) return
+
+    let attempts = 0
+    const maxAttempts = 200 // 10 minutes
+
+    const interval = setInterval(async () => {
+      attempts++
+      if (attempts >= maxAttempts) {
+        clearInterval(interval)
+        return
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        clearInterval(interval)
+        router.push("/dashboard")
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [emailSent, router])
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-white via-gray-50 to-white flex items-center justify-center p-6 overflow-hidden">
@@ -172,6 +200,13 @@ export default function SignupPage() {
               Continue with Google
             </Button>
           </div>
+
+          {emailSent && (
+            <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
+              <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              Waiting for confirmation...
+            </p>
+          )}
 
           <p className="text-center text-sm text-gray-600">
             Already have an account?{" "}
