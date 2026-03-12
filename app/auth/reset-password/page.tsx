@@ -1,175 +1,47 @@
 "use client"
-
-import { Suspense, useEffect, useState } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 function ResetPasswordContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null)
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState<{ newPassword?: string; confirmPassword?: string; general?: string }>({})
+  const router = useRouter()
+  const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (cancelled) return
-      if (session) {
-        setHasRecoverySession(true)
-        return
-      }
-      const tokenHash = searchParams.get("token_hash")
-      const type = searchParams.get("type")
-      if (tokenHash && type === "recovery") {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "recovery",
-        })
-        if (cancelled) return
-        if (!verifyError) {
-          setHasRecoverySession(true)
-          return
-        }
-      }
-      setHasRecoverySession(false)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [searchParams])
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const errors: { newPassword?: string; confirmPassword?: string } = {}
-    if (newPassword.length < 8) {
-      errors.newPassword = "Password must be at least 8 characters"
-    }
-    if (newPassword !== confirmPassword) {
-      errors.confirmPassword = "Passwords do not match"
-    }
-    if (Object.keys(errors).length > 0) {
-      setError(errors)
-      return
-    }
-    setError({})
-    setSaving(true)
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
-    setSaving(false)
-    if (updateError) {
-      setError({ general: updateError.message })
-      return
-    }
-    setSuccess(true)
-    setNewPassword("")
-    setConfirmPassword("")
-    setTimeout(() => {
-      router.push("/login")
-    }, 1500)
-  }
-
-  if (hasRecoverySession === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <p className="text-center text-gray-600">Checking reset link…</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (hasRecoverySession === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Invalid or expired link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired. Request a new one from your account settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/login">Back to sign in</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    if (password !== confirm) { setError("Passwords do not match"); return }
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    setLoading(false)
+    if (error) { setError(error.message) } else { setSuccess(true); setTimeout(() => router.push("/dashboard"), 2000) }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Set new password</CardTitle>
-          <CardDescription>Enter your new password below.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {success ? (
-            <p className="text-emerald-600 text-sm">Password updated. Redirecting to sign in…</p>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value)
-                    setError((prev) => ({ ...prev, newPassword: undefined }))
-                  }}
-                />
-                {error.newPassword && <p className="text-sm text-red-600">{error.newPassword}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value)
-                    setError((prev) => ({ ...prev, confirmPassword: undefined }))
-                  }}
-                />
-                {error.confirmPassword && <p className="text-sm text-red-600">{error.confirmPassword}</p>}
-              </div>
-              {error.general && <p className="text-sm text-red-600">{error.general}</p>}
-              <Button type="submit" disabled={saving || !newPassword || !confirmPassword} className="w-full">
-                {saving ? "Updating…" : "Set password"}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow">
+        <h1 className="text-2xl font-bold mb-6">Reset your password</h1>
+        {success ? <p className="text-emerald-600">Password updated! Redirecting...</p> : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div><label className="block text-sm font-medium mb-1">New password</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" required /></div>
+            <div><label className="block text-sm font-medium mb-1">Confirm password</label><input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} className="w-full border rounded-lg px-3 py-2" required /></div>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50">{loading ? "Updating..." : "Update password"}</button>
+          </form>
+        )}
+      </div>
     </div>
   )
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loading...</p></div>}>
       <ResetPasswordContent />
     </Suspense>
   )
