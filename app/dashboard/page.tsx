@@ -632,14 +632,37 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
           setProjects(mapped)
           console.log("[dashboard] list projects count:", mapped.length)
 
+          let storedProjectId: string | null = null
+          if (typeof window !== "undefined") {
+            storedProjectId = localStorage.getItem("currentProjectId")
+          }
+          if (storedProjectId && !mapped.some((p) => p.id === storedProjectId)) {
+            // Stale project from another user or deleted project — clear it
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("currentProjectId")
+            }
+            storedProjectId = null
+          }
+
           const paramId = searchParams.get("project")
           const initialId =
             paramId && mapped.some((p) => p.id === paramId)
               ? paramId
-              : mapped.length > 0
-                ? mapped[0].id
-                : null
+              : storedProjectId && mapped.some((p) => p.id === storedProjectId)
+                ? storedProjectId
+                : mapped.length > 0
+                  ? mapped[0].id
+                  : null
+
           setCurrentProjectId(initialId)
+          if (typeof window !== "undefined") {
+            if (initialId) {
+              localStorage.setItem("currentProjectId", initialId)
+            } else {
+              localStorage.removeItem("currentProjectId")
+            }
+          }
+
           console.log("[dashboard] active projectId:", initialId)
           // Background prefetch — populates cache so section views and summary are instant
           if (initialId) prefetchProjectSections(initialId).catch(() => {})
@@ -835,6 +858,9 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
 
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("currentProjectId", projectId)
+    }
     setActiveView("home")
     router.replace(`/dashboard?project=${projectId}`)
   }
@@ -920,6 +946,13 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     if (currentProjectId === projectId) {
       const nextId = listAfterDelete.length > 0 ? listAfterDelete[0].id : null
       setCurrentProjectId(nextId)
+      if (typeof window !== "undefined") {
+        if (nextId) {
+          localStorage.setItem("currentProjectId", nextId)
+        } else {
+          localStorage.removeItem("currentProjectId")
+        }
+      }
       setActiveView("home")
       router.replace(nextId ? `/dashboard?project=${nextId}` : "/dashboard")
     }
@@ -943,6 +976,14 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     setProjects(
       projects.map((p) => (p.id === projectId ? { ...p, name: newName, lastModified: new Date().toISOString() } : p)),
     )
+
+    if (typeof window !== "undefined") {
+      const storedProjectId = localStorage.getItem("currentProjectId")
+      if (storedProjectId && !projects.some((p) => p.id === storedProjectId)) {
+        // Ensure we don't keep a reference to a project that no longer exists
+        localStorage.removeItem("currentProjectId")
+      }
+    }
   }
 
   const handleLogout = () => {
