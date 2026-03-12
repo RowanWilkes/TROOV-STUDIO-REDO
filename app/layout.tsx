@@ -16,26 +16,26 @@ const poppins = Poppins({
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Design Studio - Project Planning Dashboard",
-  description: "Turn your design ideas into structured projects with comprehensive planning tools",
-  generator: "v0.app",
+  title: "Troov Studio — The Project Planner Built for Web Designers",
+  description: "Plan, brief, and deliver web design projects faster. Troov Studio gives you mood boards, style guides, sitemaps, technical specs and a one-click PDF summary — all in one place. Free to start.",
+  keywords: "web design project management, design brief tool, mood board, style guide, sitemap builder, web designer tools",
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
+    icon: "/favicon.ico",
     apple: "/apple-icon.png",
   },
+  openGraph: {
+    title: "Troov Studio — The Project Planner Built for Web Designers",
+    description: "Plan, brief, and deliver web design projects faster. Everything from mood boards to PDF summaries in one place.",
+    url: "https://troovstudio.com",
+    siteName: "Troov Studio",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Troov Studio — The Project Planner Built for Web Designers",
+    description: "Plan, brief, and deliver web design projects faster. Everything from mood boards to PDF summaries in one place.",
+  },
+  metadataBase: new URL("https://troovstudio.com"),
 }
 
 export default function RootLayout({
