@@ -1,0 +1,844 @@
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/"},"timestamp":1772347805818,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/","durationMs":8},"timestamp":1772347805826,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-logo-white.png"},"timestamp":1772347805928,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-logo-white.png","durationMs":10},"timestamp":1772347805938,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/images/troovstudio-logo.png"},"timestamp":1772347806086,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/images/troovstudio-logo.png","durationMs":2},"timestamp":1772347806088,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/login"},"timestamp":1772347807502,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/login","durationMs":2},"timestamp":1772347807504,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772347813026,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":268},"timestamp":1772347813294,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772347813412,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":2},"timestamp":1772347813413,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":3},"timestamp":1772347813419,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":4},"timestamp":1772347813419,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":5},"timestamp":1772347813426,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":6},"timestamp":1772347813427,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":7},"timestamp":1772347813722,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":8},"timestamp":1772347813723,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":9},"timestamp":1772347813876,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":10},"timestamp":1772347813877,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":11},"timestamp":1772347814207,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":12},"timestamp":1772347814208,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":13},"timestamp":1772347814361,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":14},"timestamp":1772347814362,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":15},"timestamp":1772347814364,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":16},"timestamp":1772347814364,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":17},"timestamp":1772347816117,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":18},"timestamp":1772347816118,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":19},"timestamp":1772347816123,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":20},"timestamp":1772347816123,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":1,"projectCount":1},"timestamp":1772347816146,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":21},"timestamp":1772347816147,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":22},"timestamp":1772347816148,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":23},"timestamp":1772347816158,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":24},"timestamp":1772347816159,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":25},"timestamp":1772347816179,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":26},"timestamp":1772347816179,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":27},"timestamp":1772347816210,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":28},"timestamp":1772347816210,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":29},"timestamp":1772347816237,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":30},"timestamp":1772347816238,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/avatars/avatar-1.svg"},"timestamp":1772347816250,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":31},"timestamp":1772347817144,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":32},"timestamp":1772347817145,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":33},"timestamp":1772347817266,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":34},"timestamp":1772347817267,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":35},"timestamp":1772347817285,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":36},"timestamp":1772347817285,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":37},"timestamp":1772347817313,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":38},"timestamp":1772347817314,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":39},"timestamp":1772347817370,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":40},"timestamp":1772347817370,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/avatars/avatar-1.svg","durationMs":1415},"timestamp":1772347817665,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:completionEffect end","message":"Dashboard completion effect end","data":{"effectRun":1,"projectCount":1,"durationMs":3677,"queryCount":9},"timestamp":1772347819823,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":41},"timestamp":1772347819824,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":42},"timestamp":1772347819825,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":43},"timestamp":1772347822627,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":44},"timestamp":1772347822627,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":45},"timestamp":1772347822664,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":46},"timestamp":1772347822664,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":47},"timestamp":1772347826426,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":48},"timestamp":1772347826426,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347826437,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347826438,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347826446,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347826446,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":49},"timestamp":1772347826447,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":50},"timestamp":1772347826447,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":897},"timestamp":1772347827343,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347827343,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347827348,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1188},"timestamp":1772347827634,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347827635,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347827639,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347828385,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347828389,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347828447,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":850},"timestamp":1772347829297,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347829298,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347829302,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347830449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":836},"timestamp":1772347831285,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347831286,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347831308,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347832449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":833},"timestamp":1772347833283,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347833285,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347833306,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347834451,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347834867,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347834886,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf"},"timestamp":1772347834897,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":811},"timestamp":1772347835262,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347835263,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347835302,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf","durationMs":508},"timestamp":1772347835405,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347836450,"hypothesisId":"H2"}
+{"location":"summary-pdf/route.ts:GET entry","message":"summary-pdf GET called","data":{},"timestamp":1772347836950,"hypothesisId":"H4"}
+{"location":"summary-pdf/route.ts:getUser","message":"summary-pdf getUser done","data":{"durationMs":210},"timestamp":1772347837169,"hypothesisId":"H4"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":818},"timestamp":1772347837267,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347837269,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347837308,"hypothesisId":"H5"}
+{"location":"summary-pdf/route.ts:getProjectSummaryData","message":"summary-pdf getProjectSummaryData done","data":{"durationMs":856},"timestamp":1772347838195,"hypothesisId":"H4"}
+{"location":"summary-pdf/route.ts:attachSummarySignedUrls","message":"summary-pdf attachSummarySignedUrls done","data":{"durationMs":1},"timestamp":1772347838198,"hypothesisId":"H4"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347838449,"hypothesisId":"H2"}
+{"location":"summary-pdf/route.ts:pdf render","message":"summary-pdf pdf render done","data":{"durationMs":267,"totalMs":1517},"timestamp":1772347838467,"hypothesisId":"H4"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347838518,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347838542,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":793},"timestamp":1772347839242,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347839242,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347839266,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347840449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1082},"timestamp":1772347841531,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347841532,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347841551,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347842449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":829},"timestamp":1772347843278,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":27,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347843281,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":28,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347843300,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347844449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":813},"timestamp":1772347845261,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":29,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347845265,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":30,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347845289,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347846450,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":817},"timestamp":1772347847267,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":31,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347847270,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":32,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347847297,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347848449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":805},"timestamp":1772347849254,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":33,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347849256,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":34,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347849275,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347850448,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":801},"timestamp":1772347851249,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":35,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347851250,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":36,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347851288,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347852448,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":799},"timestamp":1772347853247,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":37,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347853248,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":38,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347853267,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347854449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":827},"timestamp":1772347855275,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":39,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347855277,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":40,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347855317,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347856449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":803},"timestamp":1772347857252,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":41,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347857253,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":42,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347857293,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347858449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":808},"timestamp":1772347859257,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":43,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347859258,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":44,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347859298,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347860449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":814},"timestamp":1772347861263,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":45,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347861264,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":46,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347861303,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347862449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":846},"timestamp":1772347863295,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":47,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347863296,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":48,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347863334,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347864450,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":977},"timestamp":1772347865427,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":49,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347865428,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":50,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347865468,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347866450,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1150},"timestamp":1772347867599,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":51,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347867606,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":52,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347867625,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347868449,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":950},"timestamp":1772347869399,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":53,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347869400,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":54,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347869438,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347870939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":897},"timestamp":1772347871835,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":55,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347871837,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":56,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347871855,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347872939,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":51},"timestamp":1772347873364,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":52},"timestamp":1772347873364,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873388,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873392,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873404,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873405,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":53},"timestamp":1772347873547,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":54},"timestamp":1772347873548,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873560,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873565,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873574,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347873575,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":822},"timestamp":1772347873761,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1093},"timestamp":1772347874498,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1281},"timestamp":1772347874687,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1597},"timestamp":1772347875171,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347875172,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347875195,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347875577,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2422},"timestamp":1772347875997,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347875998,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347876034,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347876478,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347876507,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":969},"timestamp":1772347876546,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347876547,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347876564,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347877577,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":815},"timestamp":1772347878392,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347878393,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347878412,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347879938,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":843},"timestamp":1772347880781,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347880785,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347880820,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347881939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":825},"timestamp":1772347882765,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347882767,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347882802,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347883939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":920},"timestamp":1772347884858,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347884860,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347884900,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347885938,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":824},"timestamp":1772347886762,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347886763,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347886788,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347887938,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":832},"timestamp":1772347888770,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347888771,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347888790,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347889939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":839},"timestamp":1772347890778,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347890780,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347890807,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347891939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":805},"timestamp":1772347892744,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347892745,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347892785,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347893939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":766},"timestamp":1772347894705,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":27,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347894706,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":28,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347894727,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347895938,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":795},"timestamp":1772347896733,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":29,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347896737,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":30,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347896771,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347897939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1206},"timestamp":1772347899145,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":31,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347899146,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":32,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347899186,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347899939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1156},"timestamp":1772347901094,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":33,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347901095,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":34,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347901134,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347901939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":948},"timestamp":1772347902886,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":35,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347902887,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":36,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347902904,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347903939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1966},"timestamp":1772347905904,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":37,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347905905,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":38,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347905943,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347905982,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1039},"timestamp":1772347907021,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":39,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347907022,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":40,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347907039,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347907939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":931},"timestamp":1772347908871,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":41,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347908873,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":42,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347908914,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347909939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1133},"timestamp":1772347911072,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":43,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347911073,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":44,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347911098,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347911940,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":901},"timestamp":1772347912841,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":45,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347912841,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":46,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347912858,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347913939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":901},"timestamp":1772347914840,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":47,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347914841,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":48,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347914873,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347915939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":823},"timestamp":1772347916762,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":49,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347916763,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":50,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347916798,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347917939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":866},"timestamp":1772347918805,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":51,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347918805,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":52,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347918822,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347919939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":810},"timestamp":1772347920750,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":53,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347920750,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":54,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347920768,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347921939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1033},"timestamp":1772347922972,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":55,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347922973,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":56,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347923010,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":27,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347923940,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":27,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":845},"timestamp":1772347924785,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":57,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347924785,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":58,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347924824,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":28,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347925939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":28,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":914},"timestamp":1772347926853,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":59,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347926854,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":60,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347926891,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":29,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347927939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":29,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":917},"timestamp":1772347928856,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":61,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347928857,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":62,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347928894,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":30,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347929939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":30,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":786},"timestamp":1772347930726,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":63,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347930726,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":64,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347930764,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":31,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347931939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":31,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":934},"timestamp":1772347932873,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":65,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347932874,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":66,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347932911,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":32,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347933939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":32,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":806},"timestamp":1772347934745,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":67,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347934746,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":68,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347934771,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":33,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347935939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":33,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":851},"timestamp":1772347936791,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":69,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347936791,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":70,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347936809,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":34,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347937939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":34,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":887},"timestamp":1772347938826,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":71,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347938826,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":72,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347938843,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":35,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772347997942,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":35,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2607},"timestamp":1772348000548,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":73,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348000552,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":74,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348000571,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":36,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348057946,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":36,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2235},"timestamp":1772348060180,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":75,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348060182,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":76,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348060201,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":37,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348117945,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":37,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2469},"timestamp":1772348120413,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":77,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348120416,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":78,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348120455,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":38,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348177948,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":38,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1333},"timestamp":1772348179281,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":79,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348179282,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":80,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348179300,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":39,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348237945,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":39,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1009},"timestamp":1772348238954,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":81,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348238955,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":82,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348238973,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":40,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348297948,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":40,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1016},"timestamp":1772348298963,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":83,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348298965,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":84,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348298983,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":41,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348358548,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":41,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1164},"timestamp":1772348359713,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":85,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348359714,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":86,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348359734,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":42,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348418558,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":42,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1351},"timestamp":1772348419909,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":87,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348419916,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":88,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348419938,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":43,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348478559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":43,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":962},"timestamp":1772348479522,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":89,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348479523,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":90,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348479541,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":44,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348538562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":44,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1021},"timestamp":1772348539583,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":91,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348539589,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":92,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348539612,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":45,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348598558,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":45,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2021},"timestamp":1772348600579,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":93,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348600581,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":94,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348600600,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":46,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644106,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":55},"timestamp":1772348644127,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":56},"timestamp":1772348644129,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644153,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644157,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644168,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644169,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":57},"timestamp":1772348644594,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":58},"timestamp":1772348644595,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644607,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644612,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644624,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348644625,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":46,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1262},"timestamp":1772348645369,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772348645601,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1553},"timestamp":1772348645721,"hypothesisId":"H2"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":411},"timestamp":1772348646012,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772348646236,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1629},"timestamp":1772348646254,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":2085},"timestamp":1772348646254,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":1631},"timestamp":1772348646255,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-black-text.png"},"timestamp":1772348646369,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772348646495,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":2},"timestamp":1772348646496,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon.svg"},"timestamp":1772348646495,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":3},"timestamp":1772348646502,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":4},"timestamp":1772348646502,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-black-text.png","durationMs":161},"timestamp":1772348646530,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":5},"timestamp":1772348646650,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":6},"timestamp":1772348646651,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon.svg","durationMs":196},"timestamp":1772348646691,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon-light-32x32.png"},"timestamp":1772348646701,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":7},"timestamp":1772348646792,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":8},"timestamp":1772348646793,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon-light-32x32.png","durationMs":160},"timestamp":1772348646861,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":9},"timestamp":1772348646938,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":10},"timestamp":1772348646939,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":11},"timestamp":1772348646942,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":12},"timestamp":1772348646943,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":13},"timestamp":1772348647259,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":14},"timestamp":1772348647260,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":15},"timestamp":1772348647262,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":16},"timestamp":1772348647263,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":1,"projectCount":1},"timestamp":1772348647312,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":17},"timestamp":1772348647314,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":18},"timestamp":1772348647314,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":19},"timestamp":1772348647330,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":20},"timestamp":1772348647331,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/avatars/avatar-1.svg"},"timestamp":1772348647336,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":21},"timestamp":1772348647402,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":22},"timestamp":1772348647402,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":23},"timestamp":1772348647418,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":24},"timestamp":1772348647418,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":25},"timestamp":1772348647426,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":26},"timestamp":1772348647426,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/avatars/avatar-1.svg","durationMs":363},"timestamp":1772348647699,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:completionEffect end","message":"Dashboard completion effect end","data":{"effectRun":1,"projectCount":1,"durationMs":1697,"queryCount":9},"timestamp":1772348649009,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":27},"timestamp":1772348649010,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":28},"timestamp":1772348649010,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":29},"timestamp":1772348651385,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":30},"timestamp":1772348651387,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348651415,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348651417,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348651428,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348651429,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":31},"timestamp":1772348651430,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":32},"timestamp":1772348651430,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348653432,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348655431,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348657431,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348659431,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348661431,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348663431,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":33},"timestamp":1772348663587,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":34},"timestamp":1772348663588,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":35},"timestamp":1772348663650,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":36},"timestamp":1772348663651,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":37},"timestamp":1772348668218,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":38},"timestamp":1772348668219,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":39},"timestamp":1772348668263,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":40},"timestamp":1772348668263,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":41},"timestamp":1772348670687,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":42},"timestamp":1772348670688,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":43},"timestamp":1772348670787,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":44},"timestamp":1772348670788,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":45},"timestamp":1772348672488,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":46},"timestamp":1772348672489,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":47},"timestamp":1772348672535,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":48},"timestamp":1772348672535,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":49},"timestamp":1772348674135,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":50},"timestamp":1772348674136,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":51},"timestamp":1772348674177,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":52},"timestamp":1772348674177,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":53},"timestamp":1772348676203,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":54},"timestamp":1772348676204,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":55},"timestamp":1772348676253,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":56},"timestamp":1772348676254,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":57},"timestamp":1772348677871,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":58},"timestamp":1772348677872,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":59},"timestamp":1772348677906,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":60},"timestamp":1772348677907,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":61},"timestamp":1772348679719,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":62},"timestamp":1772348679720,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":63},"timestamp":1772348679752,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":64},"timestamp":1772348679753,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":65},"timestamp":1772348682019,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":66},"timestamp":1772348682020,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":67},"timestamp":1772348682072,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":68},"timestamp":1772348682072,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":69},"timestamp":1772348687535,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":70},"timestamp":1772348687536,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":71},"timestamp":1772348687556,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":72},"timestamp":1772348687556,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":73},"timestamp":1772348688636,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":74},"timestamp":1772348688638,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":75},"timestamp":1772348688694,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":76},"timestamp":1772348688694,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":77},"timestamp":1772348697070,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":78},"timestamp":1772348697071,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":79},"timestamp":1772348697112,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":80},"timestamp":1772348697113,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":81},"timestamp":1772348698301,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":82},"timestamp":1772348698302,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":83},"timestamp":1772348698331,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":84},"timestamp":1772348698331,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":58877},"timestamp":1772348712310,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf"},"timestamp":1772348712329,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":58919},"timestamp":1772348714351,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":58966},"timestamp":1772348716398,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59025},"timestamp":1772348718457,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59065},"timestamp":1772348720497,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59138},"timestamp":1772348722570,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":79812},"timestamp":1772348731241,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":85},"timestamp":1772348734987,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":86},"timestamp":1772348734988,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":87},"timestamp":1772348738535,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":88},"timestamp":1772348738537,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":2,"projectCount":1},"timestamp":1772348738568,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":89},"timestamp":1772348738569,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":90},"timestamp":1772348738570,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":3,"projectCount":1},"timestamp":1772348738594,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":91},"timestamp":1772348741868,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":92},"timestamp":1772348741868,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348741879,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348741880,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348741885,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348741886,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":93},"timestamp":1772348741887,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":94},"timestamp":1772348741887,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348743888,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348745888,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348748558,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348750558,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":99266},"timestamp":1772348750698,"hypothesisId":"H2"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf","durationMs":39244},"timestamp":1772348751573,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348752559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348754559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348756559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348758559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348760558,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348762560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348764559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348766559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348768562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348770559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348772559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348774561,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348776559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348778559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348780559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348782560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348784559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348786560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348788559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348790559,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":95},"timestamp":1772348791026,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":96},"timestamp":1772348791026,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348791037,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348791038,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348791046,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348791058,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348793559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348795559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348797559,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348799560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348801560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348803560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348805560,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348838564,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348898563,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":97},"timestamp":1772348917122,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":98},"timestamp":1772348917123,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348917146,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348917148,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348917159,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348917160,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348919562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348921562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348923562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348925562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348927562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348929563,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":205982},"timestamp":1772348949874,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf"},"timestamp":1772348949943,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":206030},"timestamp":1772348951922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":205412},"timestamp":1772348953974,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":205468},"timestamp":1772348956030,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":203471},"timestamp":1772348956034,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":201510},"timestamp":1772348956073,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772348958568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":207741},"timestamp":1772348964304,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":224082},"timestamp":1772348982646,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222087},"timestamp":1772348982650,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222123},"timestamp":1772348984687,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222177},"timestamp":1772348986741,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222224},"timestamp":1772348988788,"hypothesisId":"H2"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/api/projects/eacb19c1-b334-4876-ae93-dd10879995aa/summary-pdf","durationMs":39221},"timestamp":1772348989164,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222265},"timestamp":1772348990831,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222319},"timestamp":1772348992882,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":220375},"timestamp":1772348994938,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222378},"timestamp":1772348994941,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":218375},"timestamp":1772348994939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":216376},"timestamp":1772348994939,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":222564},"timestamp":1772349003128,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349018570,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":238996},"timestamp":1772349021561,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":236998},"timestamp":1772349021562,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":237034},"timestamp":1772349023599,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":25,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":237089},"timestamp":1772349025653,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":26,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":237139},"timestamp":1772349027703,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":238750},"timestamp":1772349029801,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":242788},"timestamp":1772349033851,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":240291},"timestamp":1772349033855,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":238302},"timestamp":1772349033866,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":244474},"timestamp":1772349042038,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":260914},"timestamp":1772349060479,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":260952},"timestamp":1772349062517,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":261031},"timestamp":1772349064596,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":261048},"timestamp":1772349066613,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":230092},"timestamp":1772349068660,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349069199,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349069201,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349070713,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349070719,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":174204},"timestamp":1772349072770,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349072772,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":155609},"timestamp":1772349072771,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349072775,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349078567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349105519,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":181952},"timestamp":1772349105517,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349105523,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":185964},"timestamp":1772349105530,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":183965},"timestamp":1772349105531,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":188367},"timestamp":1772349105531,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349105534,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349105537,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":365679},"timestamp":1772349107572,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":186108},"timestamp":1772349111674,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":369781},"timestamp":1772349111674,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349111675,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349111678,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":184119},"timestamp":1772349111684,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349111685,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349111689,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":190290},"timestamp":1772349119857,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349119859,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349119864,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":179725},"timestamp":1772349138296,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349138299,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349138303,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349138566,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":121334},"timestamp":1772349139905,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349139905,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":22,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349139909,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":63817},"timestamp":1772349142385,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":23,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349142387,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":24,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349142390,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349157976,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":99},"timestamp":1772349157994,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":100},"timestamp":1772349157995,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349158023,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349158029,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349158048,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349158050,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349160567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349162566,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349164567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349166566,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349168567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349170567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349172567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349174568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349176567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349178567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349180567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":42730},"timestamp":1772349181297,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349182567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349184567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349186567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349188567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349190568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349192568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349194568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349196568,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":101},"timestamp":1772349197174,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":102},"timestamp":1772349197174,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349197186,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349197189,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349197197,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349197197,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349199567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349201568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349203567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349205567,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349207568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349209568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349211568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349213568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349215568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59174},"timestamp":1772349217152,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59103},"timestamp":1772349217152,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59101},"timestamp":1772349217152,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349217568,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59133},"timestamp":1772349219701,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":75578},"timestamp":1772349238146,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":89492},"timestamp":1772349256060,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":83492},"timestamp":1772349256061,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":81493},"timestamp":1772349256062,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":79499},"timestamp":1772349256068,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":91500},"timestamp":1772349256068,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":87501},"timestamp":1772349256069,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":85501},"timestamp":1772349256070,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":77503},"timestamp":1772349256072,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349258569,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":94477},"timestamp":1772349277046,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":17,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":88480},"timestamp":1772349277049,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":92483},"timestamp":1772349277052,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":16,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":90488},"timestamp":1772349277056,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":96488},"timestamp":1772349277057,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":19,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":84493},"timestamp":1772349277062,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":21,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":80494},"timestamp":1772349277063,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":18,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":86494},"timestamp":1772349277064,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":20,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":82495},"timestamp":1772349277064,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":75871},"timestamp":1772349277440,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349277446,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349277453,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":71875},"timestamp":1772349279445,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349279446,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349279450,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":63887},"timestamp":1772349279456,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":6,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":73888},"timestamp":1772349279456,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":67887},"timestamp":1772349279456,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":61887},"timestamp":1772349279457,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":69887},"timestamp":1772349279457,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":75888},"timestamp":1772349279457,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":65887},"timestamp":1772349279457,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":7,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349279458,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":8,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349279461,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":97782},"timestamp":1772349294981,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":9,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349294986,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":95415},"timestamp":1772349294984,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":97785},"timestamp":1772349294985,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":10,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349294991,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":13,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":59273},"timestamp":1772349317843,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":11,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349317849,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":12,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349317860,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349318570,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349345466,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":103},"timestamp":1772349345496,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349345533,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":104},"timestamp":1772349345497,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349345552,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:render","message":"Design Summary render","data":{"renderCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349345538,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349345553,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772349346696,"hypothesisId":"H1"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349347555,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349349554,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData start","message":"Design Summary loadData start","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa"},"timestamp":1772349351555,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":105},"timestamp":1772349353093,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":106},"timestamp":1772349353093,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":4,"projectCount":1},"timestamp":1772349353115,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":107},"timestamp":1772349353116,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":108},"timestamp":1772349353116,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:completionEffect start","message":"Dashboard completion effect start","data":{"effectRun":5,"projectCount":1},"timestamp":1772349353133,"hypothesisId":"H3"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":109},"timestamp":1772349355976,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":110},"timestamp":1772349355977,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":111},"timestamp":1772349356005,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":112},"timestamp":1772349356006,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":14,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":39221},"timestamp":1772349357791,"hypothesisId":"H2"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":113},"timestamp":1772349368093,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":114},"timestamp":1772349368094,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":115},"timestamp":1772349368120,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":116},"timestamp":1772349368120,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":117},"timestamp":1772349370799,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":118},"timestamp":1772349370799,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":119},"timestamp":1772349370826,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":120},"timestamp":1772349370826,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":121},"timestamp":1772349384437,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":122},"timestamp":1772349384438,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":38896},"timestamp":1772349385592,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772349385898,"hypothesisId":"H5"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":3,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":38366},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":2,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":40368},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":5,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":34366},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":1,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":40370},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":4,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":36367},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"design-summary.tsx:loadData end","message":"Design Summary loadData end","data":{"runCount":15,"projectId":"eacb19c1-b334-4876-ae93-dd10879995aa","durationMs":40456},"timestamp":1772349385922,"hypothesisId":"H2"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-black-text.png"},"timestamp":1772349386070,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772349386178,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":2},"timestamp":1772349386180,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon.svg"},"timestamp":1772349386186,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":3},"timestamp":1772349386191,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":4},"timestamp":1772349386191,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":5},"timestamp":1772349391202,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":6},"timestamp":1772349391203,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772349414287,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-black-text.png","durationMs":38963},"timestamp":1772349425033,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon.svg","durationMs":39177},"timestamp":1772349425363,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon-light-32x32.png"},"timestamp":1772349425393,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":7},"timestamp":1772349429995,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":8},"timestamp":1772349429997,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772349445888,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":38945},"timestamp":1772349484833,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772349487456,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-black-text.png"},"timestamp":1772349487866,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772349487967,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":2},"timestamp":1772349487968,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":3},"timestamp":1772349487997,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":4},"timestamp":1772349487997,"hypothesisId":"H5"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon.svg"},"timestamp":1772349488017,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":5},"timestamp":1772349493005,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":6},"timestamp":1772349493006,"hypothesisId":"H5"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-black-text.png","durationMs":38917},"timestamp":1772349526783,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon.svg","durationMs":39398},"timestamp":1772349527415,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon-light-32x32.png"},"timestamp":1772349527447,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/"},"timestamp":1772349533746,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon-light-32x32.png","durationMs":39239},"timestamp":1772349566686,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/","durationMs":39235},"timestamp":1772349572981,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-footer-logo.png"},"timestamp":1772349573534,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-logo-white.png"},"timestamp":1772349573541,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/images/troovstudio-logo.png"},"timestamp":1772349573721,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-black-text.png"},"timestamp":1772349578071,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-logo-white.png","durationMs":38950},"timestamp":1772349612491,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-footer-logo.png","durationMs":39264},"timestamp":1772349612798,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/images/troovstudio-logo.png","durationMs":39192},"timestamp":1772349612913,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon.svg"},"timestamp":1772349612932,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-black-text.png","durationMs":38948},"timestamp":1772349617019,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon.svg","durationMs":39267},"timestamp":1772349652199,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/icon-light-32x32.png"},"timestamp":1772349652234,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/login"},"timestamp":1772349680931,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/icon-light-32x32.png","durationMs":38892},"timestamp":1772349691126,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/login","durationMs":38854},"timestamp":1772349719785,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/login"},"timestamp":1772349720113,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/login","durationMs":39087},"timestamp":1772349759200,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/troov-studio-black-text.png"},"timestamp":1772349759302,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772349759351,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/dashboard"},"timestamp":1772349779287,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/troov-studio-black-text.png","durationMs":38806},"timestamp":1772349798108,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":39271},"timestamp":1772349798622,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/dashboard","durationMs":38791},"timestamp":1772349818078,"hypothesisId":"H1"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":1},"timestamp":1772349818151,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":2},"timestamp":1772349818152,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":3},"timestamp":1772349818164,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":4},"timestamp":1772349818164,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":5},"timestamp":1772349818178,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":6},"timestamp":1772349818178,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":7},"timestamp":1772349823596,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":8},"timestamp":1772349823597,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":9},"timestamp":1772349862776,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":10},"timestamp":1772349862780,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":11},"timestamp":1772349882764,"hypothesisId":"H5"}
+{"location":"dashboard/page.tsx:render","message":"Dashboard render","data":{"renderCount":12},"timestamp":1772349882766,"hypothesisId":"H5"}

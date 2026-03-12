@@ -1,0 +1,4 @@
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/login"},"timestamp":1772396746625,"hypothesisId":"H1"}
+{"location":"middleware.ts:entry","message":"middleware hit","data":{"path":"/login"},"timestamp":1772396779147,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/login","durationMs":38949,"getUserMs":38946,"isAuthRoute":true,"hasUser":false},"timestamp":1772396785574,"hypothesisId":"H1"}
+{"location":"middleware.ts:exit","message":"middleware done","data":{"path":"/login","durationMs":38993,"getUserMs":38989,"isAuthRoute":true,"hasUser":false},"timestamp":1772396818140,"hypothesisId":"H1"}

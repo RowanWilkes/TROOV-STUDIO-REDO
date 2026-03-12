@@ -4,11 +4,38 @@ import { Card } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Check } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly")
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const router = useRouter()
+
+  const handleUpgrade = async (period: "monthly" | "yearly") => {
+    setCheckoutLoading(true)
+    try {
+      const res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingPeriod: period }),
+      })
+      if (res.status === 401) {
+        router.push("/login")
+        return
+      }
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err) {
+      console.error("Checkout error:", err)
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,7 +107,10 @@ export default function PricingPage() {
                     </p>
                   </div>
 
-                  <Button className="w-full h-14 text-base font-semibold bg-black hover:bg-gray-900 text-white rounded-xl">
+                  <Button
+                    className="w-full h-14 text-base font-semibold bg-black hover:bg-gray-900 text-white rounded-xl"
+                    onClick={() => router.push("/signup")}
+                  >
                     Get Started Free
                   </Button>
 
@@ -141,8 +171,12 @@ export default function PricingPage() {
                     </p>
                   </div>
 
-                  <Button className="w-full h-14 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-900 rounded-xl">
-                    Upgrade to Pro
+                  <Button
+                    className="w-full h-14 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-900 rounded-xl"
+                    onClick={() => handleUpgrade(billingPeriod)}
+                    disabled={checkoutLoading}
+                  >
+                    {checkoutLoading ? "Loading..." : "Upgrade to Pro"}
                   </Button>
 
                   <div className="pt-2">

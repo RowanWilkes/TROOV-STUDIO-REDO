@@ -664,6 +664,13 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     }
   }, [searchParams, projects])
 
+  useEffect(() => {
+    if (searchParams.get("upgraded") === "true") {
+      toast.success("🎉 Welcome to Pro! Your account has been upgraded.")
+      router.replace("/dashboard")
+    }
+  }, [searchParams, router])
+
   const fetchDownloadedSummaries = React.useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -945,8 +952,21 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     })
   }
 
-  const handleUpgrade = () => {
-    router.push("/pricing")
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "same-origin",
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error("Failed to start checkout. Please try again.")
+      }
+    } catch {
+      toast.error("Failed to start checkout. Please try again.")
+    }
   }
 
   const resetPasswordFormState = () => {
