@@ -26,7 +26,14 @@ export default function SignupPage() {
     setIsLoading(true)
 
     console.log("[signup] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
     console.log("[signup] signUp result:", { data, error })
 
     if (error) {
