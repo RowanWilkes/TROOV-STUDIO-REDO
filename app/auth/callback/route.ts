@@ -7,15 +7,18 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code")
   const token_hash = searchParams.get("token_hash")
   const type = searchParams.get("type")
-  const next = searchParams.get("next") ?? "/dashboard"
+
+  // Detect if the request is coming from a mobile device
+  const userAgent = request.headers.get("user-agent") || ""
+  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(userAgent)
+
+  let confirmationSuccess = false
 
   // Handle PKCE flow (code parameter)
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
+    if (!error) confirmationSuccess = true
   }
 
   // Handle token hash flow (email confirmation links)
@@ -25,11 +28,19 @@ export async function GET(request: NextRequest) {
       token_hash,
       type: type as "email" | "recovery" | "invite" | "email_change",
     })
-    if (!error) {
+    if (!error) confirmationSuccess = true
+  }
+
+  if (confirmationSuccess) {
+    if (isMobile) {
+      // On mobile: show a page telling them to go back to their desktop
+      return NextResponse.redirect(`${origin}/auth/confirmed?device=mobile`)
+    } else {
+      // On desktop: go straight to dashboard
       return NextResponse.redirect(`${origin}/dashboard`)
     }
   }
 
-  // If neither worked, redirect to login with error message
+  // If confirmation failed
   return NextResponse.redirect(`${origin}/login?error=Could not confirm your email. Please try again.`)
 }
