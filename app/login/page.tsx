@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     getInitialSession().then((session) => {
@@ -30,18 +31,36 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (error) {
-        console.error("[login] signIn error:", error)
+      if (signInError) {
+        console.error("[login] signIn error:", signInError)
+        if (
+          signInError.message.toLowerCase().includes("invalid login credentials") ||
+          signInError.message.toLowerCase().includes("invalid email or password") ||
+          signInError.message.toLowerCase().includes("user not found") ||
+          signInError.message.toLowerCase().includes("no user found")
+        ) {
+          setError("No account found with this email. Please check your email or sign up for a new account.")
+        } else if (signInError.message.toLowerCase().includes("email not confirmed")) {
+          setError("Please confirm your email address before signing in. Check your inbox for a confirmation link.")
+        } else if (
+          signInError.message.toLowerCase().includes("too many requests") ||
+          (signInError as { status?: number }).status === 429
+        ) {
+          setError("Too many sign in attempts. Please wait a few minutes and try again.")
+        } else {
+          setError(signInError.message)
+        }
         setIsLoading(false)
         return
       }
 
-      if (data.session) {
+      if (data?.session) {
         const existingUser = getUser()
         if (!existingUser) {
           initializeUser(email, email.split("@")[0])
@@ -118,6 +137,20 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+                {error}
+                {error.includes("sign up") && (
+                  <span>
+                    {" "}
+                    <a href="/signup" className="font-semibold underline hover:text-red-800">
+                      Create an account here
+                    </a>
+                  </span>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"

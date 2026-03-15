@@ -3,26 +3,14 @@
 import { useEffect } from "react"
 import { usePreferences } from "@/lib/usePreferences"
 
-const THEME_DEFAULT = "light"
 const COMPACT_DEFAULT = false
 const SHOW_ANIMATIONS_DEFAULT = true
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const { prefs } = usePreferences()
 
-  const theme = prefs?.theme ?? THEME_DEFAULT
   const compactMode = prefs?.compact_mode ?? COMPACT_DEFAULT
   const showAnimations = prefs?.show_animations ?? SHOW_ANIMATIONS_DEFAULT
-
-  useEffect(() => {
-    const root = document.documentElement
-
-    if (theme === "dark") {
-      root.classList.add("dark")
-    } else {
-      root.classList.remove("dark")
-    }
-  }, [theme])
 
   useEffect(() => {
     const root = document.documentElement

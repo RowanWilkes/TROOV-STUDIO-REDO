@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "Troov Studio — The Project Planner Built for Web Designers",
   description: "Plan, brief, and deliver web design projects faster. Troov Studio gives you mood boards, style guides, sitemaps, technical specs and a one-click PDF summary — all in one place. Free to start.",
   keywords: "web design project management, design brief tool, mood board, style guide, sitemap builder, web designer tools",
+  applicationName: "Troov Studio",
+  alternates: {
+    canonical: "https://troovstudio.com",
+  },
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-icon.png",

@@ -2078,27 +2078,6 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                     <CardContent className="space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">Dashboard Theme</p>
-                          <p className="text-sm text-gray-600">Choose your preferred color scheme</p>
-                        </div>
-                        <Select
-                          value={prefs?.theme ?? "light"}
-                          onValueChange={(v) => updatePrefs({ theme: v as "light" | "dark" | "system" })}
-                          disabled={prefsLoading || prefsSaving || prefs == null}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
                           <p className="font-medium text-gray-900">Compact Mode</p>
                           <p className="text-sm text-gray-600">Reduce spacing for more content</p>
                         </div>
