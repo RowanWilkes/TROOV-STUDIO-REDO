@@ -2,7 +2,6 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // Bypass middleware completely for all API routes including Stripe webhook
   if (request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next()
   }
@@ -26,9 +25,7 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (user && !user.email_confirmed_at) {
     const url = request.nextUrl.clone()
