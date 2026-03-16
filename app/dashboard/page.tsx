@@ -758,6 +758,23 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
+    supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (!error && data) setSubscription(data as SubscriptionRow)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
     if (activeView === "account-usage") setSubscriptionLoading(true)
     supabase
       .from("user_subscriptions")
