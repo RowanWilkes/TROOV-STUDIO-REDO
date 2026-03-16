@@ -515,6 +515,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   }
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null)
   const [subscriptionLoading, setSubscriptionLoading] = useState(false)
+  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const [supportSubject, setSupportSubject] = useState("")
   const [supportMessage, setSupportMessage] = useState("")
@@ -766,6 +767,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
       .then(({ data, error }) => {
         if (cancelled) return
         if (!error && data) setSubscription(data as SubscriptionRow)
+        setSubscriptionLoaded(true)
       })
     return () => {
       cancelled = true
@@ -1284,7 +1286,9 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
               onRenameProject={handleRenameProject}
               userPlan={subscription?.plan ?? "free"}
               freePlanLimitReached={
-                !(subscription?.plan === "pro" && subscription?.status !== "free") && projects.length >= 1
+                subscriptionLoaded &&
+                !(subscription?.plan === "pro" || subscription?.plan === "professional") &&
+                projects.length >= 1
               }
             />
 
