@@ -756,9 +756,9 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   }, [prefs?.user_id, prefs?.collapse_sidebar, prefs?.default_project_view])
 
   useEffect(() => {
-    if (activeView !== "account-usage" || !user?.id) return
+    if (!user?.id) return
     let cancelled = false
-    setSubscriptionLoading(true)
+    if (activeView === "account-usage") setSubscriptionLoading(true)
     supabase
       .from("user_subscriptions")
       .select("*")
@@ -1227,7 +1227,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
         </div>
 
         <div className="border-t border-gray-200 p-3 space-y-2">
-          {user?.plan !== "pro" && user?.plan !== "team" && (
+          {subscription?.plan !== "pro" && subscription?.plan !== "team" && (
             <Button
               onClick={handleUpgrade}
               className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-medium"

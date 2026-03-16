@@ -68,10 +68,10 @@ export function UpgradeDialog({ open, onOpenChange, feature = "projects" }: Upgr
 
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">$20</span>
+              <span className="text-3xl font-bold text-foreground">$19</span>
               <span className="text-muted-foreground text-sm">/ month</span>
             </div>
-            <p className="text-xs text-muted-foreground">Cancel anytime. 14-day free trial.</p>
+            <p className="text-xs text-muted-foreground">Cancel anytime.</p>
           </div>
         </div>
 

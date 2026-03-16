@@ -3,15 +3,31 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Check } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { supabase } from "@/lib/supabase"
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly")
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [userPlan, setUserPlan] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from("user_subscriptions")
+        .select("plan")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.plan) setUserPlan(data.plan)
+        })
+    })
+  }, [])
 
   const handleUpgrade = async (period: "monthly" | "yearly") => {
     setCheckoutLoading(true)
@@ -173,10 +189,10 @@ export default function PricingPage() {
 
                   <Button
                     className="w-full h-14 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-900 rounded-xl"
-                    onClick={() => handleUpgrade(billingPeriod)}
-                    disabled={checkoutLoading}
+                    onClick={() => userPlan !== "pro" && handleUpgrade(billingPeriod)}
+                    disabled={checkoutLoading || userPlan === "pro"}
                   >
-                    {checkoutLoading ? "Loading..." : "Upgrade to Pro"}
+                    {userPlan === "pro" ? "Current Plan" : checkoutLoading ? "Loading..." : "Upgrade to Pro"}
                   </Button>
 
                   <div className="pt-2">
