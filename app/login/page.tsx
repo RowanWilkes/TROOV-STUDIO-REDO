@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { getUser, initializeUser } from "@/lib/user-service"
 import { supabase } from "@/lib/supabase"
 import { getInitialSession } from "@/lib/auth-session"
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
@@ -229,5 +229,19 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   )
 }
