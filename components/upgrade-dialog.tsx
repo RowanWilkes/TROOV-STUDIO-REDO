@@ -24,9 +24,13 @@ export function UpgradeDialog({ open, onOpenChange, feature = "projects" }: Upgr
   const content = {
     projects: {
       title: "Unlock Unlimited Projects",
-      description:
-        "You've used your free project. Upgrade to Pro to create unlimited projects and unlock premium features.",
-      benefits: ["Unlimited projects", "Advanced collaboration tools", "Priority support", "Export summaries"],
+      description: "You've used your free project. Upgrade to Pro to create unlimited projects.",
+      benefits: [
+        "Unlimited projects",
+        "Mood boards & style guides",
+        "PDF summary exports",
+        "Priority support",
+      ],
     },
     exports: {
       title: "Unlock Summary Exports",
@@ -68,7 +72,7 @@ export function UpgradeDialog({ open, onOpenChange, feature = "projects" }: Upgr
 
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">$19</span>
+              <span className="text-3xl font-bold text-foreground">$10</span>
               <span className="text-muted-foreground text-sm">/ month</span>
             </div>
             <p className="text-xs text-muted-foreground">Cancel anytime.</p>

@@ -1284,7 +1284,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
               onRenameProject={handleRenameProject}
               userPlan={subscription?.plan ?? "free"}
               freePlanLimitReached={
-                (subscription?.plan ?? "free") === "free" && projects.length >= 1
+                !(subscription?.plan === "pro" && subscription?.status !== "free") && projects.length >= 1
               }
             />
 
