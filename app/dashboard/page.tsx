@@ -1282,7 +1282,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
               onCreateProject={handleCreateProject}
               onDeleteProject={handleDeleteProject}
               onRenameProject={handleRenameProject}
-              userPlan={user?.plan || "free"}
+              userPlan={subscription?.plan ?? "free"}
               freePlanLimitReached={
                 (subscription?.plan ?? "free") === "free" && projects.length >= 1
               }
@@ -1413,7 +1413,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                   )}
                   <div className="text-left hidden md:block">
                     <p className="text-sm font-medium text-gray-900">{displayName || "User"}</p>
-                    <p className="text-xs text-gray-500 capitalize">{user?.plan || "free"} Plan</p>
+                    <p className="text-xs text-gray-500 capitalize">{subscription?.plan ?? "free"} Plan</p>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 </Button>
@@ -1546,7 +1546,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600">Plan Status</p>
-                            <p className="text-2xl font-bold text-gray-900 capitalize">{user?.plan || "Free"}</p>
+                            <p className="text-2xl font-bold text-gray-900 capitalize">{subscription?.plan ?? "Free"}</p>
                           </div>
                           <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
                             <Crown className="h-5 w-5 text-yellow-600" />
