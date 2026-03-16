@@ -92,6 +92,19 @@ export async function POST(request: Request) {
           } catch (emailErr) {
             console.error("[webhook] upgrade email error:", emailErr)
           }
+          try {
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              project_id: null,
+              type: "subscription_upgraded",
+              title: "🎉 Welcome to Pro!",
+              body: "Your account has been upgraded to Troov Studio Pro. You now have unlimited projects and all Pro features.",
+              url: "/dashboard",
+              is_read: false,
+            })
+          } catch (notifErr) {
+            console.error("[webhook] upgrade notification error:", notifErr)
+          }
         }
 
         break
@@ -112,6 +125,37 @@ export async function POST(request: Request) {
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_customer_id", customerId)
+
+        if (cancelAtPeriodEnd) {
+          try {
+            const sub = event.data.object as Stripe.Subscription
+            const periodEnd = new Date(sub.current_period_end * 1000)
+            const formattedDate = periodEnd.toLocaleDateString("en-AU", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+            const { data: subRow } = await supabase
+              .from("user_subscriptions")
+              .select("user_id")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle()
+            const userId = subRow?.user_id
+            if (userId) {
+              await supabase.from("notifications").insert({
+                user_id: userId,
+                project_id: null,
+                type: "subscription_cancelling",
+                title: "Subscription cancelled",
+                body: `Your Pro subscription has been cancelled. You will have Pro access until ${formattedDate}.`,
+                url: "/dashboard",
+                is_read: false,
+              })
+            }
+          } catch (notifErr) {
+            console.error("[webhook] cancelling notification error:", notifErr)
+          }
+        }
         break
       }
 
@@ -166,6 +210,19 @@ export async function POST(request: Request) {
           } catch (emailErr) {
             console.error("[webhook] cancellation email error:", emailErr)
           }
+          try {
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              project_id: null,
+              type: "subscription_ended",
+              title: "Pro subscription ended",
+              body: "Your Troov Studio Pro subscription has ended. You have been moved to the Free plan. Upgrade anytime to regain Pro access.",
+              url: "/dashboard",
+              is_read: false,
+            })
+          } catch (notifErr) {
+            console.error("[webhook] subscription ended notification error:", notifErr)
+          }
         }
 
         break
@@ -215,6 +272,19 @@ export async function POST(request: Request) {
             }
           } catch (emailErr) {
             console.error("[webhook] payment failed email error:", emailErr)
+          }
+          try {
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              project_id: null,
+              type: "payment_failed",
+              title: "⚠️ Payment failed",
+              body: "We could not process your payment for Troov Studio Pro. Please update your payment details to keep your Pro access.",
+              url: "/dashboard",
+              is_read: false,
+            })
+          } catch (notifErr) {
+            console.error("[webhook] payment failed notification error:", notifErr)
           }
         }
 
