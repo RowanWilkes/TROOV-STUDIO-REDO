@@ -99,28 +99,16 @@ export async function POST(request: Request) {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription
-        const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? ""
-        const { status } = subscription
-
-        let plan: string
-        let mappedStatus: string
-        if (status === "active" || status === "trialing") {
-          plan = "pro"
-          mappedStatus = "active"
-        } else if (status === "past_due") {
-          plan = "pro"
-          mappedStatus = "past_due"
-        } else {
-          plan = "free"
-          mappedStatus = status
-        }
+        const customerId =
+          typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? ""
+        const cancelAtPeriodEnd = subscription.cancel_at_period_end
 
         await supabase
           .from("user_subscriptions")
           .update({
-            plan,
-            status: mappedStatus,
+            status: cancelAtPeriodEnd ? "cancelling" : subscription.status,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            stripe_subscription_id: subscription.id,
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_customer_id", customerId)

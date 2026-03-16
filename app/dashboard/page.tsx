@@ -2326,6 +2326,71 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                           const nextBilling = subscription?.current_period_end
                             ? new Date(subscription.current_period_end).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
                             : null
+                          if (status === "cancelling") {
+                            return (
+                              <Card>
+                                <CardHeader>
+                                  <CardTitle>Billing Information</CardTitle>
+                                  <CardDescription>Manage your payment method and billing details</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <p className="text-sm text-gray-600">
+                                    Plan status:{" "}
+                                    <span className="font-medium capitalize">{status.replace("_", " ")}</span>
+                                  </p>
+                                  {nextBilling && (
+                                    <p className="text-sm text-gray-600">
+                                      Your subscription has been cancelled. You have Pro access until {nextBilling}.
+                                    </p>
+                                  )}
+                                  <div className="flex flex-wrap gap-2 pt-2">
+                                    <Button
+                                      onClick={handleManageBilling}
+                                      disabled={portalLoading}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      {portalLoading ? "Opening…" : "Manage Billing"}
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          }
+
+                          if (status === "past_due") {
+                            return (
+                              <Card>
+                                <CardHeader>
+                                  <CardTitle>Billing Information</CardTitle>
+                                  <CardDescription>Manage your payment method and billing details</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <p className="text-sm text-gray-600">
+                                    Plan status:{" "}
+                                    <span className="font-medium capitalize">{status.replace("_", " ")}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Payment failed. Please update your payment details.
+                                  </p>
+                                  {nextBilling && (
+                                    <p className="text-sm text-gray-600">Next billing date: {nextBilling}</p>
+                                  )}
+                                  <div className="flex flex-wrap gap-2 pt-2">
+                                    <Button
+                                      onClick={handleManageBilling}
+                                      disabled={portalLoading}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      {portalLoading ? "Opening…" : "Manage Billing"}
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          }
+
                           return (
                             <Card>
                               <CardHeader>
@@ -2334,13 +2399,19 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                               </CardHeader>
                               <CardContent className="space-y-4">
                                 <p className="text-sm text-gray-600">
-                                  Plan status: <span className="font-medium capitalize">{status.replace("_", " ")}</span>
+                                  Plan status:{" "}
+                                  <span className="font-medium capitalize">{status.replace("_", " ")}</span>
                                 </p>
                                 {nextBilling && (
                                   <p className="text-sm text-gray-600">Next billing date: {nextBilling}</p>
                                 )}
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                  <Button onClick={handleManageBilling} disabled={portalLoading} variant="outline" size="sm">
+                                  <Button
+                                    onClick={handleManageBilling}
+                                    disabled={portalLoading}
+                                    variant="outline"
+                                    size="sm"
+                                  >
                                     {portalLoading ? "Opening…" : "Manage Billing"}
                                   </Button>
                                   <Button
