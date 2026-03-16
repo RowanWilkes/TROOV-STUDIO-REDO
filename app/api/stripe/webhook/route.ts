@@ -7,6 +7,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -26,7 +27,8 @@ export async function POST(request: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
         const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id ?? ""
-        const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? ""
+        const subscriptionId =
+          typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? ""
 
         if (!customerId || !subscriptionId) {
           console.error("[stripe webhook] checkout.session.completed missing customer or subscription", {
@@ -54,7 +56,6 @@ export async function POST(request: Request) {
           break
         }
 
-        // Send confirmation email
         const { data: subRow } = await supabase
           .from("user_subscriptions")
           .select("user_id")
@@ -62,91 +63,176 @@ export async function POST(request: Request) {
           .maybeSingle()
 
         const userId = subRow?.user_id
-        if (userId && process.env.RESEND_API_KEY) {
-          const { data: authUser } = await supabase.auth.admin.getUserById(userId)
-          const userEmail = authUser?.user?.email
-          if (userEmail) {
-            const resend = new Resend(process.env.RESEND_API_KEY)
-            await resend.emails.send({
-              from: "Troov Studio <contact@troov-marketing.com>",
-              to: userEmail,
-              subject: "Welcome to Troov Studio Pro!",
-              html: `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
-      <h1 style="font-size:20px;font-weight:700;color:#111827;">You're now on Troov Studio Pro!</h1>
-      <p style="color:#6b7280;font-size:15px;line-height:1.6;">
-        Thank you for upgrading. You now have access to unlimited projects and all Pro features.
-      </p>
-      <p style="color:#6b7280;font-size:15px;">
-        <a href="https://troovstudio.com/dashboard" style="color:#059669;font-weight:600;">Go to your dashboard →</a>
-      </p>
-      <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0;">
-      <p style="color:#d1d5db;font-size:12px;">Troov Studio · troovstudio.com</p>
-    </div>
-  `,
-            }).catch((err) => console.error("[stripe webhook] Resend email failed", err))
+        if (userId) {
+          try {
+            const {
+              data: { user: authUser },
+            } = await supabase.auth.admin.getUserById(userId)
+            const userEmail = authUser?.email
+            if (userEmail) {
+              await resend.emails.send({
+                from: "Troov Studio <contact@troov-marketing.com>",
+                to: userEmail,
+                subject: "Welcome to Troov Studio Pro!",
+                html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+          <h1 style="font-size:20px;font-weight:700;color:#111827;">You're now on Troov Studio Pro!</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;">
+            Thank you for upgrading. You now have unlimited projects and access to all Pro features.
+          </p>
+          <p style="color:#6b7280;font-size:15px;">
+            <a href="https://www.troovstudio.com/dashboard" style="color:#059669;font-weight:600;">Go to your dashboard →</a>
+          </p>
+          <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0;">
+          <p style="color:#d1d5db;font-size:12px;">Troov Studio · troovstudio.com</p>
+        </div>
+      `,
+              })
+            }
+          } catch (emailErr) {
+            console.error("[webhook] upgrade email error:", emailErr)
           }
         }
+
         break
       }
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription
         const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? ""
-      const { status } = subscription
+        const { status } = subscription
 
-      let plan: string
-      let mappedStatus: string
-      if (status === "active" || status === "trialing") {
-        plan = "pro"
-        mappedStatus = "active"
-      } else if (status === "past_due") {
-        plan = "pro"
-        mappedStatus = "past_due"
-      } else {
-        plan = "free"
-        mappedStatus = status
+        let plan: string
+        let mappedStatus: string
+        if (status === "active" || status === "trialing") {
+          plan = "pro"
+          mappedStatus = "active"
+        } else if (status === "past_due") {
+          plan = "pro"
+          mappedStatus = "past_due"
+        } else {
+          plan = "free"
+          mappedStatus = status
+        }
+
+        await supabase
+          .from("user_subscriptions")
+          .update({
+            plan,
+            status: mappedStatus,
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_customer_id", customerId)
+        break
       }
 
-      await supabase
-        .from("user_subscriptions")
-        .update({
-          plan,
-          status: mappedStatus,
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("stripe_customer_id", customerId)
-      break
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId =
+          typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? ""
+
+        await supabase
+          .from("user_subscriptions")
+          .update({
+            plan: "free",
+            status: "canceled",
+            stripe_subscription_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_customer_id", customerId)
+
+        const { data: subRow } = await supabase
+          .from("user_subscriptions")
+          .select("user_id")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle()
+
+        const userId = subRow?.user_id
+        if (userId) {
+          try {
+            const {
+              data: { user: authUser },
+            } = await supabase.auth.admin.getUserById(userId)
+            const userEmail = authUser?.email
+            if (userEmail) {
+              await resend.emails.send({
+                from: "Troov Studio <contact@troov-marketing.com>",
+                to: userEmail,
+                subject: "Your Troov Studio Pro subscription has been cancelled",
+                html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+          <h1 style="font-size:20px;font-weight:700;color:#111827;">Your subscription has ended</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;">
+            Your Troov Studio Pro subscription has been cancelled. You have been moved to the Free plan and can still access your existing project.
+          </p>
+          <p style="color:#6b7280;font-size:15px;">
+            Changed your mind? <a href="https://www.troovstudio.com/pricing" style="color:#059669;font-weight:600;">Resubscribe here →</a>
+          </p>
+          <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0;">
+          <p style="color:#d1d5db;font-size:12px;">Troov Studio · troovstudio.com</p>
+        </div>
+      `,
+              })
+            }
+          } catch (emailErr) {
+            console.error("[webhook] cancellation email error:", emailErr)
+          }
+        }
+
+        break
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice
+        const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id ?? ""
+
+        await supabase
+          .from("user_subscriptions")
+          .update({ status: "past_due", updated_at: new Date().toISOString() })
+          .eq("stripe_customer_id", customerId)
+
+        const { data: subRow } = await supabase
+          .from("user_subscriptions")
+          .select("user_id")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle()
+
+        const userId = subRow?.user_id
+        if (userId) {
+          try {
+            const {
+              data: { user: authUser },
+            } = await supabase.auth.admin.getUserById(userId)
+            const userEmail = authUser?.email
+            if (userEmail) {
+              await resend.emails.send({
+                from: "Troov Studio <contact@troov-marketing.com>",
+                to: userEmail,
+                subject: "Payment failed for your Troov Studio subscription",
+                html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+          <h1 style="font-size:20px;font-weight:700;color:#111827;">Payment failed</h1>
+          <p style="color:#6b7280;font-size:15px;line-height:1.6;">
+            We could not process your payment for Troov Studio Pro. Please update your payment details to keep your Pro access.
+          </p>
+          <p style="color:#6b7280;font-size:15px;">
+            <a href="https://www.troovstudio.com/dashboard" style="color:#059669;font-weight:600;">Update payment details →</a>
+          </p>
+          <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0;">
+          <p style="color:#d1d5db;font-size:12px;">Troov Studio · troovstudio.com</p>
+        </div>
+      `,
+              })
+            }
+          } catch (emailErr) {
+            console.error("[webhook] payment failed email error:", emailErr)
+          }
+        }
+
+        break
+      }
     }
-
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription
-      const customerId = subscription.customer as string
-
-      await supabase
-        .from("user_subscriptions")
-        .update({
-          plan: "free",
-          status: "canceled",
-          stripe_subscription_id: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("stripe_customer_id", customerId)
-      break
-    }
-
-    case "invoice.payment_failed": {
-      const invoice = event.data.object as Stripe.Invoice
-      const customerId = invoice.customer as string
-
-      await supabase
-        .from("user_subscriptions")
-        .update({ status: "past_due", updated_at: new Date().toISOString() })
-        .eq("stripe_customer_id", customerId)
-      break
-    }
-  }
   } catch (err) {
     console.error("[stripe webhook] Unhandled webhook error", err)
   }
