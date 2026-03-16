@@ -79,16 +79,18 @@ function SignupContent() {
   }
 
   useEffect(() => {
-    if (!emailSent) return
+    if (!emailSent || !email) return
 
+    // Listen for auth state changes on this device
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
+      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
         router.push("/dashboard")
       }
     })
 
+    // Poll the server every 3 seconds to check if email was confirmed on ANY device
     let attempts = 0
     const interval = setInterval(async () => {
       attempts++
@@ -96,12 +98,26 @@ function SignupContent() {
         clearInterval(interval)
         return
       }
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (session?.user?.email_confirmed_at) {
-        clearInterval(interval)
-        router.push("/dashboard")
+
+      try {
+        const res = await fetch("/api/auth/check-confirmed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        })
+        const { confirmed } = await res.json()
+
+        if (confirmed) {
+          clearInterval(interval)
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            router.push("/dashboard")
+          } else {
+            router.push("/login?confirmed=true")
+          }
+        }
+      } catch {
+        // Silently fail and keep polling
       }
     }, 3000)
 
@@ -109,7 +125,7 @@ function SignupContent() {
       subscription.unsubscribe()
       clearInterval(interval)
     }
-  }, [emailSent, router])
+  }, [emailSent, email, router])
 
   useEffect(() => {
     if (searchParams.get("confirm") === "pending") {

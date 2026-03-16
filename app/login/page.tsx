@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,10 +16,18 @@ import { getInitialSession } from "@/lib/auth-session"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (searchParams.get("confirmed") === "true") {
+      setSuccessMessage("Email confirmed! Please sign in to continue.")
+    }
+  }, [searchParams])
 
   useEffect(() => {
     getInitialSession().then((session) => {
@@ -97,6 +105,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {successMessage && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-700">
+                {successMessage}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-[#013B34]">
                 Email
