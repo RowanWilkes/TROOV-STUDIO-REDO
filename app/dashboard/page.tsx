@@ -775,9 +775,9 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (activeView !== "account-usage" || !user?.id) return
     let cancelled = false
-    if (activeView === "account-usage") setSubscriptionLoading(true)
+    setSubscriptionLoading(true)
     supabase
       .from("user_subscriptions")
       .select("*")
@@ -885,12 +885,14 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   }
 
   const handleCreateProject = async (projectName: string) => {
-    const plan = subscription?.plan ?? "free"
-    if (plan === "free" && projects.length >= 1) {
-      toast.error("Free plan project limit reached. Upgrade to create more projects.", {
-        action: { label: "Upgrade", onClick: () => router.push("/pricing") },
-      })
-      return
+    if (subscriptionLoaded) {
+      const isPro = subscription?.plan === "pro" || subscription?.plan === "professional"
+      if (!isPro && projects.length >= 1) {
+        toast.error("Free plan project limit reached. Upgrade to create more projects.", {
+          action: { label: "Upgrade", onClick: () => router.push("/pricing") },
+        })
+        return
+      }
     }
     const {
       data: { session },

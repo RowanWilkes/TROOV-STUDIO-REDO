@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, Plus, Trash2, FolderOpen } from "lucide-react"
 import type { Project } from "@/app/dashboard/page"
-import { canCreateProject, incrementLifetimeProjectCount } from "@/lib/user-service"
 import { UpgradeDialog } from "@/components/upgrade-dialog"
 
 type ProjectSelectorProps = {
@@ -59,15 +58,6 @@ export const ProjectSelector = forwardRef<{ openCreateDialog: () => void }, Proj
           setShowUpgradeDialog(true)
           return
         }
-
-        const { allowed } = canCreateProject()
-        if (!allowed) {
-          setIsCreateDialogOpen(false)
-          setShowUpgradeDialog(true)
-          return
-        }
-
-        incrementLifetimeProjectCount()
 
         onCreateProject(newProjectName.trim())
         setNewProjectName("")
