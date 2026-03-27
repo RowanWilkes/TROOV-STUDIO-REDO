@@ -857,23 +857,21 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
       setActiveTasks(0)
       return
     }
-
-    const storageKey = `project-${currentProjectId}-manual-tasks`
-    const savedTasks = localStorage.getItem(storageKey)
-
-    if (savedTasks) {
-      try {
-        const tasks = JSON.parse(savedTasks)
-        const activeCount = tasks.filter((t: any) => !t.completed).length
-        setActiveTasks(activeCount)
-      } catch (e) {
-        console.error("Failed to parse tasks", e)
-        setActiveTasks(0)
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id", { count: "exact" })
+        .eq("project_id", currentProjectId)
+        .eq("completed", false)
+      if (!cancelled && !error) {
+        setActiveTasks(data?.length ?? 0)
       }
-    } else {
-      setActiveTasks(0)
+    })()
+    return () => {
+      cancelled = true
     }
-  }, [currentProjectId, activeView])
+  }, [currentProjectId, activeView, refreshTrigger])
 
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId)
