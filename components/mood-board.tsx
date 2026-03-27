@@ -16,6 +16,30 @@ import { ImageIcon, Plus, X, Link } from "lucide-react"
 import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { useProjectRow } from "@/lib/useProjectRow"
 import { useProjectList } from "@/lib/useProjectList"
+import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
+
+async function uploadImageToStorage(file: File, projectId: string): Promise<string | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session?.user?.id) {
+    console.error("[mood-board] uploadImageToStorage: no session")
+    return null
+  }
+  const safeName = file.name.replace(/[/\\?#%]/g, "_") || "image"
+  const filePath = `${session.user.id}/${projectId}/${Date.now()}-${safeName}`
+  const { error } = await supabase.storage.from("mood-board-images").upload(filePath, file, {
+    upsert: false,
+    contentType: file.type || undefined,
+  })
+  if (error) {
+    console.error("[mood-board] storage upload error:", error)
+    return null
+  }
+  const { data } = supabase.storage.from("mood-board-images").getPublicUrl(filePath)
+  return data.publicUrl
+}
 
 interface InspirationImage {
   id: string
@@ -139,26 +163,25 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
     setEditingNotes("")
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
 
     const files = Array.from(e.dataTransfer.files)
-    files.forEach((file) => {
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          const imageUrl = event.target?.result as string
-          createItem({
-            type: "image",
-            url: imageUrl,
-            title: file.name.replace(/\.[^/.]+$/, ""),
-            notes: "",
-          })
-        }
-        reader.readAsDataURL(file)
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) continue
+      const imageUrl = await uploadImageToStorage(file, projectId)
+      if (imageUrl) {
+        createItem({
+          type: "image",
+          url: imageUrl,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          notes: "",
+        })
+      } else {
+        toast.error("Failed to upload image. Please try again.")
       }
-    })
+    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -171,23 +194,24 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
     setIsDragging(false)
   }
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const autoTitle = file.name.replace(/\.[^/.]+$/, "") || "Design Inspiration"
-          createItem({
-            type: "image",
-            url: reader.result as string,
-            title: autoTitle,
-            notes: "",
-          })
-        }
-        reader.readAsDataURL(file)
-      })
+    if (!files?.length) return
+    for (const file of Array.from(files)) {
+      const imageUrl = await uploadImageToStorage(file, projectId)
+      if (imageUrl) {
+        const autoTitle = file.name.replace(/\.[^/.]+$/, "") || "Design Inspiration"
+        createItem({
+          type: "image",
+          url: imageUrl,
+          title: autoTitle,
+          notes: "",
+        })
+      } else {
+        toast.error("Failed to upload image. Please try again.")
+      }
     }
+    e.target.value = ""
   }
 
   const saveImageNotes = (id: string) => {
