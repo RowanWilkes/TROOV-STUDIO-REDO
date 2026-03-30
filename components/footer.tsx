@@ -1,119 +1,104 @@
-"use client"
-
-import type React from "react"
-
+import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useState } from "react"
+
+const footerLinks = {
+  platform: {
+    title: "Platform",
+    links: [
+      { label: "Project Overview", href: "/features/project-overview" },
+      { label: "Mood Board", href: "/features/mood-board" },
+      { label: "Style Guide", href: "/features/style-guide" },
+      { label: "Sitemap", href: "/features/sitemap" },
+      { label: "Technical Spec", href: "/features/technical-spec" },
+      { label: "Content & Copy", href: "/features/content-copy" },
+      { label: "Assets", href: "/features/assets" },
+      { label: "Tasks", href: "/features/tasks" },
+    ],
+  },
+  resources: {
+    title: "Resources",
+    links: [
+      { label: "Getting Started Guide", href: "/getting-started" },
+      { label: "FAQs", href: "/faq" },
+    ],
+  },
+  company: {
+    title: "Company",
+    links: [
+      { label: "Contact", href: "mailto:contact@troov-marketing.com" },
+      { label: "Pricing", href: "/pricing" },
+    ],
+  },
+  legal: {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+    ],
+  },
+}
 
 export function Footer() {
-  const [email, setEmail] = useState("")
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle newsletter subscription
-    console.log("Newsletter subscription:", email)
-    setEmail("")
-  }
-
   return (
-    <footer className="bg-slate-800 text-white mt-auto">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <Image
-            src="/troov-studio-footer-logo.png"
-            alt="Troov Studio"
-            width={280}
-            height={80}
-            className="object-contain"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-          {/* Dashboard Menu */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Dashboard</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#overview" className="text-gray-300 hover:text-white transition-colors">
-                  Overview
-                </a>
-              </li>
-              <li>
-                <a href="#mood" className="text-gray-300 hover:text-white transition-colors">
-                  Mood Board
-                </a>
-              </li>
-              <li>
-                <a href="#styleguide" className="text-gray-300 hover:text-white transition-colors">
-                  Style Guide
-                </a>
-              </li>
-              <li>
-                <a href="#wireframe" className="text-gray-300 hover:text-white transition-colors">
-                  Sitemap
-                </a>
-              </li>
-              <li>
-                <a href="#technical" className="text-gray-300 hover:text-white transition-colors">
-                  Technical Specs
-                </a>
-              </li>
-              <li>
-                <a href="#content" className="text-gray-300 hover:text-white transition-colors">
-                  Content & Copy
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Resources</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#summary" className="text-gray-300 hover:text-white transition-colors">
-                  Project Summary
-                </a>
-              </li>
-              <li>
-                <a href="#assets" className="text-gray-300 hover:text-white transition-colors">
-                  Assets Library
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Subscribe To Our Newsletter</h3>
-            <p className="text-sm text-gray-400 mb-4">Get design tips and tricks delivered to your inbox</p>
-            <form onSubmit={handleSubscribe} className="space-y-3">
-              <Input
-                type="email"
-                placeholder="Email:"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
-                required
+    <footer className="bg-[#231E4A] text-white">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-6 gap-8">
+          {/* Logo & Description */}
+          <div className="col-span-2">
+            <Link href="/" className="flex items-center mb-4">
+              <Image
+                src="/images/troovstudio-logo-white.png"
+                alt="Troov Studio"
+                width={220}
+                height={55}
+                className="h-14 w-auto"
               />
-              <Button
-                type="submit"
-                variant="outline"
-                className="w-full border-white text-white hover:bg-white hover:text-slate-800 bg-transparent"
-              >
-                Subscribe
-              </Button>
-            </form>
+            </Link>
+            <p className="text-sm text-[#C9BFFF]/80 leading-relaxed max-w-xs">
+              Organize your web design projects in one place. From concept to delivery.
+            </p>
           </div>
+
+          {/* Links */}
+          {Object.values(footerLinks).map((section) => (
+            <div key={section.title}>
+              <h3 className="text-sm font-semibold text-white mb-4">{section.title}</h3>
+              <ul className="space-y-3">
+                {section.links.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      href={link.href}
+                      className="text-sm text-[#C9BFFF]/70 hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-slate-700 pt-6">
-          <p className="text-sm text-gray-400">©{new Date().getFullYear()} All rights reserved</p>
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-[#C9BFFF]/60">
+            © {new Date().getFullYear()} Troov Studio. All rights reserved.
+          </p>
+          <p className="text-sm text-[#C9BFFF]/60">
+            Built by{" "}
+            <a 
+              href="https://www.troov-marketing.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#C9BFFF]/80 hover:text-white transition-colors underline underline-offset-2"
+            >
+              Troov Marketing
+            </a>
+          </p>
         </div>
       </div>
     </footer>
   )
 }
+
+

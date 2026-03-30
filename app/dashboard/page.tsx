@@ -756,6 +756,34 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     }
   }, [prefs?.user_id, prefs?.collapse_sidebar, prefs?.default_project_view])
 
+  // Support deep-linking into specific dashboard sections via `?view=...`.
+  // This is used by the marketing-site header dropdown.
+  useEffect(() => {
+    const view = searchParams.get("view")
+    if (!view) return
+
+    const allowedViews = new Set([
+      "home",
+      "overview",
+      "moodboard",
+      "styleguide",
+      "sitemap",
+      "technical",
+      "content",
+      "assets",
+      "tasks",
+      "summary",
+    ])
+
+    if (!allowedViews.has(view)) return
+
+    // Section views require a project; fall back to "home" if none is selected/available.
+    if (view !== "home" && view !== "summary" && !currentProjectId) return
+    if (view === "summary" && !currentProjectId) return
+
+    setActiveView(view as typeof activeView)
+  }, [searchParams, currentProjectId])
+
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false

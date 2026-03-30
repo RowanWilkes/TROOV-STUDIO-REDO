@@ -258,8 +258,8 @@ export function SiteHeader() {
                               </div>
                             </div>
                           </Link>
-                          <Link
-                            href="/help"
+                          <a
+                            href="mailto:contact@troov-marketing.com"
                             className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors group/item"
                           >
                             <Users className="size-5 text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -271,7 +271,7 @@ export function SiteHeader() {
                                 Get in touch with our team
                               </div>
                             </div>
-                          </Link>
+                          </a>
                         </div>
                       </div>
                     </div>

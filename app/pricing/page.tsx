@@ -1,330 +1,439 @@
 "use client"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Check } from "lucide-react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
-import { supabase } from "@/lib/supabase"
+
+import { useState } from "react"
+import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
+import { Check, Sparkles, ArrowUpRight, ChevronDown } from "lucide-react"
 
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly")
-  const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [userPlan, setUserPlan] = useState<string | null>(null)
-  const router = useRouter()
+  const [isYearly, setIsYearly] = useState(false)
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from("user_subscriptions")
-        .select("plan")
-        .eq("user_id", user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.plan) setUserPlan(data.plan)
-        })
-    })
-  }, [])
+  const freeFeatures = [
+    "1 active project",
+    "All 8 dashboard sections",
+    "PDF summary export",
+    "1 team member",
+    "Project progress tracking",
+  ]
 
-  const handleUpgrade = async (period: "monthly" | "yearly") => {
-    setCheckoutLoading(true)
-    try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billingPeriod: period }),
-      })
-      if (res.status === 401) {
-        router.push("/login")
-        return
-      }
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (err) {
-      console.error("Checkout error:", err)
-    } finally {
-      setCheckoutLoading(false)
-    }
-  }
+  const proFeatures = [
+    { text: "Unlimited projects", comingSoon: false },
+    { text: "Unlimited PDF summary exports", comingSoon: false },
+    { text: "Priority support", comingSoon: false },
+    { text: "AI-assisted project suggestions", comingSoon: true },
+    { text: "Client sharing & collaboration", comingSoon: true },
+    { text: "Custom branding on exports", comingSoon: true },
+  ]
+
+  const faqs = [
+    {
+      question: "Is Troov Studio really free to start?",
+      answer: "Yes. The Free plan gives you full access to all 8 dashboard sections on your first project. No credit card needed, no time limit. Try it out and upgrade only when you need more.",
+    },
+    {
+      question: "What do I get on the Pro plan?",
+      answer: "Pro unlocks unlimited projects, unlimited PDF summary exports, and priority support. You also get early access to upcoming features like AI-assisted project suggestions, client sharing, and custom branding on exports.",
+    },
+    {
+      question: "Can I upgrade or downgrade at any time?",
+      answer: "Yes, you can change your plan at any time from your account settings. Changes take effect at the end of your current billing period.",
+    },
+    {
+      question: "What happens to my projects if I downgrade?",
+      answer: "Your data is never deleted. If you downgrade to Free, all your projects are preserved but you can only actively work on 1 project at a time.",
+    },
+    {
+      question: "Do you charge per team member?",
+      answer: "No. The Pro plan includes unlimited team members across all your projects. No per-seat fees.",
+    },
+    {
+      question: "When should I upgrade to Pro?",
+      answer: "When you are ready to take on more than one client project at a time, or you want unlimited PDF exports for professional client handoffs, that is when Pro makes sense.",
+    },
+  ]
+
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
+
+  const monthlyPrice = 10
+  const yearlyPrice = 8
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <main className="min-h-screen bg-[#F7F5FF]">
+      <Navigation />
 
-      <section className="relative overflow-hidden bg-primary">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#003A33] to-[#002724] opacity-80" />
+      {/* Hero: pull under sticky header so lavender shows through (matches home HeroSection) */}
+      <section className="-mt-[88px] pt-[calc(88px+8rem)] pb-20 bg-[#F7F5FF]">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h1 
+            className="font-serif text-balance mb-6"
+            style={{ fontSize: '56px', color: '#231E4A', lineHeight: 1.1 }}
+          >
+            Start free, upgrade{" "}
+            <span style={{ color: '#1BAE80' }}>when you&apos;re ready</span>
+          </h1>
+          
+          <p 
+            className="font-sans mb-10 max-w-2xl mx-auto"
+            style={{ fontSize: '20px', color: '#4A4570', lineHeight: 1.6 }}
+          >
+            Everything you need to plan, design, and deliver exceptional web projects. No credit card required.
+          </p>
 
-        {/* Enhanced green glow effects */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 left-1/3 w-[500px] h-[500px] bg-accent/15 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl" />
-
-        <div className="relative">
-          {/* Hero Section */}
-          <div className="container mx-auto px-6 pt-32 pb-12 lg:pt-40">
-            <div className="max-w-5xl mx-auto text-center space-y-6">
-              <h1 className="text-[64px] leading-[1.1] font-semibold tracking-tight">
-                <span className="text-emerald-400">Simple pricing.</span>
-                <br />
-                <span className="text-white">Powerful design tools.</span>
-              </h1>
-              <p className="text-lg leading-relaxed text-white/85 max-w-2xl mx-auto">
-                Everything you need to plan, design, and deliver exceptional web projects.
-              </p>
-            </div>
+          {/* CTA Button */}
+          <div className="flex items-center justify-center mb-4">
+            <a 
+              href="/signup"
+              className="flex items-center gap-2 font-sans font-semibold py-3.5 px-7 rounded-full transition-opacity hover:opacity-90"
+              style={{ background: '#4E4499', color: 'white', fontSize: '15px' }}
+            >
+              <ArrowUpRight size={18} />
+              Get started for free
+            </a>
           </div>
 
-          <div className="container mx-auto px-6 pb-8">
-            <div className="flex items-center justify-center">
-              <div className="inline-flex items-center gap-0 bg-white/10 backdrop-blur-sm rounded-full p-1 shadow-lg">
-                <button
-                  onClick={() => setBillingPeriod("monthly")}
-                  className={`px-6 py-2 text-sm font-semibold rounded-full transition-all ${
-                    billingPeriod === "monthly" ? "bg-white text-gray-900 shadow-md" : "text-white/70 hover:text-white"
-                  }`}
+          <p 
+            className="font-sans"
+            style={{ fontSize: '14px', color: '#7B6FCC' }}
+          >
+            Try free for as long as you need
+          </p>
+        </div>
+      </section>
+
+      {/* Plans Section */}
+      <section className="py-20 bg-[#F7F5FF]">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Section Layout - Text on left, Cards centered-right */}
+          <div className="flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-12">
+            {/* Left Column - Text */}
+            <div className="lg:w-[340px] flex-shrink-0">
+              <p 
+                className="font-sans font-semibold uppercase mb-3"
+                style={{ fontSize: '12px', color: '#1BAE80', letterSpacing: '0.1em' }}
+              >
+                PLANS & PRICING
+              </p>
+              <h2 
+                className="font-serif text-balance"
+                style={{ fontSize: '42px', color: '#231E4A', lineHeight: 1.15 }}
+              >
+                Most designers<br />
+                start and stay<br />
+                free.
+              </h2>
+            </div>
+
+            {/* Right Column - Pricing Cards - Overlapping Layout */}
+            <div className="relative flex flex-col flex-1 items-stretch lg:items-start lg:justify-center gap-0">
+              {/* Monthly/Yearly Toggle - Above Pro Card */}
+              <div className="flex items-center gap-3 mb-3 lg:ml-[420px]">
+                <span 
+                  className="font-sans font-medium"
+                  style={{ fontSize: '14px', color: isYearly ? '#7B6FCC' : '#231E4A' }}
                 >
                   Monthly
-                </button>
+                </span>
                 <button
-                  onClick={() => setBillingPeriod("yearly")}
-                  className={`px-6 py-2 text-sm font-semibold rounded-full transition-all ${
-                    billingPeriod === "yearly" ? "bg-white text-gray-900 shadow-md" : "text-white/70 hover:text-white"
-                  }`}
+                  onClick={() => setIsYearly(!isYearly)}
+                  className="relative w-14 h-7 rounded-full transition-colors duration-200"
+                  style={{ background: isYearly ? '#1BAE80' : '#C9BFFF' }}
+                >
+                  <div 
+                    className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200"
+                    style={{ 
+                      transform: isYearly ? 'translateX(32px)' : 'translateX(4px)'
+                    }}
+                  />
+                </button>
+                <span 
+                  className="font-sans font-medium"
+                  style={{ fontSize: '14px', color: isYearly ? '#231E4A' : '#7B6FCC' }}
                 >
                   Yearly
-                </button>
-                <span className="ml-1 px-3 py-1.5 bg-blue-100/90 backdrop-blur-sm text-blue-600 text-xs font-semibold rounded-full">
+                </span>
+                <span 
+                  className="font-sans font-semibold px-2 py-1 rounded-full"
+                  style={{ fontSize: '12px', background: '#C3F0E0', color: '#0F6E56' }}
+                >
                   Save 20%
                 </span>
               </div>
+
+              {/* Cards Row */}
+              <div className="relative flex flex-col lg:flex-row items-stretch lg:items-start gap-0">
+                {/* Green Glow Behind Cards */}
+                <div 
+                  className="absolute z-0 rounded-full blur-3xl opacity-40"
+                  style={{
+                    width: '350px',
+                    height: '350px',
+                    background: 'radial-gradient(circle, #1BAE80 0%, transparent 70%)',
+                    top: '50%',
+                    left: '120px',
+                    transform: 'translateY(-50%)',
+                  }}
+                />
+            {/* Free Card - Elevated/In Front */}
+            <div 
+              className="relative z-20 bg-white rounded-2xl p-8 w-full lg:w-[400px] lg:-mr-4"
+              style={{ 
+                border: '1px solid #EDE8FF',
+                boxShadow: '0 0 24px 5px rgba(27, 174, 128, 0.3), 0 25px 50px -12px rgba(78, 68, 153, 0.25)'
+              }}
+            >
+              <p 
+                className="font-sans font-semibold mb-2"
+                style={{ fontSize: '20px', color: '#231E4A' }}
+              >
+                Free
+              </p>
+              <p 
+                className="font-sans mb-4"
+                style={{ fontSize: '14px', color: '#7B6FCC' }}
+              >
+                Perfect for getting started
+              </p>
+              
+              <div className="flex items-baseline gap-1 mb-3">
+                <span 
+                  className="font-serif"
+                  style={{ fontSize: '52px', color: '#4E4499' }}
+                >
+                  $0
+                </span>
+                <span 
+                  className="font-sans"
+                  style={{ fontSize: '16px', color: '#7B6FCC' }}
+                >
+                  / MONTH
+                </span>
+              </div>
+
+              <p 
+                className="font-sans mb-6 pb-6"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#4A4570', 
+                  lineHeight: 1.6,
+                  borderBottom: '1px solid #EDE8FF'
+                }}
+              >
+                Get started with Troov Studio and explore all core features with your first project.
+              </p>
+
+              <p 
+                className="font-sans font-semibold uppercase mb-4"
+                style={{ fontSize: '11px', color: '#7B6FCC', letterSpacing: '0.08em' }}
+              >
+                KEY FEATURES
+              </p>
+
+              <div className="flex flex-col gap-4 mb-8">
+                {freeFeatures.map((feature, index) => (
+                  <FeatureItem key={index} text={feature} />
+                ))}
+              </div>
+
+              {/* Spacer to balance card heights */}
+              <div className="h-24" />
+
+              <a 
+                href="/signup"
+                className="flex items-center justify-center gap-2 w-full font-sans font-semibold py-3.5 rounded-lg transition-opacity hover:opacity-90"
+                style={{ background: '#231E4A', color: 'white', fontSize: '14px' }}
+              >
+                <ArrowUpRight size={16} />
+                Get started for free
+              </a>
             </div>
-          </div>
 
-          {/* Pricing Cards with increased green glow */}
-          <div className="container mx-auto px-6 pb-24">
-            <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
-              {/* Free Plan */}
-              <Card className="p-10 bg-white border border-gray-200 rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-emerald-600">For individuals & freelancers</h3>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-6xl font-bold text-gray-900">$0</span>
-                      <span className="text-gray-500 text-lg">/month</span>
-                    </div>
-                    <p className="text-gray-600 text-base leading-relaxed">
-                      Get started with Troov Studio and explore all core features with your first project.
-                    </p>
-                  </div>
+            {/* Pro Card - Behind */}
+            <div 
+              className="relative z-10 bg-white rounded-2xl p-8 pl-12 pt-12 lg:pt-8 w-full lg:w-[420px] lg:mt-8"
+              style={{ 
+                border: '1px solid #EDE8FF',
+                boxShadow: '0 10px 30px -12px rgba(78, 68, 153, 0.15)'
+              }}
+            >
+              <p 
+                className="font-sans font-semibold mb-2"
+                style={{ fontSize: '20px', color: '#231E4A' }}
+              >
+                Pro
+              </p>
+              <p 
+                className="font-sans mb-4"
+                style={{ fontSize: '14px', color: '#7B6FCC' }}
+              >
+                Unlimited & scalable
+              </p>
+              
+              <div className="flex items-baseline gap-1 mb-3">
+                <span 
+                  className="font-serif"
+                  style={{ fontSize: '52px', color: '#1BAE80' }}
+                >
+                  ${isYearly ? yearlyPrice : monthlyPrice}
+                </span>
+                <span 
+                  className="font-sans"
+                  style={{ fontSize: '16px', color: '#7B6FCC' }}
+                >
+                  / MONTH
+                </span>
+              </div>
 
-                  <Button
-                    className="w-full h-14 text-base font-semibold bg-black hover:bg-gray-900 text-white rounded-xl"
-                    onClick={() => router.push("/signup")}
-                  >
-                    Get Started Free
-                  </Button>
+              <p 
+                className="font-sans mb-6 pb-6"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#4A4570', 
+                  lineHeight: 1.6,
+                  borderBottom: '1px solid #EDE8FF'
+                }}
+              >
+                Unlimited everything for professionals and teams who need to scale.
+              </p>
 
-                  <div className="pt-2">
-                    <p className="text-sm font-medium text-emerald-600 mb-6">Includes:</p>
-                    <ul className="space-y-4">
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">1 project</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">All 8 dashboard sections</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">PDF summary export</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">1 team member</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Project progress tracking</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
+              <p 
+                className="font-sans font-semibold uppercase mb-4"
+                style={{ fontSize: '11px', color: '#7B6FCC', letterSpacing: '0.08em' }}
+              >
+                EVERYTHING IN FREE +
+              </p>
 
-              {/* Pro Plan */}
-              <Card className="p-10 bg-white border border-gray-200 rounded-3xl shadow-[0_0_100px_-10px_rgba(16,185,129,0.7),0_0_60px_-15px_rgba(16,185,129,0.5)] hover:shadow-[0_0_120px_-5px_rgba(16,185,129,0.8),0_0_80px_-10px_rgba(16,185,129,0.6)] transition-shadow">
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Pro</h3>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-6xl font-bold text-gray-900">
-                        ${billingPeriod === "monthly" ? "10" : "8"}
-                      </span>
-                      <span className="text-gray-500 text-lg">/month</span>
-                      {billingPeriod === "yearly" && (
-                        <span className="text-sm text-gray-500">(billed $96/year)</span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-base leading-relaxed">
-                      Unlimited everything for professionals and teams who need to scale their design workflow.
-                    </p>
-                  </div>
+              <div className="flex flex-col gap-4 mb-8">
+                {proFeatures.map((feature, index) => (
+                  <FeatureItem 
+                    key={index} 
+                    text={feature.text} 
+                    comingSoon={feature.comingSoon}
+                    isPro 
+                  />
+                ))}
+              </div>
 
-                  <Button
-                    className="w-full h-14 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-900 rounded-xl"
-                    onClick={() => userPlan !== "pro" && handleUpgrade(billingPeriod)}
-                    disabled={checkoutLoading || userPlan === "pro"}
-                  >
-                    {userPlan === "pro" ? "Current Plan" : checkoutLoading ? "Loading..." : "Upgrade to Pro"}
-                  </Button>
+              {/* Spacer to push button down */}
+              <div className="h-6" />
 
-                  <div className="pt-2">
-                    <p className="text-sm font-medium text-emerald-600 mb-6">Everything in Free, plus:</p>
-                    <ul className="space-y-4">
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Unlimited projects</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Unlimited PDF summary exports</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base">Priority support</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base flex items-center gap-2">
-                          AI-assisted project suggestions
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base flex items-center gap-2">
-                          Client sharing & collaboration
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="rounded-full bg-emerald-50 p-1 mt-0.5 flex-shrink-0">
-                          <Check className="size-4 text-emerald-600 stroke-[3]" />
-                        </div>
-                        <span className="text-gray-700 text-base flex items-center gap-2">
-                          Custom branding on exports
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">Coming soon</span>
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
+              <a 
+                href="https://app.troovstudio.com"
+                className="flex items-center justify-center w-full font-sans font-semibold py-3.5 rounded-lg transition-opacity hover:opacity-90"
+                style={{ background: '#1BAE80', color: 'white', fontSize: '14px' }}
+              >
+                Upgrade
+              </a>
+            </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-white py-32 border-t border-gray-200">
-        <div className="container mx-auto px-6">
-          <div className="max-w-6xl mx-auto space-y-12">
-            <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">Frequently asked questions</h2>
+      {/* FAQ Section */}
+      <section className="py-24 bg-[#F7F5FF]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16">
+            {/* Left Column - Label & Heading */}
+            <div className="lg:w-[340px] flex-shrink-0">
+              <p 
+                className="font-sans font-semibold uppercase mb-3"
+                style={{ fontSize: '12px', color: '#1BAE80', letterSpacing: '0.1em' }}
+              >
+                FAQ
+              </p>
+              <h2 
+                className="font-serif"
+                style={{ fontSize: '36px', color: '#231E4A', lineHeight: 1.15 }}
+              >
+                Frequently asked questions
+              </h2>
             </div>
 
-            <Accordion type="single" collapsible className="space-y-0 divide-y divide-gray-200">
-              <AccordionItem value="item-1" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  What is Troov Studio?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  Troov Studio is a comprehensive design project management platform that helps you plan, organize, and
-                  deliver web design projects. From mood boards to technical specs, everything you need in one place.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-2" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  Who is Troov Studio for?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  Troov Studio is built for web designers, freelancers, agencies, and teams who want to streamline their
-                  design workflow and deliver better projects faster.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-3" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  How does the Free plan work?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  The Free plan is completely free forever. You get access to all core features with 1 project and 1
-                  team member. No credit card required, no time limits.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-4" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  Can I upgrade or downgrade my plan?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  Yes, you can upgrade from Free to Pro at any time. If you downgrade, your existing projects remain
-                  accessible, but you'll be limited to the Free plan restrictions for new projects.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-5" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  What payment methods do you accept?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  We accept all major credit cards (Visa, Mastercard, American Express, Discover) and process payments
-                  securely through Stripe.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-6" className="border-0">
-                <AccordionTrigger className="text-lg font-medium text-gray-900 hover:no-underline py-6 hover:text-emerald-600 transition-colors">
-                  Can I cancel my plan anytime?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-6 text-base leading-relaxed">
-                  Absolutely. There's no commitment. You can cancel or pause your subscription anytime directly from
-                  your account settings. No cancellation fees.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {/* Right Column - Accordion */}
+            <div className="flex-1">
+              {faqs.map((faq, index) => (
+                <div 
+                  key={index}
+                  className="border-b"
+                  style={{ borderColor: '#E5E0F5' }}
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                    className="w-full flex items-center justify-between py-5 text-left"
+                  >
+                    <h3 
+                      className="font-sans font-semibold pr-4"
+                      style={{ fontSize: '16px', color: '#231E4A' }}
+                    >
+                      {faq.question}
+                    </h3>
+                    <ChevronDown 
+                      size={20} 
+                      className="flex-shrink-0 transition-transform duration-200"
+                      style={{ 
+                        color: '#7B6FCC',
+                        transform: openFaqIndex === index ? 'rotate(180deg)' : 'rotate(0deg)'
+                      }}
+                    />
+                  </button>
+                  <div 
+                    className="overflow-hidden transition-all duration-200"
+                    style={{ 
+                      maxHeight: openFaqIndex === index ? '200px' : '0',
+                      opacity: openFaqIndex === index ? 1 : 0
+                    }}
+                  >
+                    <p 
+                      className="font-sans pb-5"
+                      style={{ fontSize: '15px', color: '#4A4570', lineHeight: 1.6 }}
+                    >
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <SiteFooter />
+      <Footer />
+    </main>
+  )
+}
+
+function FeatureItem({ text, comingSoon, isPro }: { text: string; comingSoon?: boolean; isPro?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div 
+        className="flex items-center justify-center rounded-full flex-shrink-0"
+        style={{ 
+          width: '22px', 
+          height: '22px', 
+          background: isPro ? '#C3F0E0' : '#EDE8FF' 
+        }}
+      >
+        {comingSoon ? (
+          <Sparkles size={12} style={{ color: isPro ? '#0F6E56' : '#4E4499' }} />
+        ) : (
+          <Check size={13} style={{ color: isPro ? '#0F6E56' : '#4E4499' }} />
+        )}
+      </div>
+      <span 
+        className="font-sans flex-1"
+        style={{ fontSize: '14px', color: '#4A4570', minWidth: '180px' }}
+      >
+        {text}
+      </span>
+      {comingSoon && (
+        <span 
+          className="font-sans font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0"
+          style={{ fontSize: '11px', background: '#EDE8FF', color: '#4E4499' }}
+        >
+          Coming soon
+        </span>
+      )}
     </div>
   )
 }

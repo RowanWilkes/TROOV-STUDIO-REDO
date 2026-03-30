@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins, JetBrains_Mono } from "next/font/google"
+import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "sonner"
 import { PreferencesProvider } from "@/components/PreferencesProvider"
@@ -8,12 +8,18 @@ import { SupabaseConnectionProvider } from "@/components/SupabaseConnectionProvi
 import { SupabaseConnectionBanner } from "@/components/SupabaseConnectionBanner"
 import "./globals.css"
 
-const poppins = Poppins({
+const dmSerifDisplay = DM_Serif_Display({
+  weight: "400",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-display",
+  display: "swap",
 })
-const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "Troov Studio — The Project Planner Built for Web Designers",
@@ -48,8 +54,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased ${poppins.className}`}>
+    <html lang="en" className={`${dmSerifDisplay.variable} ${plusJakartaSans.variable}`}>
+      <body className="font-sans antialiased">
         <SupabaseConnectionProvider>
           <SupabaseConnectionBanner />
           <PreferencesProvider>
