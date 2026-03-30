@@ -58,8 +58,9 @@ export default function PricingPage() {
   const yearlyPrice = 8
 
   return (
-    <main className="min-h-screen bg-[#F7F5FF]">
-      <Navigation />
+    <div className="bg-[#F7F5FF]">
+      <main className="min-h-screen bg-[#F7F5FF]">
+        <Navigation />
 
       {/* Hero: pull under sticky header so lavender shows through (matches home HeroSection) */}
       <section className="-mt-[88px] pt-[calc(88px+8rem)] pb-20 bg-[#F7F5FF]">
@@ -398,8 +399,9 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </div>
   )
 }
 

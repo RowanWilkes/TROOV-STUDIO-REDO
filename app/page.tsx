@@ -9,15 +9,17 @@ import { Footer } from "@/components/footer"
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      <Navigation />
-      <HeroSection />
-      <LogoStrip />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <FreelancersSection />
-      <CTASection />
-      <Footer />
-    </main>
+    <div className="bg-[#F7F5FF]">
+      <main className="min-h-screen">
+        <Navigation />
+        <HeroSection />
+        <LogoStrip />
+        <FeaturesSection />
+        <TestimonialsSection />
+        <FreelancersSection />
+        <CTASection />
+        <Footer />
+      </main>
+    </div>
   )
 }

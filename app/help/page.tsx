@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Card } from "@/components/ui/card"
+import { ChevronRight, Mail } from "lucide-react"
 
 export default function HelpPage() {
   return (
@@ -29,72 +30,24 @@ export default function HelpPage() {
         <section className="py-16 pb-32">
           <div className="container mx-auto px-6">
             <div className="max-w-2xl mx-auto">
-              <Card className="p-8 lg:p-12 bg-white rounded-2xl shadow-2xl">
-                <div className="space-y-6">
-                  <div className="text-center space-y-3">
-                    <h2 className="text-3xl font-bold text-foreground">Contact Support</h2>
-                    <p className="text-lg text-gray-700 leading-relaxed">
-                      Send us a message and we'll get back to you as soon as possible.
-                    </p>
-                  </div>
-
-                  <form className="space-y-6">
-                    <div className="space-y-2">
-                      <label htmlFor="name" className="text-sm font-medium text-foreground">
-                        Name
-                      </label>
-                      <input
-                        id="name"
-                        type="text"
-                        className="w-full h-11 px-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                        placeholder="Your name"
-                      />
+                <a href="mailto:contact@troov-marketing.com">
+                  <Card className="cursor-pointer hover:shadow-md transition-all bg-emerald-50 border-emerald-200 hover:border-emerald-300">
+                    <div className="flex items-center justify-between p-6 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <Mail className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-lg text-emerald-900">
+                            Contact Support
+                          </h3>
+                          <p className="text-sm text-emerald-800">Get in touch with our team</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-emerald-600 flex-shrink-0" />
                     </div>
-
-                    <div className="space-y-2">
-                      <label htmlFor="email" className="text-sm font-medium text-foreground">
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        className="w-full h-11 px-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                        placeholder="contact@troov-marketing.com"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label htmlFor="subject" className="text-sm font-medium text-foreground">
-                        Subject
-                      </label>
-                      <input
-                        id="subject"
-                        type="text"
-                        className="w-full h-11 px-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                        placeholder="What do you need help with?"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label htmlFor="message" className="text-sm font-medium text-foreground">
-                        Message
-                      </label>
-                      <textarea
-                        id="message"
-                        className="w-full min-h-32 px-4 py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent resize-none"
-                        placeholder="Describe your issue or question in detail..."
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full h-12 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors"
-                    >
-                      Send Message
-                    </button>
-                  </form>
-                </div>
-              </Card>
+                  </Card>
+                </a>
             </div>
           </div>
         </section>

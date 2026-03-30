@@ -8,8 +8,9 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#F7F5FF]">
-      <Navigation />
+    <div className="bg-[#F7F5FF]">
+      <main className="min-h-screen bg-[#F7F5FF]">
+        <Navigation />
       
       <div className="mx-auto max-w-3xl px-6 lg:px-8 py-16 md:py-24">
         {/* Header */}
@@ -152,6 +153,7 @@ export default function PrivacyPage() {
       </div>
 
       <Footer />
-    </main>
+      </main>
+    </div>
   )
 }
