@@ -37,6 +37,15 @@ function LoginContent() {
     })
   }, [router])
 
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://troovstudio.com/auth/callback',
+      },
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -186,6 +195,7 @@ function LoginContent() {
               variant="outline"
               className="w-full bg-white border-gray-200 text-[#013B34] hover:border-[#2DCE73] hover:bg-[#2DCE73]/15 hover:text-[#013B34] transition-colors"
               type="button"
+              onClick={handleGoogleSignIn}
             >
               <svg className="size-5 mr-2" viewBox="0 0 24 24">
                 <path
