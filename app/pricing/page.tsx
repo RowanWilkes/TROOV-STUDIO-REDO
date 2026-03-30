@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Check, Sparkles, ArrowUpRight, ChevronDown } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false)
+  const router = useRouter()
 
   const freeFeatures = [
     "1 active project",
@@ -56,6 +59,33 @@ export default function PricingPage() {
 
   const monthlyPrice = 10
   const yearlyPrice = 8
+
+  const handleUpgrade = async () => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError || !session?.user?.id) {
+      router.push("/signup")
+      return
+    }
+
+    try {
+      const res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingPeriod: isYearly ? "yearly" : "monthly" }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (data.url) window.location.href = data.url
+      else router.push("/signup")
+    } catch {
+      router.push("/signup")
+    }
+  }
 
   return (
     <div className="bg-[#F7F5FF]">
@@ -318,7 +348,11 @@ export default function PricingPage() {
               <div className="h-6" />
 
               <a 
-                href="https://app.troovstudio.com"
+                href="/signup"
+                onClick={(e) => {
+                  e.preventDefault()
+                  void handleUpgrade()
+                }}
                 className="flex items-center justify-center w-full font-sans font-semibold py-3.5 rounded-lg transition-opacity hover:opacity-90"
                 style={{ background: '#1BAE80', color: 'white', fontSize: '14px' }}
               >
