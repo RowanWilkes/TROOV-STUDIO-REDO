@@ -151,6 +151,17 @@ type SitemapData = {
   custom_blocks: CustomBlock[]
 }
 
+function findPageInTree(pageList: SitemapPage[], pageId: string): SitemapPage | null {
+  for (const page of pageList) {
+    if (page.id === pageId) return page
+    if (page.children.length > 0) {
+      const found = findPageInTree(page.children, pageId)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const { data: sitemapData, setData: setSitemapData } = useProjectRow<SitemapData>({
     tableName: "sitemap",
@@ -183,7 +194,10 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
     })
   }
 
-  const [selectedPage, setSelectedPage] = useState<string | null>(null)
+  const [selectedPage, setSelectedPage] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(`troov-sitemap-selected-${projectId}`) ?? null
+  })
   const [newPageName, setNewPageName] = useState("")
   const [showAddPage, setShowAddPage] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
@@ -201,8 +215,19 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
   const [editingCustomId, setEditingCustomId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (pages.length > 0 && selectedPage === null) setSelectedPage(pages[0].id)
-  }, [pages, selectedPage])
+    if (selectedPage) {
+      localStorage.setItem(`troov-sitemap-selected-${projectId}`, selectedPage)
+    }
+  }, [selectedPage, projectId])
+
+  useEffect(() => {
+    if (pages.length === 0) return
+    const saved = localStorage.getItem(`troov-sitemap-selected-${projectId}`)
+    const savedExists = saved && pages.some((p) => p.id === saved)
+    if (!savedExists) {
+      setSelectedPage(pages[0].id)
+    }
+  }, [pages.length, projectId])
 
   const allBlocks = [...BLOCK_LIBRARY, ...customBlocks]
   const categories = ["All", ...Array.from(new Set(allBlocks.map((b) => b.category)))]
@@ -318,16 +343,8 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
     setPages(reorder(pages))
   }
 
-  const findPage = (pageList: SitemapPage[], pageId: string): SitemapPage | null => {
-    for (const page of pageList) {
-      if (page.id === pageId) return page
-      if (page.children.length > 0) {
-        const found = findPage(page.children, pageId)
-        if (found) return found
-      }
-    }
-    return null
-  }
+  const findPage = (pageList: SitemapPage[], pageId: string): SitemapPage | null =>
+    findPageInTree(pageList, pageId)
 
   const deletePage = (pageId: string) => {
     const removePageFromTree = (pageList: SitemapPage[]): SitemapPage[] => {
@@ -512,50 +529,46 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
                     setEditingPageName("")
                   }
                 }}
-                className="h-7 text-sm px-2 dark:bg-[#013B34] dark:border-[#2DCE73] dark:text-white"
+                className="h-7 text-sm px-2"
                 autoFocus
               />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 dark:hover:bg-[#024039]"
+              <button
+                type="button"
+                className="p-1.5 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
                 onClick={() => renamePage(page.id, editingPageName)}
               >
-                <Check className="size-3 text-green-600" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 dark:hover:bg-[#024039]"
+                <Check className="size-3" />
+              </button>
+              <button
+                type="button"
+                className="p-1.5 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 onClick={() => {
                   setEditingPageId(null)
                   setEditingPageName("")
                 }}
               >
-                <X className="size-3 text-red-600" />
-              </Button>
+                <X className="size-3" />
+              </button>
             </div>
           ) : (
             <>
               <span className="font-medium text-sm flex-1">{page.name}</span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
+                <button
+                  type="button"
+                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     setEditingPageId(page.id)
                     setEditingPageName(page.name)
                   }}
                 >
-                  <Edit2 className="size-3 text-gray-500 hover:text-blue-600" />
-                </Button>
+                  <Edit2 className="size-3" />
+                </button>
                 {page.id !== "home" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
+                  <button
+                    type="button"
+                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       if (confirm(`Delete "${page.name}"?`)) {
@@ -563,8 +576,8 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
                       }
                     }}
                   >
-                    <Trash2 className="size-3 text-gray-500 hover:text-red-600" />
-                  </Button>
+                    <Trash2 className="size-3" />
+                  </button>
                 )}
               </div>
             </>

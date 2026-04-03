@@ -284,6 +284,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
   const [newColorLabel, setNewColorLabel] = useState("")
   const [editingTypography, setEditingTypography] = useState<string | null>(null)
   const [activeButtonTab, setActiveButtonTab] = useState<"primary" | "secondary">("primary")
+  const [typographyAtBottom, setTypographyAtBottom] = useState(false)
+  const [buttonsAtBottom, setButtonsAtBottom] = useState(false)
 
   const handleCompletionToggle = (checked: boolean) => {
     setOverride("styleguide", checked)
@@ -331,7 +333,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Style Guide</h2>
         <p className="text-sm text-gray-600 mt-1 mb-3">
@@ -355,16 +357,16 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-3 gap-6" style={{ gridAutoRows: "1fr" }}>
         {/* Colors Card */}
-        <Card>
+        <Card className="flex h-full min-w-0 flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PaletteIcon className="size-4" />
               Colors
             </CardTitle>
           </CardHeader>
-          <CardContent className={`space-y-4 ${customColors.length > 0 ? "max-h-[600px] overflow-y-auto" : ""}`}>
+          <CardContent className="flex min-h-0 flex-1 flex-col min-w-0 space-y-4 overflow-x-hidden overflow-y-auto">
             <div className="space-y-3">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Standard Colors</p>
               {Object.entries(standardColors).map(([key, value]) => (
@@ -457,14 +459,22 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
         </Card>
 
         {/* Typography Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TypeIcon className="size-4" />
-              Typography
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+        <div className="relative h-full min-w-0">
+          <Card className="flex h-full min-w-0 flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TypeIcon className="size-4" />
+                Typography
+              </CardTitle>
+            </CardHeader>
+            <CardContent
+              className="flex max-h-[600px] min-h-0 min-w-0 flex-1 flex-col space-y-3 overflow-x-hidden overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                setTypographyAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 10)
+              }}
+            >
             {typography.map((typo, index) => (
               <div key={typo.level} className="border rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between mb-2">
@@ -604,18 +614,35 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 <p className="text-xs text-gray-500">{typo.description}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          {!typographyAtBottom && (
+            <>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-16 bg-gradient-to-t from-white dark:from-gray-900 to-transparent rounded-b-lg" />
+              <p className="pointer-events-none absolute bottom-3 left-0 right-0 z-20 text-center text-xs text-gray-400">
+                scroll for more
+              </p>
+            </>
+          )}
+        </div>
 
         {/* Buttons Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PencilIcon className="size-4" />
-              Buttons
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="relative h-full min-w-0">
+          <Card className="flex h-full min-w-0 flex-col overflow-x-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PencilIcon className="size-4" />
+                Buttons
+              </CardTitle>
+            </CardHeader>
+            <CardContent
+              className="flex max-h-[600px] min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-x-hidden overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                setButtonsAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 10)
+              }}
+            >
             <div className="flex border-b">
               <button
                 onClick={() => setActiveButtonTab("primary")}
@@ -653,7 +680,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
               }
             `}</style>
 
-            <div className="bg-gray-50 rounded-lg p-6 flex items-center justify-center">
+            <div className="min-w-0 overflow-hidden rounded-lg bg-gray-50 p-6 flex items-center justify-center">
               <button
                 className={`preview-button-${activeButtonTab} min-w-[120px] capitalize`}
                 style={{
@@ -677,7 +704,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-6">
               {/* TEXT Section */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Text</h4>
@@ -685,12 +712,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 {/* Font Family */}
                 <div>
                   <Label className="text-xs font-medium mb-1.5 block">Font</Label>
-                  <div className="flex gap-2">
+                  <div className="flex min-w-0 gap-2">
                     <Select
                       value={buttonStyles[activeButtonTab].fontFamily}
                       onValueChange={(value) => updateButtonStyle(activeButtonTab, "fontFamily", value)}
                     >
-                      <SelectTrigger className="h-9">
+                      <SelectTrigger className="h-9 min-w-0 w-full max-w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -711,7 +738,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                     value={buttonStyles[activeButtonTab].fontSize.toString()}
                     onValueChange={(value) => updateButtonStyle(activeButtonTab, "fontSize", Number.parseInt(value))}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 min-w-0 w-full max-w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -762,8 +789,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   <HexColorRow
                     value={buttonStyles[activeButtonTab].textColor}
                     onChange={(hex) => updateButtonStyle(activeButtonTab, "textColor", hex)}
-                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
-                    wrapperClassName="w-full"
+                    inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                    wrapperClassName="w-full min-w-0"
                   />
                 </div>
 
@@ -863,8 +890,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   <HexColorRow
                     value={buttonStyles[activeButtonTab].backgroundColor}
                     onChange={(hex) => updateButtonStyle(activeButtonTab, "backgroundColor", hex)}
-                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
-                    wrapperClassName="w-full"
+                    inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                    wrapperClassName="w-full min-w-0"
                   />
                 </div>
               </div>
@@ -906,7 +933,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <input
                       type="range"
                       min="0"
@@ -915,7 +942,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       onChange={(e) =>
                         updateButtonStyle(activeButtonTab, "borderWidth", Number.parseInt(e.target.value, 10) || 0)
                       }
-                      className="flex-1"
+                      className="min-w-0 flex-1"
                     />
                     <Input
                       type="number"
@@ -924,14 +951,16 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                         const val = e.target.value === "" ? 0 : Number.parseInt(e.target.value, 10)
                         updateButtonStyle(activeButtonTab, "borderWidth", isNaN(val) ? 0 : val)
                       }}
-                      className="h-9 w-20 text-sm"
+                      className="h-9 w-20 shrink-0 text-sm"
                     />
-                    <span className="text-xs text-gray-500">px</span>
+                    <span className="shrink-0 text-xs text-gray-500">px</span>
+                  </div>
+                  <div className="mt-2 min-w-0">
                     <HexColorRow
                       value={buttonStyles[activeButtonTab].borderColor}
                       onChange={(hex) => updateButtonStyle(activeButtonTab, "borderColor", hex)}
-                      inputClassName="h-9 font-mono text-sm w-[7.25rem] shrink-0"
-                      wrapperClassName="shrink-0"
+                      inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                      wrapperClassName="w-full min-w-0"
                     />
                   </div>
                 </div>
@@ -942,7 +971,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Corners & Shadow</h4>
                 <div>
                   <Label className="text-xs font-medium mb-1.5 block">Corner radius</Label>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex min-w-0 gap-2 items-center">
                     <input
                       type="range"
                       min="0"
@@ -951,7 +980,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       onChange={(e) =>
                         updateButtonStyle(activeButtonTab, "borderRadius", Number.parseInt(e.target.value, 10) || 0)
                       }
-                      className="flex-1"
+                      className="min-w-0 flex-1"
                     />
                     <Input
                       type="number"
@@ -1025,8 +1054,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   <HexColorRow
                     value={buttonStyles[activeButtonTab].hoverBackgroundColor}
                     onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverBackgroundColor", hex)}
-                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
-                    wrapperClassName="w-full"
+                    inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                    wrapperClassName="w-full min-w-0"
                   />
                 </div>
 
@@ -1067,8 +1096,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   <HexColorRow
                     value={buttonStyles[activeButtonTab].hoverBorderColor}
                     onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverBorderColor", hex)}
-                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
-                    wrapperClassName="w-full"
+                    inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                    wrapperClassName="w-full min-w-0"
                   />
                 </div>
 
@@ -1109,8 +1138,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   <HexColorRow
                     value={buttonStyles[activeButtonTab].hoverTextColor}
                     onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverTextColor", hex)}
-                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
-                    wrapperClassName="w-full"
+                    inputClassName="h-9 min-w-0 flex-1 font-mono text-sm"
+                    wrapperClassName="w-full min-w-0"
                   />
                 </div>
 
@@ -1155,566 +1184,19 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          {!buttonsAtBottom && (
+            <>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-16 bg-gradient-to-t from-white dark:from-gray-900 to-transparent rounded-b-lg" />
+              <p className="pointer-events-none absolute bottom-3 left-0 right-0 z-20 text-center text-xs text-gray-400">
+                scroll for more
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Website Preview Section */}
-      <Card className="col-span-3">
-        <CardHeader>
-          <CardTitle>Website Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <style jsx>{`
-            .website-preview-primary {
-              transition: all 0.2s ease-in-out;
-            }
-            .website-preview-primary:hover {
-              background-color: ${buttonStyles.primary.hoverBackgroundColor} !important;
-              border-color: ${buttonStyles.primary.hoverBorderColor} !important;
-              color: ${buttonStyles.primary.hoverTextColor} !important;
-              font-weight: ${buttonStyles.primary.hoverBold ? "bold" : buttonStyles.primary.bold ? "bold" : "normal"} !important;
-              text-decoration: ${buttonStyles.primary.hoverUnderline ? "underline" : buttonStyles.primary.underline ? "underline" : "none"} !important;
-              font-style: ${buttonStyles.primary.hoverItalic ? "italic" : buttonStyles.primary.italic ? "italic" : "normal"} !important;
-            }
-            .website-preview-secondary {
-              transition: all 0.2s ease-in-out;
-            }
-            .website-preview-secondary:hover {
-              background-color: ${buttonStyles.secondary.hoverBackgroundColor} !important;
-              border-color: ${buttonStyles.secondary.hoverBorderColor} !important;
-              color: ${buttonStyles.secondary.hoverTextColor} !important;
-              font-weight: ${buttonStyles.secondary.hoverBold ? "bold" : buttonStyles.secondary.bold ? "bold" : "normal"} !important;
-              text-decoration: ${buttonStyles.secondary.hoverUnderline ? "underline" : buttonStyles.secondary.underline ? "underline" : "none"} !important;
-              font-style: ${buttonStyles.secondary.hoverItalic ? "italic" : buttonStyles.secondary.italic ? "italic" : "normal"} !important;
-            }
-          `}</style>
-
-          <div
-            className="border rounded-lg overflow-hidden shadow-sm"
-            style={{ backgroundColor: standardColors.background || "#FFFFFF" }}
-          >
-            {/* Header - Updated layout: logo left, links center, button right; added secondary background */}
-            <header
-              className="px-8 py-4 flex items-center justify-between border-b"
-              style={{
-                backgroundColor: standardColors.secondaryBackground || "#F9FAFB",
-                borderColor: "#E5E7EB",
-              }}
-            >
-              {/* Logo on far left */}
-              <div
-                className="font-semibold"
-                style={{
-                  fontFamily: typography[2].fontFamily,
-                  fontSize: `${typography[2].fontSize}px`,
-                  color: typography[2].color,
-                }}
-              >
-                Logo
-              </div>
-
-              {/* Navigation links in center */}
-              <div className="flex gap-6 items-center">
-                <a
-                  href="#"
-                  style={{
-                    fontFamily: typography[6].fontFamily,
-                    fontSize: `${typography[6].fontSize}px`,
-                    color: typography[6].color,
-                  }}
-                  className="hover:opacity-70 transition-opacity"
-                >
-                  Link One
-                </a>
-                <a
-                  href="#"
-                  style={{
-                    fontFamily: typography[6].fontFamily,
-                    fontSize: `${typography[6].fontSize}px`,
-                    color: typography[6].color,
-                  }}
-                  className="hover:opacity-70 transition-opacity"
-                >
-                  Link Two
-                </a>
-                <a
-                  href="#"
-                  style={{
-                    fontFamily: typography[6].fontFamily,
-                    fontSize: `${typography[6].fontSize}px`,
-                    color: typography[6].color,
-                  }}
-                  className="hover:opacity-70 transition-opacity"
-                >
-                  Link Three
-                </a>
-              </div>
-
-              {/* Button on far right */}
-              <button
-                className="website-preview-primary"
-                style={{
-                  fontFamily: buttonStyles.primary.fontFamily,
-                  fontSize: `${buttonStyles.primary.fontSize}px`,
-                  color: buttonStyles.primary.textColor,
-                  fontWeight: buttonStyles.primary.bold ? "bold" : "normal",
-                  backgroundColor: buttonStyles.primary.backgroundColor,
-                  borderWidth: `${buttonStyles.primary.borderWidth}px`,
-                  borderColor: buttonStyles.primary.borderColor,
-                  borderStyle: "solid",
-                  borderRadius: `${buttonStyles.primary.borderRadius}px`,
-                  padding: "8px 20px",
-                  boxShadow: buttonStyles.primary.shadow ? "0 2px 4px rgba(0, 0, 0, 0.1)" : "none",
-                }}
-              >
-                Button
-              </button>
-            </header>
-
-            {/* Hero Section */}
-            <section
-              className="px-8 py-20 text-center"
-              style={{
-                backgroundColor: standardColors.background || "#FFFFFF",
-              }}
-            >
-              <h1
-                className="max-w-2xl mx-auto mb-4"
-                style={{
-                  fontFamily: typography[0].fontFamily,
-                  fontSize: `${typography[0].fontSize}px`,
-                  color: typography[0].color,
-                  lineHeight: "1.3",
-                }}
-              >
-                Medium length hero heading goes here
-              </h1>
-              <p
-                className="max-w-xl mx-auto mb-8"
-                style={{
-                  fontFamily: typography[6].fontFamily,
-                  fontSize: `${typography[6].fontSize}px`,
-                  color: typography[6].color,
-                  lineHeight: "1.6",
-                  opacity: 0.8,
-                }}
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum
-                tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae
-                erat.
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  className="website-preview-primary"
-                  style={{
-                    fontFamily: buttonStyles.primary.fontFamily,
-                    fontSize: `${buttonStyles.primary.fontSize}px`,
-                    color: buttonStyles.primary.textColor,
-                    fontWeight: buttonStyles.primary.bold ? "bold" : "normal",
-                    backgroundColor: buttonStyles.primary.backgroundColor,
-                    borderWidth: `${buttonStyles.primary.borderWidth}px`,
-                    borderColor: buttonStyles.primary.borderColor,
-                    borderStyle: "solid",
-                    borderRadius: `${buttonStyles.primary.borderRadius}px`,
-                    padding: buttonStyles.primary.padding,
-                    boxShadow: buttonStyles.primary.shadow ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-                  }}
-                >
-                  Button
-                </button>
-                <button
-                  className="website-preview-secondary"
-                  style={{
-                    fontFamily: buttonStyles.secondary.fontFamily,
-                    fontSize: `${buttonStyles.secondary.fontSize}px`,
-                    color: buttonStyles.secondary.textColor,
-                    fontWeight: buttonStyles.secondary.bold ? "bold" : "normal",
-                    backgroundColor: buttonStyles.secondary.backgroundColor,
-                    borderWidth: `${buttonStyles.secondary.borderWidth}px`,
-                    borderColor: buttonStyles.secondary.borderColor,
-                    borderStyle: "solid",
-                    borderRadius: `${buttonStyles.secondary.borderRadius}px`,
-                    padding: buttonStyles.secondary.padding,
-                    boxShadow: buttonStyles.secondary.shadow ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-                  }}
-                >
-                  Button
-                </button>
-              </div>
-            </section>
-
-            {/* Large Image Placeholder */}
-            <section
-              className="px-8"
-              style={{
-                backgroundColor: standardColors.background || "#FFFFFF",
-              }}
-            >
-              <div
-                className="w-full h-64 rounded-lg flex items-center justify-center"
-                style={{
-                  backgroundColor: standardColors.secondaryBackground || "#E5E7EB",
-                }}
-              >
-                <div className="text-center opacity-30">
-                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="M21 15l-5-5L5 21" />
-                  </svg>
-                </div>
-              </div>
-            </section>
-
-            {/* Content Section with Cards */}
-            <section
-              className="px-8 py-20 text-center"
-              style={{
-                backgroundColor: standardColors.background || "#FFFFFF",
-              }}
-            >
-              <div
-                className="text-xs uppercase tracking-wide mb-3"
-                style={{
-                  fontFamily: typography[6].fontFamily,
-                  fontSize: `${typography[6].fontSize - 2}px`,
-                  color: typography[6].color,
-                  opacity: 0.6,
-                }}
-              >
-                Tagline
-              </div>
-              <h2
-                className="max-w-2xl mx-auto mb-4"
-                style={{
-                  fontFamily: typography[1].fontFamily,
-                  fontSize: `${typography[1].fontSize}px`,
-                  color: typography[1].color,
-                  lineHeight: "1.3",
-                }}
-              >
-                Medium length section heading goes here
-              </h2>
-              <p
-                className="max-w-xl mx-auto mb-12"
-                style={{
-                  fontFamily: typography[6].fontFamily,
-                  fontSize: `${typography[6].fontSize}px`,
-                  color: typography[6].color,
-                  lineHeight: "1.6",
-                  opacity: 0.8,
-                }}
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum
-                tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae
-                erat.
-              </p>
-
-              {/* Three Card Grid */}
-              <div className="grid grid-cols-3 gap-8 mb-12">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="text-center">
-                    <div
-                      className="w-full h-40 rounded-lg flex items-center justify-center mb-4"
-                      style={{
-                        backgroundColor: standardColors.secondaryBackground || "#E5E7EB",
-                      }}
-                    >
-                      <div className="text-center opacity-30">
-                        <svg
-                          width="60"
-                          height="60"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1"
-                        >
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <path d="M21 15l-5-5L5 21" />
-                        </svg>
-                      </div>
-                    </div>
-                    <h3
-                      className="mb-3"
-                      style={{
-                        fontFamily: typography[3].fontFamily,
-                        fontSize: `${typography[3].fontSize}px`,
-                        color: typography[3].color,
-                      }}
-                    >
-                      Medium length section heading goes here
-                    </h3>
-                    <p
-                      style={{
-                        fontFamily: typography[6].fontFamily,
-                        fontSize: `${typography[6].fontSize - 1}px`,
-                        color: typography[6].color,
-                        lineHeight: "1.6",
-                        opacity: 0.7,
-                      }}
-                    >
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum
-                      tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla.
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom Buttons */}
-              <div className="flex gap-4 justify-center">
-                <button
-                  className="website-preview-secondary"
-                  style={{
-                    fontFamily: buttonStyles.secondary.fontFamily,
-                    fontSize: `${buttonStyles.secondary.fontSize}px`,
-                    color: buttonStyles.secondary.textColor,
-                    fontWeight: buttonStyles.secondary.bold ? "bold" : "normal",
-                    backgroundColor: buttonStyles.secondary.backgroundColor,
-                    borderWidth: `${buttonStyles.secondary.borderWidth}px`,
-                    borderColor: buttonStyles.secondary.borderColor,
-                    borderStyle: "solid",
-                    borderRadius: `${buttonStyles.secondary.borderRadius}px`,
-                    padding: buttonStyles.secondary.padding,
-                    boxShadow: buttonStyles.secondary.shadow ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-                  }}
-                >
-                  Button
-                </button>
-                <button
-                  className="website-preview-primary flex items-center gap-2"
-                  style={{
-                    fontFamily: buttonStyles.primary.fontFamily,
-                    fontSize: `${buttonStyles.primary.fontSize}px`,
-                    color: buttonStyles.primary.textColor,
-                    fontWeight: buttonStyles.primary.bold ? "bold" : "normal",
-                    backgroundColor: buttonStyles.primary.backgroundColor,
-                    borderWidth: `${buttonStyles.primary.borderWidth}px`,
-                    borderColor: buttonStyles.primary.borderColor,
-                    borderStyle: "solid",
-                    borderRadius: `${buttonStyles.primary.borderRadius}px`,
-                    padding: buttonStyles.primary.padding,
-                    boxShadow: buttonStyles.primary.shadow ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-                  }}
-                >
-                  Button
-                  <span>→</span>
-                </button>
-              </div>
-            </section>
-
-            {/* Newsletter Section */}
-            <section
-              className="px-8 py-12"
-              style={{
-                backgroundColor: standardColors.secondaryBackground || "#F9FAFB",
-              }}
-            >
-              <div className="max-w-2xl mx-auto text-center">
-                <h4
-                  className="mb-2"
-                  style={{
-                    fontFamily: typography[4].fontFamily,
-                    fontSize: `${typography[4].fontSize}px`,
-                    color: typography[4].color,
-                    fontWeight: buttonStyles.primary.bold ? "bold" : "600",
-                  }}
-                >
-                  Join our newsletter
-                </h4>
-                <p
-                  className="mb-6"
-                  style={{
-                    fontFamily: typography[6].fontFamily,
-                    fontSize: `${typography[6].fontSize}px`,
-                    color: typography[6].color,
-                    opacity: 0.8,
-                  }}
-                >
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="px-4 py-2 border rounded flex-1 max-w-sm"
-                    style={{
-                      fontFamily: typography[6].fontFamily,
-                      fontSize: `${typography[6].fontSize}px`,
-                      borderColor: "#E5E7EB",
-                    }}
-                  />
-                  <button
-                    className="website-preview-primary"
-                    style={{
-                      fontFamily: buttonStyles.primary.fontFamily,
-                      fontSize: `${buttonStyles.primary.fontSize}px`,
-                      color: buttonStyles.primary.textColor,
-                      fontWeight: buttonStyles.primary.bold ? "bold" : "normal",
-                      backgroundColor: buttonStyles.primary.backgroundColor,
-                      borderWidth: `${buttonStyles.primary.borderWidth}px`,
-                      borderColor: buttonStyles.primary.borderColor,
-                      borderStyle: "solid",
-                      borderRadius: `${buttonStyles.primary.borderRadius}px`,
-                      padding: "8px 20px",
-                      boxShadow: buttonStyles.primary.shadow ? "0 2px 4px rgba(0, 0, 0, 0.1)" : "none",
-                    }}
-                  >
-                    Subscribe
-                  </button>
-                </div>
-                <p
-                  className="mt-3 text-xs"
-                  style={{
-                    fontFamily: typography[6].fontFamily,
-                    fontSize: `${typography[6].fontSize - 2}px`,
-                    color: typography[6].color,
-                    opacity: 0.6,
-                  }}
-                >
-                  By submitting this you agree to our{" "}
-                  <a href="#" className="underline">
-                    Privacy Policy
-                  </a>
-                  .
-                </p>
-              </div>
-            </section>
-
-            {/* Footer */}
-            <footer
-              className="px-8 py-12 border-t"
-              style={{
-                backgroundColor: standardColors.background || "#FFFFFF",
-                borderColor: "#E5E7EB",
-              }}
-            >
-              <div className="grid grid-cols-6 gap-8 mb-8">
-                <div>
-                  <div
-                    className="font-semibold mb-4"
-                    style={{
-                      fontFamily: typography[4].fontFamily,
-                      fontSize: `${typography[4].fontSize}px`,
-                      color: typography[4].color,
-                    }}
-                  >
-                    Logo
-                  </div>
-                </div>
-                {["Column One", "Column Two", "Column Three", "Column Four", "Column Five"].map((col) => (
-                  <div key={col}>
-                    <h5
-                      className="mb-3"
-                      style={{
-                        fontFamily: typography[5].fontFamily,
-                        fontSize: `${typography[5].fontSize}px`,
-                        color: typography[5].color,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {col}
-                    </h5>
-                    <ul className="space-y-2">
-                      {["Link One", "Link Two", "Link Three"].map((link) => (
-                        <li key={link}>
-                          <a
-                            href="#"
-                            style={{
-                              fontFamily: typography[6].fontFamily,
-                              fontSize: `${typography[6].fontSize - 1}px`,
-                              color: typography[6].color,
-                              opacity: 0.7,
-                            }}
-                            className="hover:opacity-100 transition-opacity"
-                          >
-                            {link}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                className="pt-8 border-t flex items-center justify-between"
-                style={{
-                  borderColor: "#E5E7EB",
-                }}
-              >
-                <div className="flex gap-4">
-                  <a
-                    href="#"
-                    style={{
-                      fontFamily: typography[6].fontFamily,
-                      fontSize: `${typography[6].fontSize - 2}px`,
-                      color: typography[6].color,
-                      opacity: 0.6,
-                    }}
-                    className="hover:opacity-100 transition-opacity"
-                  >
-                    © 2025 Name. All rights reserved.
-                  </a>
-                  <a
-                    href="#"
-                    style={{
-                      fontFamily: typography[6].fontFamily,
-                      fontSize: `${typography[6].fontSize - 2}px`,
-                      color: typography[6].color,
-                      opacity: 0.6,
-                    }}
-                    className="hover:opacity-100 transition-opacity underline"
-                  >
-                    Privacy Policy
-                  </a>
-                  <a
-                    href="#"
-                    style={{
-                      fontFamily: typography[6].fontFamily,
-                      fontSize: `${typography[6].fontSize - 2}px`,
-                      color: typography[6].color,
-                      opacity: 0.6,
-                    }}
-                    className="hover:opacity-100 transition-opacity underline"
-                  >
-                    Terms of Service
-                  </a>
-                  <a
-                    href="#"
-                    style={{
-                      fontFamily: typography[6].fontFamily,
-                      fontSize: `${typography[6].fontSize - 2}px`,
-                      color: typography[6].color,
-                      opacity: 0.6,
-                    }}
-                    className="hover:opacity-100 transition-opacity underline"
-                  >
-                    Cookies Settings
-                  </a>
-                </div>
-                <div className="flex gap-4">
-                  {["facebook", "instagram", "x", "linkedin", "youtube"].map((social) => (
-                    <a
-                      key={social}
-                      href="#"
-                      className="w-6 h-6 flex items-center justify-center"
-                      style={{
-                        color: typography[6].color,
-                        opacity: 0.6,
-                      }}
-                    >
-                      <span className="sr-only">{social}</span>
-                      <div className="w-5 h-5 rounded-full border-2" style={{ borderColor: "currentColor" }} />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </footer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
