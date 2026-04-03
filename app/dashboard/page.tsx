@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -37,6 +37,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Loader2,
 } from "lucide-react"
 import { ProjectOverview } from "@/components/project-overview"
 import { MoodBoard } from "@/components/mood-board"
@@ -518,6 +519,8 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   const [subscriptionLoading, setSubscriptionLoading] = useState(false)
   const [subscriptionLoaded, setSubscriptionLoaded] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [upgradeCheckoutLoading, setUpgradeCheckoutLoading] = useState(false)
+  const [pricingNavPending, startPricingNav] = useTransition()
   const [supportSubject, setSupportSubject] = useState("")
   const [supportMessage, setSupportMessage] = useState("")
   const [supportSending, setSupportSending] = useState(false)
@@ -916,7 +919,10 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
       const isPro = subscription?.plan === "pro" || subscription?.plan === "professional"
       if (!isPro && projects.length >= 1) {
         toast.error("Free plan project limit reached. Upgrade to create more projects.", {
-          action: { label: "Upgrade", onClick: () => router.push("/pricing") },
+          action: {
+            label: "Upgrade",
+            onClick: () => startPricingNav(() => router.push("/pricing")),
+          },
         })
         return
       }
@@ -940,7 +946,10 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
         error?.message?.includes("Free plan project limit") || error?.code === "P0001"
       if (isLimitError) {
         toast.error("Free plan project limit reached. Upgrade to create more projects.", {
-          action: { label: "Upgrade", onClick: () => router.push("/pricing") },
+          action: {
+            label: "Upgrade",
+            onClick: () => startPricingNav(() => router.push("/pricing")),
+          },
         })
       } else {
         toast.error("Failed to create project. Try again.")
@@ -1042,20 +1051,24 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
   }
 
   const handleUpgrade = async () => {
+    setUpgradeCheckoutLoading(true)
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingPeriod: "monthly" }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (data.url) {
         window.location.href = data.url
-      } else {
-        toast.error("Failed to start checkout. Please try again.")
+        return
       }
+      toast.error("Failed to start checkout. Please try again.")
     } catch {
       toast.error("Failed to start checkout. Please try again.")
     }
+    setUpgradeCheckoutLoading(false)
   }
 
   const resetPasswordFormState = () => {
@@ -1202,6 +1215,13 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
 
   return (
       <div className="flex h-screen bg-gray-50">
+        {pricingNavPending && (
+          <div
+            className="fixed top-0 left-0 right-0 z-[200] h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 animate-pulse"
+            role="status"
+            aria-label="Opening pricing"
+          />
+        )}
         {/* Sidebar */}
         <aside
         className={cn(
@@ -1277,10 +1297,20 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
         <div className="border-t border-gray-200 p-3 space-y-2">
           {subscription?.plan !== "pro" && subscription?.plan !== "team" && (
             <Button
-              onClick={handleUpgrade}
+              onClick={() => void handleUpgrade()}
+              disabled={upgradeCheckoutLoading}
               className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-medium"
             >
-              {sidebarCollapsed ? (
+              {upgradeCheckoutLoading ? (
+                sidebarCollapsed ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <>
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    Loading...
+                  </>
+                )
+              ) : sidebarCollapsed ? (
                 <Crown className="h-4 w-4" />
               ) : (
                 <>
@@ -2285,8 +2315,19 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                   <CardDescription className="mt-1">Your subscription details and limits</CardDescription>
                                 </div>
                                 {plan === "free" && (
-                                  <Button onClick={handleUpgrade} size="sm">
-                                    Upgrade Plan
+                                  <Button
+                                    onClick={() => void handleUpgrade()}
+                                    disabled={upgradeCheckoutLoading}
+                                    size="sm"
+                                  >
+                                    {upgradeCheckoutLoading ? (
+                                      <>
+                                        <Loader2 className="size-4 animate-spin mr-2" />
+                                        Loading...
+                                      </>
+                                    ) : (
+                                      "Upgrade Plan"
+                                    )}
                                   </Button>
                                 )}
                               </div>
@@ -2383,7 +2424,14 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                       variant="outline"
                                       size="sm"
                                     >
-                                      {portalLoading ? "Opening…" : "Manage Billing"}
+                                      {portalLoading ? (
+                                        <>
+                                          <Loader2 className="size-4 animate-spin mr-2" />
+                                          Opening…
+                                        </>
+                                      ) : (
+                                        "Manage Billing"
+                                      )}
                                     </Button>
                                   </div>
                                 </CardContent>
@@ -2416,7 +2464,14 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                       variant="outline"
                                       size="sm"
                                     >
-                                      {portalLoading ? "Opening…" : "Manage Billing"}
+                                      {portalLoading ? (
+                                        <>
+                                          <Loader2 className="size-4 animate-spin mr-2" />
+                                          Opening…
+                                        </>
+                                      ) : (
+                                        "Manage Billing"
+                                      )}
                                     </Button>
                                   </div>
                                 </CardContent>
@@ -2445,7 +2500,14 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                     variant="outline"
                                     size="sm"
                                   >
-                                    {portalLoading ? "Opening…" : "Manage Billing"}
+                                    {portalLoading ? (
+                                      <>
+                                        <Loader2 className="size-4 animate-spin mr-2" />
+                                        Opening…
+                                      </>
+                                    ) : (
+                                      "Manage Billing"
+                                    )}
                                   </Button>
                                   <Button
                                     onClick={handleManageBilling}
@@ -2468,7 +2530,19 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                               <CardDescription>You're currently on the Free plan. Upgrade to add a payment method and unlock more projects and team members.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                              <Button onClick={handleUpgrade}>Upgrade</Button>
+                              <Button
+                                onClick={() => void handleUpgrade()}
+                                disabled={upgradeCheckoutLoading}
+                              >
+                                {upgradeCheckoutLoading ? (
+                                  <>
+                                    <Loader2 className="size-4 animate-spin mr-2" />
+                                    Loading...
+                                  </>
+                                ) : (
+                                  "Upgrade"
+                                )}
+                              </Button>
                             </CardContent>
                           </Card>
                         )

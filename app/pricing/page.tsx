@@ -4,10 +4,12 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { Check, Sparkles, ArrowUpRight, ChevronDown } from "lucide-react"
+import { Check, Sparkles, ArrowUpRight, ChevronDown, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { Toaster, toast } from "sonner"
 
 export default function PricingPage() {
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [isYearly, setIsYearly] = useState(false)
   const router = useRouter()
 
@@ -59,33 +61,6 @@ export default function PricingPage() {
 
   const monthlyPrice = 10
   const yearlyPrice = 8
-
-  const handleUpgrade = async () => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-
-    if (sessionError || !session?.user?.id) {
-      router.push("/signup")
-      return
-    }
-
-    try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billingPeriod: isYearly ? "yearly" : "monthly" }),
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (data.url) window.location.href = data.url
-      else router.push("/signup")
-    } catch {
-      router.push("/signup")
-    }
-  }
 
   return (
     <div className="bg-[#F7F5FF]">
@@ -347,17 +322,55 @@ export default function PricingPage() {
               {/* Spacer to push button down */}
               <div className="h-6" />
 
-              <a 
-                href="/signup"
-                onClick={(e) => {
-                  e.preventDefault()
-                  void handleUpgrade()
+              <button
+                type="button"
+                disabled={upgradeLoading}
+                onClick={() => {
+                  setUpgradeLoading(true)
+                  void (async () => {
+                    const {
+                      data: { session },
+                      error: sessionError,
+                    } = await supabase.auth.getSession()
+
+                    if (sessionError || !session?.user?.id) {
+                      setUpgradeLoading(false)
+                      router.push("/signup")
+                      return
+                    }
+
+                    const billingPeriod = isYearly ? "yearly" : "monthly"
+                    try {
+                      const res = await fetch("/api/stripe/create-checkout-session", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ billingPeriod }),
+                      })
+                      const data = await res.json().catch(() => ({}))
+                      if (data.url) {
+                        window.location.href = data.url
+                        return
+                      }
+                      toast.error("Something went wrong. Please try again.")
+                    } catch {
+                      toast.error("Something went wrong. Please try again.")
+                    }
+                    setUpgradeLoading(false)
+                  })()
                 }}
-                className="flex items-center justify-center w-full font-sans font-semibold py-3.5 rounded-lg transition-opacity hover:opacity-90"
-                style={{ background: '#1BAE80', color: 'white', fontSize: '14px' }}
+                className="flex items-center justify-center w-full font-sans font-semibold py-3.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-70 disabled:pointer-events-none"
+                style={{ background: "#1BAE80", color: "white", fontSize: "14px" }}
               >
-                Upgrade
-              </a>
+                {upgradeLoading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  "Upgrade to Pro"
+                )}
+              </button>
             </div>
               </div>
             </div>
@@ -435,6 +448,7 @@ export default function PricingPage() {
 
         <Footer />
       </main>
+      <Toaster />
     </div>
   )
 }

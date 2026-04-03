@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react"
+import { useState, useEffect, useRef, useMemo, type ChangeEvent, type KeyboardEvent } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +25,7 @@ type TypographyLevel = {
   level: string
   label: string
   fontFamily: string
+  fontWeight: number
   fontSize: number
   color: string
   previewText: string
@@ -34,6 +35,7 @@ type TypographyLevel = {
 type ButtonStyle = {
   // Text properties
   fontFamily: string
+  fontWeight: number
   fontSize: number
   textColor: string
   bold: boolean
@@ -90,24 +92,24 @@ const defaultStandardColors: StandardColors = {
 }
 
 const defaultTypography: TypographyLevel[] = [
-  { level: "h1", label: "H1", fontFamily: "Inter", fontSize: 32, color: "#000000", previewText: "This is a H1 heading example", description: "Main page heading" },
-  { level: "h2", label: "H2", fontFamily: "Inter", fontSize: 28, color: "#000000", previewText: "This is a H2 heading example", description: "Section heading" },
-  { level: "h3", label: "H3", fontFamily: "Inter", fontSize: 24, color: "#000000", previewText: "This is a H3 heading example", description: "Subsection heading" },
-  { level: "h4", label: "H4", fontFamily: "Inter", fontSize: 20, color: "#000000", previewText: "This is a H4 heading example", description: "Card or component heading" },
-  { level: "h5", label: "H5", fontFamily: "Inter", fontSize: 18, color: "#000000", previewText: "This is a H5 heading example", description: "Small section heading" },
-  { level: "h6", label: "H6", fontFamily: "Inter", fontSize: 16, color: "#000000", previewText: "This is a H6 heading example", description: "Smallest heading" },
-  { level: "body", label: "Paragraph", fontFamily: "Inter", fontSize: 14, color: "#000000", previewText: "This is body text used for paragraphs and general content throughout your website.", description: "Body and paragraph text" },
+  { level: "h1", label: "H1", fontFamily: "Inter", fontWeight: 400, fontSize: 32, color: "#000000", previewText: "This is a H1 heading example", description: "Main page heading" },
+  { level: "h2", label: "H2", fontFamily: "Inter", fontWeight: 400, fontSize: 28, color: "#000000", previewText: "This is a H2 heading example", description: "Section heading" },
+  { level: "h3", label: "H3", fontFamily: "Inter", fontWeight: 400, fontSize: 24, color: "#000000", previewText: "This is a H3 heading example", description: "Subsection heading" },
+  { level: "h4", label: "H4", fontFamily: "Inter", fontWeight: 400, fontSize: 20, color: "#000000", previewText: "This is a H4 heading example", description: "Card or component heading" },
+  { level: "h5", label: "H5", fontFamily: "Inter", fontWeight: 400, fontSize: 18, color: "#000000", previewText: "This is a H5 heading example", description: "Small section heading" },
+  { level: "h6", label: "H6", fontFamily: "Inter", fontWeight: 400, fontSize: 16, color: "#000000", previewText: "This is a H6 heading example", description: "Smallest heading" },
+  { level: "body", label: "Paragraph", fontFamily: "Inter", fontWeight: 400, fontSize: 14, color: "#000000", previewText: "This is body text used for paragraphs and general content throughout your website.", description: "Body and paragraph text" },
 ]
 
 const defaultButtonStyles: Record<string, ButtonStyle> = {
   primary: {
-    fontFamily: "Inter", fontSize: 16, textColor: "#FFFFFF", bold: false, underline: false, italic: false, alignment: "center",
+    fontFamily: "Inter", fontWeight: 400, fontSize: 16, textColor: "#FFFFFF", bold: false, underline: false, italic: false, alignment: "center",
     backgroundColor: "#000000", borderWidth: 0, borderColor: "#000000", borderRadius: 6, shadow: false,
     hoverBackgroundColor: "#333333", hoverBorderColor: "#000000", hoverTextColor: "#FFFFFF", hoverBold: false, hoverUnderline: false, hoverItalic: false,
     padding: "12px 24px",
   },
   secondary: {
-    fontFamily: "Inter", fontSize: 16, textColor: "#000000", bold: false, underline: false, italic: false, alignment: "center",
+    fontFamily: "Inter", fontWeight: 400, fontSize: 16, textColor: "#000000", bold: false, underline: false, italic: false, alignment: "center",
     backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#000000", borderRadius: 6, shadow: false,
     hoverBackgroundColor: "#F3F4F6", hoverBorderColor: "#000000", hoverTextColor: "#000000", hoverBold: false, hoverUnderline: false, hoverItalic: false,
     padding: "12px 24px",
@@ -205,7 +207,10 @@ function HexColorRow({ value, onChange, inputClassName, wrapperClassName, onKeyD
   )
 }
 
-const STANDARD_FONTS = [
+const GOOGLE_FONTS_CACHE_KEY = "troov-google-fonts-list"
+const GOOGLE_FONTS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+const FONT_PICKER_FALLBACK_FONTS = [
   "Inter",
   "Arial",
   "Helvetica",
@@ -217,13 +222,244 @@ const STANDARD_FONTS = [
   "Raleway",
   "Nunito",
   "Georgia",
-  "Times New Roman",
   "Playfair Display",
   "Merriweather",
-  "Source Sans Pro",
-  "Ubuntu",
-  "Oswald",
+  "Plus Jakarta Sans",
+  "DM Sans",
 ]
+
+const FONT_WEIGHT_OPTIONS: { label: string; value: string }[] = [
+  { label: "Thin (100)", value: "100" },
+  { label: "Extra Light (200)", value: "200" },
+  { label: "Light (300)", value: "300" },
+  { label: "Regular (400)", value: "400" },
+  { label: "Medium (500)", value: "500" },
+  { label: "Semi Bold (600)", value: "600" },
+  { label: "Bold (700)", value: "700" },
+  { label: "Extra Bold (800)", value: "800" },
+  { label: "Black (900)", value: "900" },
+]
+
+function previewLinkId(family: string) {
+  return `troov-gf-preview-${encodeURIComponent(family)}`
+}
+
+function loadedLinkId(family: string) {
+  return `troov-gf-loaded-${encodeURIComponent(family)}`
+}
+
+function ensureFontStylesheetInHead(family: string) {
+  const id = loadedLinkId(family)
+  if (document.getElementById(id)) return
+  const link = document.createElement("link")
+  link.id = id
+  link.rel = "stylesheet"
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`
+  document.head.appendChild(link)
+}
+
+type FontPickerProps = {
+  value: string
+  onChange: (font: string) => void
+}
+
+function FontPicker({ value, onChange }: FontPickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const selectingRef = useRef(false)
+  const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [fonts, setFonts] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (value) ensureFontStylesheetInHead(value)
+  }, [value])
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const raw = typeof window !== "undefined" ? localStorage.getItem(GOOGLE_FONTS_CACHE_KEY) : null
+        if (raw) {
+          const parsed = JSON.parse(raw) as { expiresAt?: number; families?: string[] }
+          if (
+            typeof parsed.expiresAt === "number" &&
+            parsed.expiresAt > Date.now() &&
+            Array.isArray(parsed.families) &&
+            parsed.families.length > 0
+          ) {
+            if (!cancelled) setFonts(parsed.families)
+            return
+          }
+        }
+      } catch {
+        /* use network */
+      }
+
+      const key = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY
+      if (!key) {
+        if (!cancelled) {
+          setFonts(FONT_PICKER_FALLBACK_FONTS)
+          setLoading(false)
+        }
+        return
+      }
+
+      if (!cancelled) setLoading(true)
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/webfonts/v1/webfonts?key=${encodeURIComponent(key)}&sort=popularity`,
+        )
+        if (!res.ok) throw new Error("fonts api")
+        const data = (await res.json()) as { items?: { family: string }[] }
+        const families = (data.items ?? []).map((item) => item.family).filter(Boolean)
+        if (families.length === 0) throw new Error("empty")
+        try {
+          localStorage.setItem(
+            GOOGLE_FONTS_CACHE_KEY,
+            JSON.stringify({ expiresAt: Date.now() + GOOGLE_FONTS_CACHE_TTL_MS, families }),
+          )
+        } catch {
+          /* ignore quota */
+        }
+        if (!cancelled) setFonts(families)
+      } catch {
+        if (!cancelled) setFonts(FONT_PICKER_FALLBACK_FONTS)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const trimmedQuery = searchQuery.trim()
+  const filtered = useMemo(() => {
+    const q = trimmedQuery.toLowerCase()
+    if (!q) return fonts.slice(0, 20)
+    return fonts.filter((f) => f.toLowerCase().includes(q)).slice(0, 20)
+  }, [fonts, trimmedQuery])
+
+  useEffect(() => {
+    if (!open) return
+    const created: HTMLLinkElement[] = []
+    for (const family of filtered) {
+      const id = previewLinkId(family)
+      if (document.getElementById(id)) continue
+      const link = document.createElement("link")
+      link.id = id
+      link.rel = "stylesheet"
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`
+      document.head.appendChild(link)
+      created.push(link)
+    }
+    return () => {
+      for (const link of created) {
+        link.remove()
+      }
+    }
+  }, [open, filtered])
+
+  useEffect(() => {
+    if (!open) return
+    const onDocMouseDown = (e: MouseEvent) => {
+      const el = containerRef.current
+      if (el && !el.contains(e.target as Node)) {
+        setOpen(false)
+        setSearchQuery("")
+      }
+    }
+    document.addEventListener("mousedown", onDocMouseDown)
+    return () => document.removeEventListener("mousedown", onDocMouseDown)
+  }, [open])
+
+  const handleSelect = (family: string) => {
+    selectingRef.current = true
+    if (blurTimerRef.current) {
+      clearTimeout(blurTimerRef.current)
+      blurTimerRef.current = null
+    }
+    ensureFontStylesheetInHead(family)
+    onChange(family)
+    setSearchQuery("")
+    setOpen(false)
+    selectingRef.current = false
+  }
+
+  const inputDisplayValue = open ? searchQuery : value
+
+  return (
+    <div ref={containerRef} className="relative w-full min-w-0">
+      <Input
+        value={inputDisplayValue}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onFocus={() => {
+          if (blurTimerRef.current) {
+            clearTimeout(blurTimerRef.current)
+            blurTimerRef.current = null
+          }
+          setOpen(true)
+          setSearchQuery("")
+        }}
+        onBlur={() => {
+          blurTimerRef.current = setTimeout(() => {
+            blurTimerRef.current = null
+            if (!selectingRef.current) {
+              setOpen(false)
+              setSearchQuery("")
+            }
+            selectingRef.current = false
+          }, 150)
+        }}
+        placeholder="Search fonts..."
+        className={`h-9 text-sm ${loading ? "opacity-70" : ""}`}
+        aria-busy={loading}
+        aria-autocomplete="list"
+        aria-expanded={open}
+        autoComplete="off"
+      />
+      {loading && (
+        <p className="mt-1 text-xs text-gray-400">Loading fonts…</p>
+      )}
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-md"
+          role="listbox"
+        >
+          <div className="border-b border-gray-100 px-3 py-1.5 text-[11px] text-gray-400">
+            {trimmedQuery ? "Search results" : "Showing popular fonts"}
+          </div>
+          {filtered.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+          ) : (
+            filtered.map((family) => (
+              <button
+                key={family}
+                type="button"
+                role="option"
+                aria-selected={family === value}
+                className={`flex h-9 w-full items-center px-3 text-left text-sm hover:bg-gray-50 ${
+                  family === value ? "bg-emerald-50" : ""
+                }`}
+                style={{ fontFamily: `"${family}", sans-serif` }}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  selectingRef.current = true
+                }}
+                onClick={() => handleSelect(family)}
+              >
+                {family}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function StyleGuideClean({ projectId }: { projectId: string }) {
   const { completion, setOverride } = useSectionCompletion(projectId)
@@ -239,8 +475,28 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
       return {
         standardColors: (o.standardColors as StandardColors) ?? defaultStandardColors,
         customColors: Array.isArray(o.customColors) ? (o.customColors as CustomColor[]) : [],
-        typography: Array.isArray(o.typography) ? (o.typography as TypographyLevel[]) : defaultTypography,
-        buttonStyles: (o.buttonStyles as Record<string, ButtonStyle>) ?? defaultButtonStyles,
+        typography: Array.isArray(o.typography)
+          ? (o.typography as TypographyLevel[]).map((t) => ({
+              ...t,
+              fontWeight: typeof t.fontWeight === "number" ? t.fontWeight : 400,
+            }))
+          : defaultTypography,
+        buttonStyles: (() => {
+          const raw = o.buttonStyles as Record<string, ButtonStyle> | undefined
+          if (!raw || typeof raw !== "object") return defaultButtonStyles
+          return {
+            primary: {
+              ...defaultButtonStyles.primary,
+              ...raw.primary,
+              fontWeight: typeof raw.primary?.fontWeight === "number" ? raw.primary.fontWeight : 400,
+            },
+            secondary: {
+              ...defaultButtonStyles.secondary,
+              ...raw.secondary,
+              fontWeight: typeof raw.secondary?.fontWeight === "number" ? raw.secondary.fontWeight : 400,
+            },
+          }
+        })(),
       }
     },
     toPayload: (d) => ({ data: d ?? defaultStyleGuideData }),
@@ -505,17 +761,25 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                     {/* Font Family Selection */}
                     <div>
                       <Label className="text-xs font-medium mb-2 block">Font Family</Label>
-                      <Select
+                      <FontPicker
                         value={typo.fontFamily}
-                        onValueChange={(value) => updateTypography(index, "fontFamily", value)}
+                        onChange={(font) => updateTypography(index, "fontFamily", font)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-medium mb-2 block">Font Weight</Label>
+                      <Select
+                        value={String(typo.fontWeight ?? 400)}
+                        onValueChange={(v) => updateTypography(index, "fontWeight", Number.parseInt(v, 10))}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Choose a font" />
+                          <SelectValue placeholder="Weight" />
                         </SelectTrigger>
                         <SelectContent>
-                          {STANDARD_FONTS.map((font) => (
-                            <SelectItem key={font} value={font}>
-                              <span style={{ fontFamily: font }}>{font}</span>
+                          {FONT_WEIGHT_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -604,6 +868,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 <div
                   style={{
                     fontFamily: typo.fontFamily,
+                    fontWeight: typo.fontWeight ?? 400,
                     fontSize: `${typo.fontSize}px`,
                     color: typo.color,
                   }}
@@ -628,7 +893,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
 
         {/* Buttons Card */}
         <div className="relative h-full min-w-0">
-          <Card className="flex h-full min-w-0 flex-col overflow-x-hidden">
+          <Card className="flex h-full min-w-0 flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PencilIcon className="size-4" />
@@ -636,7 +901,7 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
               </CardTitle>
             </CardHeader>
             <CardContent
-              className="flex max-h-[600px] min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-x-hidden overflow-y-auto"
+              className="flex max-h-[600px] min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-y-auto"
               style={{ scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}
               onScroll={(e) => {
                 const el = e.currentTarget
@@ -680,14 +945,14 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
               }
             `}</style>
 
-            <div className="min-w-0 overflow-hidden rounded-lg bg-gray-50 p-6 flex items-center justify-center">
+            <div className="flex items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 p-8 my-4 min-h-[120px]">
               <button
-                className={`preview-button-${activeButtonTab} min-w-[120px] capitalize`}
+                className={`preview-button-${activeButtonTab} capitalize`}
                 style={{
                   fontFamily: buttonStyles[activeButtonTab].fontFamily,
                   fontSize: `${buttonStyles[activeButtonTab].fontSize}px`,
                   color: buttonStyles[activeButtonTab].textColor,
-                  fontWeight: buttonStyles[activeButtonTab].bold ? "bold" : "normal",
+                  fontWeight: buttonStyles[activeButtonTab].fontWeight ?? 400,
                   textDecoration: buttonStyles[activeButtonTab].underline ? "underline" : "none",
                   fontStyle: buttonStyles[activeButtonTab].italic ? "italic" : "normal",
                   textAlign: buttonStyles[activeButtonTab].alignment,
@@ -698,6 +963,8 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                   borderRadius: `${buttonStyles[activeButtonTab].borderRadius}px`,
                   padding: buttonStyles[activeButtonTab].padding,
                   boxShadow: buttonStyles[activeButtonTab].shadow ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
+                  minWidth: "160px",
+                  minHeight: "48px",
                 }}
               >
                 {activeButtonTab}
@@ -713,22 +980,30 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                 <div>
                   <Label className="text-xs font-medium mb-1.5 block">Font</Label>
                   <div className="flex min-w-0 gap-2">
-                    <Select
+                    <FontPicker
                       value={buttonStyles[activeButtonTab].fontFamily}
-                      onValueChange={(value) => updateButtonStyle(activeButtonTab, "fontFamily", value)}
-                    >
-                      <SelectTrigger className="h-9 min-w-0 w-full max-w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STANDARD_FONTS.map((font) => (
-                          <SelectItem key={font} value={font}>
-                            <span style={{ fontFamily: font }}>{font}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(font) => updateButtonStyle(activeButtonTab, "fontFamily", font)}
+                    />
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-medium mb-1.5 block">Font Weight</Label>
+                  <Select
+                    value={String(buttonStyles[activeButtonTab].fontWeight ?? 400)}
+                    onValueChange={(v) => updateButtonStyle(activeButtonTab, "fontWeight", Number.parseInt(v, 10))}
+                  >
+                    <SelectTrigger className="h-9 min-w-0 w-full max-w-full">
+                      <SelectValue placeholder="Weight" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Font Size */}

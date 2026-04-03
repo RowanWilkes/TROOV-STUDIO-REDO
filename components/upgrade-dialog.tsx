@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -10,8 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, Sparkles, Zap } from "lucide-react"
-import Link from "next/link"
+import { Check, Sparkles, Zap, Loader2 } from "lucide-react"
 
 interface UpgradeDialogProps {
   open: boolean
@@ -20,7 +21,8 @@ interface UpgradeDialogProps {
 }
 
 export function UpgradeDialog({ open, onOpenChange, feature = "projects" }: UpgradeDialogProps) {
-  // Added default value
+  const router = useRouter()
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
   const content = {
     projects: {
       title: "Unlock Unlimited Projects",
@@ -83,8 +85,23 @@ export function UpgradeDialog({ open, onOpenChange, feature = "projects" }: Upgr
           <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Maybe later
           </Button>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/pricing">Upgrade to Pro</Link>
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            disabled={upgradeLoading}
+            onClick={() => {
+              setUpgradeLoading(true)
+              router.push("/pricing")
+            }}
+          >
+            {upgradeLoading ? (
+              <>
+                <Loader2 className="size-4 animate-spin mr-2" />
+                Loading...
+              </>
+            ) : (
+              "Upgrade to Pro"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
