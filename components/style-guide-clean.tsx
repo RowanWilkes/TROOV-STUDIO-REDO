@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -119,6 +119,90 @@ const defaultStyleGuideData: StyleGuideData = {
   customColors: [],
   typography: defaultTypography,
   buttonStyles: defaultButtonStyles,
+}
+
+const VALID_HEX_6 = /^#[0-9A-Fa-f]{6}$/
+
+function hexToPickerValue(stored: string, draft: string): string {
+  if (VALID_HEX_6.test(stored)) return stored
+  if (VALID_HEX_6.test(draft)) return draft
+  return "#000000"
+}
+
+type HexColorRowProps = {
+  value: string
+  onChange: (hex: string) => void
+  inputClassName?: string
+  wrapperClassName?: string
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
+}
+
+function HexColorRow({ value, onChange, inputClassName, wrapperClassName, onKeyDown }: HexColorRowProps) {
+  const [draft, setDraft] = useState(value)
+  const emptyPickerRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
+  const handleHexInput = (raw: string) => {
+    setDraft(raw)
+    if (raw === "") {
+      onChange("")
+      return
+    }
+    if (VALID_HEX_6.test(raw)) onChange(raw)
+  }
+
+  const handlePicker = (e: ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value
+    setDraft(v)
+    onChange(v)
+  }
+
+  const isEmpty = value === ""
+
+  return (
+    <div className={`flex items-center gap-2 ${wrapperClassName ?? ""}`}>
+      {isEmpty ? (
+        <div className="relative w-9 h-9 shrink-0">
+          <input
+            ref={emptyPickerRef}
+            type="color"
+            defaultValue="#000000"
+            onChange={handlePicker}
+            className="absolute inset-0 opacity-0 pointer-events-none size-full"
+            aria-hidden
+          />
+          <div
+            role="button"
+            tabIndex={0}
+            className="absolute inset-0 w-9 h-9 rounded border-2 border-dashed border-gray-300 bg-white cursor-pointer flex-shrink-0"
+            onClick={() => emptyPickerRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                emptyPickerRef.current?.click()
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <input
+          type="color"
+          value={hexToPickerValue(value, draft)}
+          onChange={handlePicker}
+          className="size-9 shrink-0 rounded cursor-pointer border border-gray-200 p-0.5 bg-white"
+        />
+      )}
+      <Input
+        value={draft}
+        onChange={(e) => handleHexInput(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder="#000000"
+        className={inputClassName ?? "font-mono text-sm"}
+      />
+    </div>
+  )
 }
 
 const STANDARD_FONTS = [
@@ -300,27 +384,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       </Button>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <div className="relative size-10">
-                      <input
-                        type="color"
-                        value={value || "#000000"}
-                        onChange={(e) => updateStandardColor(key as keyof StandardColors, e.target.value)}
-                        className={`size-10 rounded cursor-pointer border border-gray-300 ${!value ? "opacity-0" : ""}`}
-                      />
-                      {!value && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="size-9 rounded border-2 border-dashed border-gray-300 bg-gray-50" />
-                        </div>
-                      )}
-                    </div>
-                    <Input
-                      value={value || ""}
-                      onChange={(e) => updateStandardColor(key as keyof StandardColors, e.target.value)}
-                      placeholder="No color selected"
-                      className="font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={value || ""}
+                    onChange={(hex) => updateStandardColor(key as keyof StandardColors, hex)}
+                    inputClassName="font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
               ))}
             </div>
@@ -342,19 +411,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       <X className="size-3" />
                     </Button>
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={color.value}
-                      onChange={(e) => updateCustomColor(color.id, "value", e.target.value)}
-                      className="size-10 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={color.value}
-                      onChange={(e) => updateCustomColor(color.id, "value", e.target.value)}
-                      className="font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={color.value}
+                    onChange={(hex) => updateCustomColor(color.id, "value", hex)}
+                    inputClassName="font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
               ))}
 
@@ -362,21 +424,13 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
               <div className="space-y-2 pt-2 border-t border-dashed">
                 <p className="text-xs font-medium text-gray-700">Add Custom Color</p>
 
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    value={newCustomColor}
-                    onChange={(e) => setNewCustomColor(e.target.value)}
-                    className="size-10 rounded cursor-pointer border border-gray-300 flex-shrink-0"
-                  />
-                  <Input
-                    value={newCustomColor}
-                    onChange={(e) => setNewCustomColor(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addCustomColor()}
-                    placeholder="#000000"
-                    className="h-9 font-mono text-sm"
-                  />
-                </div>
+                <HexColorRow
+                  value={newCustomColor}
+                  onChange={setNewCustomColor}
+                  inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                  wrapperClassName="w-full"
+                  onKeyDown={(e) => e.key === "Enter" && addCustomColor()}
+                />
 
                 <div className="flex gap-2">
                   <Input
@@ -526,19 +580,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                     {/* Custom Color Picker */}
                     <div>
                       <Label className="text-xs font-medium mb-2 block">Custom Color</Label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={typo.color}
-                          onChange={(e) => updateTypography(index, "color", e.target.value)}
-                          className="size-9 rounded cursor-pointer border border-gray-300"
-                        />
-                        <Input
-                          value={typo.color}
-                          onChange={(e) => updateTypography(index, "color", e.target.value)}
-                          className="h-9 font-mono text-sm"
-                        />
-                      </div>
+                      <HexColorRow
+                        value={typo.color}
+                        onChange={(hex) => updateTypography(index, "color", hex)}
+                        inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                        wrapperClassName="w-full"
+                      />
                     </div>
                   </div>
                 )}
@@ -712,19 +759,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={buttonStyles[activeButtonTab].textColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "textColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={buttonStyles[activeButtonTab].textColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "textColor", e.target.value)}
-                      className="h-9 font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={buttonStyles[activeButtonTab].textColor}
+                    onChange={(hex) => updateButtonStyle(activeButtonTab, "textColor", hex)}
+                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
 
                 {/* Format (Bold, Underline, Italic) */}
@@ -820,19 +860,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={buttonStyles[activeButtonTab].backgroundColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "backgroundColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={buttonStyles[activeButtonTab].backgroundColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "backgroundColor", e.target.value)}
-                      className="h-9 font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={buttonStyles[activeButtonTab].backgroundColor}
+                    onChange={(hex) => updateButtonStyle(activeButtonTab, "backgroundColor", hex)}
+                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
               </div>
 
@@ -894,11 +927,11 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       className="h-9 w-20 text-sm"
                     />
                     <span className="text-xs text-gray-500">px</span>
-                    <input
-                      type="color"
+                    <HexColorRow
                       value={buttonStyles[activeButtonTab].borderColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "borderColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
+                      onChange={(hex) => updateButtonStyle(activeButtonTab, "borderColor", hex)}
+                      inputClassName="h-9 font-mono text-sm w-[7.25rem] shrink-0"
+                      wrapperClassName="shrink-0"
                     />
                   </div>
                 </div>
@@ -989,19 +1022,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={buttonStyles[activeButtonTab].hoverBackgroundColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverBackgroundColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={buttonStyles[activeButtonTab].hoverBackgroundColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverBackgroundColor", e.target.value)}
-                      className="h-9 font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={buttonStyles[activeButtonTab].hoverBackgroundColor}
+                    onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverBackgroundColor", hex)}
+                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
 
                 <div>
@@ -1038,19 +1064,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={buttonStyles[activeButtonTab].hoverBorderColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverBorderColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={buttonStyles[activeButtonTab].hoverBorderColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverBorderColor", e.target.value)}
-                      className="h-9 font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={buttonStyles[activeButtonTab].hoverBorderColor}
+                    onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverBorderColor", hex)}
+                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
 
                 <div>
@@ -1087,19 +1106,12 @@ export function StyleGuideClean({ projectId }: { projectId: string }) {
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={buttonStyles[activeButtonTab].hoverTextColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverTextColor", e.target.value)}
-                      className="size-9 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={buttonStyles[activeButtonTab].hoverTextColor}
-                      onChange={(e) => updateButtonStyle(activeButtonTab, "hoverTextColor", e.target.value)}
-                      className="h-9 font-mono text-sm"
-                    />
-                  </div>
+                  <HexColorRow
+                    value={buttonStyles[activeButtonTab].hoverTextColor}
+                    onChange={(hex) => updateButtonStyle(activeButtonTab, "hoverTextColor", hex)}
+                    inputClassName="h-9 font-mono text-sm flex-1 min-w-0"
+                    wrapperClassName="w-full"
+                  />
                 </div>
 
                 <div>

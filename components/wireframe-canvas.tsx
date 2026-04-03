@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, Home, Trash2, ChevronRight, ChevronDown, FileText, Edit2, Check, X, Puzzle, PenLine } from "lucide-react"
+import { Plus, Home, Trash2, ChevronRight, ChevronDown, ChevronUp, GripVertical, FileText, Edit2, Check, X, Puzzle, PenLine } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -296,6 +296,26 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
       })
     }
     setPages(removeBlock(pages))
+  }
+
+  const moveBlock = (pageId: string, blockIndex: number, direction: "up" | "down") => {
+    const delta = direction === "up" ? -1 : 1
+    const reorder = (pageList: SitemapPage[]): SitemapPage[] => {
+      return pageList.map((page) => {
+        if (page.id === pageId) {
+          const blocks = [...page.blocks]
+          const j = blockIndex + delta
+          if (j < 0 || j >= blocks.length) return page
+          ;[blocks[blockIndex], blocks[j]] = [blocks[j], blocks[blockIndex]]
+          return { ...page, blocks }
+        }
+        if (page.children.length > 0) {
+          return { ...page, children: reorder(page.children) }
+        }
+        return page
+      })
+    }
+    setPages(reorder(pages))
   }
 
   const findPage = (pageList: SitemapPage[], pageId: string): SitemapPage | null => {
@@ -652,12 +672,19 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
                     <p>Add sections from the block library</p>
                   </div>
                 ) : (
-                  selectedPageData.blocks.map((block) => (
+                  <div className="space-y-3 transition-all duration-200 ease-in-out">
+                  {selectedPageData.blocks.map((block, blockIndex) => {
+                    const blockCount = selectedPageData.blocks.length
+                    return (
                     <div
                       key={block.id}
-                      className="p-3 rounded-lg border-2 border-gray-200 dark:border-[#2DCE73]/50 bg-white dark:bg-[#013B34] hover:shadow-md transition-shadow group relative"
+                      className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#013B34] hover:shadow-sm transition-all duration-200 ease-in-out relative"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <GripVertical
+                        className="size-4 shrink-0 mt-0.5 text-gray-300 dark:text-gray-600 cursor-grab"
+                        aria-hidden
+                      />
+                      <div className="flex flex-1 min-w-0 items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="font-semibold text-sm text-gray-900 dark:text-white">{block.label}</p>
@@ -670,17 +697,42 @@ export function WireframeCanvas({ projectId }: WireframeCanvasProps) {
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{block.description}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeBlockFromPage(selectedPage!, block.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 h-8 w-8 p-0 dark:hover:bg-[#024039]"
-                        >
-                          <Trash2 className="size-3.5 text-gray-400 hover:text-orange-500" />
-                        </Button>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={blockIndex === 0}
+                            onClick={() => moveBlock(selectedPage!, blockIndex, "up")}
+                            className="h-8 w-8 p-0 text-gray-300 dark:text-gray-600 hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-800 dark:hover:!text-gray-200 disabled:pointer-events-none disabled:opacity-30"
+                            aria-label="Move section up"
+                          >
+                            <ChevronUp className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={blockIndex === blockCount - 1}
+                            onClick={() => moveBlock(selectedPage!, blockIndex, "down")}
+                            className="h-8 w-8 p-0 text-gray-300 dark:text-gray-600 hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-800 dark:hover:!text-gray-200 disabled:pointer-events-none disabled:opacity-30"
+                            aria-label="Move section down"
+                          >
+                            <ChevronDown className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeBlockFromPage(selectedPage!, block.id)}
+                            className="h-8 w-8 p-0 text-gray-300 dark:text-gray-600 hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                            aria-label="Remove section"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  ))
+                    )
+                  })}
+                  </div>
                 )}
               </div>
             ) : (
