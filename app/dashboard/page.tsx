@@ -1668,25 +1668,20 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-3">
                                     <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                                      Ready to Develop!
-                                      <span className="text-2xl">🚀</span>
+                                      Ready to Export!
                                     </h3>
                                     <p className="text-sm text-gray-700 leading-relaxed">
-                                      Congratulations! All design sections are complete. Your project is fully planned
-                                      and ready for development. Download your summary to share with your development
-                                      team.
+                                      All sections complete. Export your project to Figma or send your client a content
+                                      link from the Handoff section.
                                     </p>
                                     <div className="flex gap-2">
                                       <Button
                                         size="sm"
-                                        onClick={() => {
-                                          setActiveView("summary")
-                                          setTriggerExportOnce(true)
-                                        }}
+                                        onClick={() => setActiveView("handoff")}
                                         className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md"
                                       >
                                         <Download className="h-4 w-4 mr-2" />
-                                        Download Summary
+                                        Go to Handoff
                                       </Button>
                                       <Button
                                         size="sm"
@@ -2047,7 +2042,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                 <div className="p-6">
                   <HandoffExport
                     projectId={currentProjectId}
-                    userPlan={user?.plan ?? "free"}
+                    userPlan={subscription?.plan ?? "free"}
                     onNavigateToSummary={() => setActiveView("summary")}
                   />
                 </div>
