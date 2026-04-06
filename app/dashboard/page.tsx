@@ -38,6 +38,7 @@ import {
   AlertCircle,
   X,
   Loader2,
+  Share2,
 } from "lucide-react"
 import { ProjectOverview } from "@/components/project-overview"
 import { MoodBoard } from "@/components/mood-board"
@@ -47,6 +48,7 @@ import { TechnicalSpecs } from "@/components/technical-specs"
 import { ContentAssets } from "@/components/content-assets"
 import { TaskManager } from "@/components/task-manager"
 import { DesignSummary } from "@/components/design-summary"
+import { HandoffExport } from "@/components/handoff-export"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -450,6 +452,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     | "assets"
     | "tasks"
     | "summary"
+    | "handoff"
     | "account-profile"
     | "account-preferences"
     | "account-usage"
@@ -1209,6 +1212,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
       content: "content",
       assets: "assets",
       tasks: "tasks",
+      handoff: "handoff",
     }
     return viewMap[sectionId] || sectionId
   }
@@ -1288,6 +1292,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                 <div className="space-y-1">
                   <NavItem icon={CheckSquare} label="Tasks" view="tasks" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                   <NavItem icon={ClipboardList} label="Summary" view="summary" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
+                  <NavItem icon={Share2} label="Handoff" view="handoff" activeView={activeView} currentProjectId={currentProjectId} setActiveView={setActiveView} sidebarCollapsed={sidebarCollapsed} />
                 </div>
               </div>
             </nav>
@@ -2035,6 +2040,15 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                     projectId={currentProjectId || ""}
                     triggerExportOnce={triggerExportOnce}
                     onExportComplete={() => setTriggerExportOnce(false)}
+                  />
+                </div>
+              )}
+              {activeView === "handoff" && currentProjectId && (
+                <div className="p-6">
+                  <HandoffExport
+                    projectId={currentProjectId}
+                    userPlan={user?.plan ?? "free"}
+                    onNavigateToSummary={() => setActiveView("summary")}
                   />
                 </div>
               )}
