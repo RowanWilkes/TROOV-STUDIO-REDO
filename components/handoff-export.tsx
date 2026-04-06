@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 
 import { supabase } from "@/lib/supabase"
+import { ClientLinkCard } from "@/components/client-link-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSectionCompletion } from "@/lib/useSectionCompletion"
@@ -332,34 +333,8 @@ export function HandoffExport({
         </div>
       </div>
 
-      <div className="flex items-center gap-4 border border-dashed border-gray-300 bg-white rounded-xl p-5 mb-4">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-100 flex-shrink-0">
-          <Link2 className="size-5 text-emerald-600" />
-        </div>
-        <div className="flex-1">
-          <h3 className="font-medium text-foreground">Collect content from your client</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">Stop chasing clients for files. Send them a single link — they upload their logo, copy and images directly into your project. No email chains, no Dropbox folders.</p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5">1. You send a link</span>
-            <span className="text-gray-300 text-xs">→</span>
-            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5">2. Client uploads files</span>
-            <span className="text-gray-300 text-xs">→</span>
-            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5">3. Project auto-populates</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full border border-emerald-200">Coming soon</span>
-          <Button
-            type="button"
-            variant="outline"
-            aria-disabled="true"
-            className="gap-2 opacity-60 text-muted-foreground shadow-none hover:bg-muted/40 hover:text-muted-foreground"
-            onClick={() => toast.info("We'll let you know as soon as this feature launches!")}
-          >
-            <Bell className="size-3.5" />
-            Notify me when ready
-          </Button>
-        </div>
+      <div className="mb-6">
+        <ClientLinkCard projectId={projectId} />
       </div>
 
       <div className="grid grid-cols-3 gap-4">

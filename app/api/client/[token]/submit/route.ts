@@ -12,6 +12,8 @@ type FieldSubmission = {
   fieldLabel: string
   fieldType: "text" | "longtext" | "file"
   pageName: string | null
+  stepId?: string | null
+  colorValue?: string | null
   textValue: string | null
   fileUrl: string | null
   isBlank: boolean
@@ -54,6 +56,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     text_value: f.textValue,
     file_url: f.fileUrl,
     page_name: f.pageName,
+    step_id: f.stepId ?? null,
+    color_value: f.colorValue ?? null,
     section_name: null,
     is_blank: f.isBlank,
     status: "pending",
