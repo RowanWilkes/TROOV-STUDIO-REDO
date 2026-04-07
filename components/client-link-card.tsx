@@ -341,7 +341,7 @@ export function ClientLinkCard({ projectId }: Props) {
             className={
               status === "none"
                 ? "gap-2 text-white"
-                : "gap-2 text-gray-600 border-gray-300 hover:bg-gray-50"
+                : "gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 hover:border-gray-400"
             }
             style={status === "none" ? { background: "#7C3AED" } : {}}
           >

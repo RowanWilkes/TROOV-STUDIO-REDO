@@ -19,6 +19,9 @@ type FormStep = {
   fields: FormField[]
 }
 type PageSelection = { id: string; name: string; isCustom?: boolean }
+type InspirationImage = { file: File; note: string }
+type BrandAsset = { file: File; label: string }
+type LogoFile = { file: File; label: string }
 type Props = {
   token: string
   projectId: string
@@ -27,7 +30,7 @@ type Props = {
   alreadySubmitted: boolean
 }
 
-function buildSteps(pages: SitemapPage[], selectedPages: PageSelection[]): FormStep[] {
+function buildSteps(): FormStep[] {
   const steps: FormStep[] = []
 
   steps.push({
@@ -40,6 +43,7 @@ function buildSteps(pages: SitemapPage[], selectedPages: PageSelection[]): FormS
       { key: "project_goal", label: "What is the main goal of this website?", type: "longtext", placeholder: "e.g. Generate leads, sell products online, build credibility...", hint: "What do you want visitors to do or feel?" },
       { key: "target_audience", label: "Who is your target customer?", type: "longtext", placeholder: "e.g. Homeowners in Melbourne aged 30–55 who need electrical work.", hint: "Describe your ideal client in a sentence or two." },
       { key: "primary_action", label: "What is the #1 action you want visitors to take?", type: "text", placeholder: "e.g. Book a free quote, Call us, Shop now", hint: "The single most important button or action on the site." },
+      { key: "launch_date", label: "When do you need the website live?", type: "text", placeholder: "e.g. End of May, 1 July 2026, ASAP", hint: "A rough date is fine — helps your designer plan the project." },
     ],
   })
 
@@ -51,10 +55,25 @@ function buildSteps(pages: SitemapPage[], selectedPages: PageSelection[]): FormS
       { key: "brand_primary_color", label: "Primary Brand Colour", type: "color", hint: "Your main brand colour. Click the swatch to pick or type a hex code." },
       { key: "brand_secondary_color", label: "Secondary Colour", type: "color", hint: "A supporting colour — optional." },
       { key: "brand_accent_color", label: "Accent Colour", type: "color", hint: "Used for buttons or highlights — optional." },
-      { key: "font_preference", label: "Font Style Preference", type: "text", placeholder: "e.g. Clean and modern, Bold and strong, Elegant and minimal", hint: "Describe the feel of font that suits your brand." },
-      { key: "brands_admired", label: "Websites or brands you admire", type: "longtext", placeholder: "e.g. apple.com, Nike — I like clean layouts with bold imagery", hint: "Paste URLs or describe what you like about them." },
+      {
+        key: "brand_feeling",
+        label: "How do you want people to feel when they visit your website?",
+        type: "longtext",
+        placeholder: 'e.g. Confident and reassured, Excited and inspired, Professional and trustworthy, Warm and welcoming',
+        hint: "This helps your designer set the right tone for colours, fonts, imagery, and copy.",
+      },
+      { key: "font_preference", label: "Brand Voice & Font Preference", type: "text", placeholder: "e.g. Clean and modern, Bold and strong, Elegant and minimal", hint: "e.g. Clean and modern, Bold and strong — describe the feel and tone of your brand." },
+      { key: "tagline", label: "Do you have a tagline or slogan?", type: "text", placeholder: 'e.g. "Powering homes across Melbourne"', hint: "A short memorable phrase for your brand — leave blank if you don't have one." },
+      { key: "mission_statement", label: "What does your business stand for?", type: "longtext", placeholder: "e.g. We believe every homeowner deserves safe, reliable electrical work at a fair price.", hint: "1–2 sentences about your values or purpose." },
       { key: "style_notes", label: "Any other style notes for your designer?", type: "longtext", placeholder: "e.g. Avoid dark backgrounds. Keep it professional but friendly.", hint: "Anything else that helps set the visual direction." },
     ],
+  })
+
+  steps.push({
+    id: "inspiration",
+    title: "Websites & Inspiration",
+    subtitle: "",
+    fields: [],
   })
 
   // Page selection step is rendered separately (not as a FormStep with fields)
@@ -64,23 +83,6 @@ function buildSteps(pages: SitemapPage[], selectedPages: PageSelection[]): FormS
     title: "Your Website Pages",
     subtitle: "Tell your designer which pages your website needs.",
     fields: [],
-  })
-
-  // Per-page content steps — use selectedPages if available, else fall back to sitemap pages
-  const pagesToUse = selectedPages.length > 0 ? selectedPages : pages.length > 0 ? pages : [{ id: "home", name: "Home" }]
-  pagesToUse.forEach((page) => {
-    steps.push({
-      id: `page_${page.id}`,
-      title: `${page.name} Page`,
-      subtitle: `Provide the copy for your ${page.name} page. Leave anything blank you don't have ready.`,
-      fields: [
-        { key: `${page.id}__headline`, label: "Main Headline", type: "text", placeholder: "The first big text visitors see on this page.", hint: "Keep it short and punchy — one strong sentence." },
-        { key: `${page.id}__subheadline`, label: "Subheadline", type: "text", placeholder: "A supporting line beneath the headline.", hint: "1–2 sentences that expand on the headline." },
-        { key: `${page.id}__body`, label: "Body Copy", type: "longtext", placeholder: "The main written content for this page.", hint: "Paste your copy or write it fresh. Can be rough — your designer will work with it." },
-        { key: `${page.id}__cta`, label: "Call to Action Button", type: "text", placeholder: 'e.g. "Get a Free Quote", "Shop Now", "Contact Us"', hint: "What should the main button on this page say?" },
-        { key: `${page.id}__image`, label: "Page Image", type: "file", accept: "image/png,image/jpeg,image/jpg,image/gif,image/webp", hint: "A photo or image for this page — PNG, JPG, WebP, max 10MB." },
-      ],
-    })
   })
 
   steps.push({
@@ -96,7 +98,7 @@ function buildSteps(pages: SitemapPage[], selectedPages: PageSelection[]): FormS
   return steps
 }
 
-export function ClientForm({ token, projectName, pages, alreadySubmitted }: Props) {
+export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isReview, setIsReview] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -106,10 +108,20 @@ export function ClientForm({ token, projectName, pages, alreadySubmitted }: Prop
   const [colorValues, setColorValues] = useState<Record<string, string>>({})
   const [fileValues, setFileValues] = useState<Record<string, File | null>>({})
   const [multiFiles, setMultiFiles] = useState<Record<string, File[]>>({})
+  const [websiteReferences, setWebsiteReferences] = useState<string>("")
+  const [websiteReferenceNotes, setWebsiteReferenceNotes] = useState<string>("")
+  const [inspirationImages, setInspirationImages] = useState<InspirationImage[]>([])
+  const inspirationImagesRef = useRef<HTMLInputElement | null>(null)
+  const [brandAssets, setBrandAssets] = useState<BrandAsset[]>([])
+  const brandAssetsRef = useRef<HTMLInputElement | null>(null)
+  const [logoFiles, setLogoFiles] = useState<LogoFile[]>([])
+  const logoFilesRef = useRef<HTMLInputElement | null>(null)
+  const [brandColourRef, setBrandColourRef] = useState<File | null>(null)
+  const brandColourRefRef = useRef<HTMLInputElement | null>(null)
   const [selectedPages, setSelectedPages] = useState<PageSelection[]>([{ id: "home", name: "Home" }])
   const [customPageInput, setCustomPageInput] = useState("")
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const steps = buildSteps(pages, selectedPages)
+  const steps = buildSteps()
   const step = steps[currentStep]
   const isLastStep = currentStep === steps.length - 1
 
@@ -122,6 +134,13 @@ export function ClientForm({ token, projectName, pages, alreadySubmitted }: Prop
   }
   function removeMultiFile(key: string, index: number) {
     setMultiFiles((p) => ({ ...p, [key]: p[key].filter((_, i) => i !== index) }))
+  }
+  function handleBrandAssets(files: FileList | null) {
+    if (!files) return
+    setBrandAssets((prev) => [...prev, ...Array.from(files).map((file) => ({ file, label: "" }))])
+  }
+  function removeBrandAsset(index: number) {
+    setBrandAssets((prev) => prev.filter((_, i) => i !== index))
   }
 
   async function uploadFile(file: File): Promise<string | null> {
@@ -156,19 +175,72 @@ export function ClientForm({ token, projectName, pages, alreadySubmitted }: Prop
 
         for (const field of s.fields) {
           if (field.type === "file" && field.multiple) {
-            const files = multiFiles[field.key] ?? []
-            if (files.length > 0) {
-              for (let i = 0; i < files.length; i++) {
-                const url = await uploadFile(files[i])
-                fields.push({ fieldKey: `${field.key}_${i}`, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
+            if (field.key === "brand_assets") {
+              if (brandAssets.length > 0) {
+                for (let i = 0; i < brandAssets.length; i++) {
+                  const asset = brandAssets[i]
+                  const url = await uploadFile(asset.file)
+                  fields.push({
+                    fieldKey: `brand_asset_${i}`,
+                    fieldLabel: asset.label.trim() ? asset.label.trim() : "Brand Asset",
+                    fieldType: "file",
+                    pageName,
+                    stepId: s.id,
+                    textValue: null,
+                    colorValue: null,
+                    fileUrl: url,
+                    isBlank: url === null,
+                  })
+                }
+              } else {
+                fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: null, isBlank: true })
               }
             } else {
-              fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: null, isBlank: true })
+              const files = multiFiles[field.key] ?? []
+              if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                  const url = await uploadFile(files[i])
+                  fields.push({ fieldKey: `${field.key}_${i}`, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
+                }
+              } else {
+                fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: null, isBlank: true })
+              }
             }
           } else if (field.type === "file") {
-            const file = fileValues[field.key] ?? null
-            const url = file ? await uploadFile(file) : null
-            fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
+            if (field.key === "logo") {
+              if (logoFiles.length > 0) {
+                for (let i = 0; i < logoFiles.length; i++) {
+                  const url = await uploadFile(logoFiles[i].file)
+                  fields.push({
+                    fieldKey: `logo_${i}`,
+                    fieldLabel: logoFiles[i].label.trim() ? logoFiles[i].label.trim() : "Logo",
+                    fieldType: "file",
+                    pageName: null,
+                    textValue: null,
+                    fileUrl: url,
+                    isBlank: url === null,
+                    stepId: "assets",
+                    colorValue: null,
+                  })
+                }
+              } else {
+                fields.push({
+                  fieldKey: "logo",
+                  fieldLabel: "Logo",
+                  fieldType: "file",
+                  pageName: null,
+                  textValue: null,
+                  fileUrl: null,
+                  isBlank: true,
+                  stepId: "assets",
+                  colorValue: null,
+                })
+              }
+            } else {
+              const file = fileValues[field.key] ?? null
+              const url = file ? await uploadFile(file) : null
+              fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
+            }
           } else if (field.type === "color") {
             const val = colorValues[field.key] ?? ""
             fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "color", pageName, stepId: s.id, textValue: null, colorValue: val || null, fileUrl: null, isBlank: !val })
@@ -177,6 +249,80 @@ export function ClientForm({ token, projectName, pages, alreadySubmitted }: Prop
             fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: field.type, pageName, stepId: s.id, textValue: val || null, colorValue: null, fileUrl: null, isBlank: !val.trim() })
           }
         }
+      }
+
+      if (brandColourRef) {
+        const url = await uploadFile(brandColourRef)
+        fields.push({
+          fieldKey: "inspiration_image_colour_ref",
+          fieldLabel: "Brand Colour Reference",
+          fieldType: "file",
+          pageName: null,
+          textValue: null,
+          fileUrl: url,
+          isBlank: url === null,
+          stepId: "inspiration",
+          colorValue: null,
+        })
+      }
+
+      if (websiteReferences.trim()) {
+        fields.push({
+          fieldKey: "brands_admired",
+          fieldLabel: "Websites or brands you admire",
+          fieldType: "longtext",
+          pageName: null,
+          textValue: websiteReferenceNotes
+            ? `${websiteReferences}\n\nDesigner notes: ${websiteReferenceNotes}`
+            : websiteReferences || null,
+          fileUrl: null,
+          isBlank: !websiteReferences.trim(),
+          stepId: "inspiration",
+          colorValue: null,
+        })
+      }
+
+      if (inspirationImages.length > 0) {
+        for (let i = 0; i < inspirationImages.length; i++) {
+          const item = inspirationImages[i]
+          const url = await uploadFile(item.file)
+          fields.push({
+            fieldKey: `inspiration_image_${i}`,
+            fieldLabel: "Inspiration Screenshot",
+            fieldType: "file",
+            pageName: null,
+            textValue: null,
+            fileUrl: url,
+            isBlank: url === null,
+            stepId: "inspiration",
+            colorValue: null,
+          })
+          if (item.note.trim()) {
+            fields.push({
+              fieldKey: `inspiration_note_${i}`,
+              fieldLabel: "Inspiration Note",
+              fieldType: "longtext",
+              pageName: null,
+              textValue: item.note,
+              fileUrl: null,
+              isBlank: false,
+              stepId: "inspiration",
+              colorValue: null,
+            })
+          }
+        }
+      } else {
+        fields.push({
+          fieldKey: "inspiration_images",
+          fieldLabel: "Inspiration Screenshots",
+          fieldType: "file",
+          pageName: null,
+          textValue: null,
+          fileUrl: null,
+          isBlank: true,
+          stepId: "inspiration",
+          colorValue: null,
+        })
       }
 
       // Add selected pages as a special submission field
@@ -433,73 +579,302 @@ export function ClientForm({ token, projectName, pages, alreadySubmitted }: Prop
               {selectedPages.length} page{selectedPages.length !== 1 ? "s" : ""} selected — your designer will use this to build your sitemap
             </p>
           </div>
+        ) : step.id === "inspiration" ? (
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Websites or brands you admire</label>
+              <p className="text-xs text-gray-400 mb-3">Paste URLs separated by commas or new lines. e.g. apple.com, notion.so</p>
+              <textarea
+                value={websiteReferences}
+                onChange={(e) => setWebsiteReferences(e.target.value)}
+                rows={4}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+              />
+              <label className="block text-sm font-semibold text-gray-800 mb-1 mt-4">Notes for your designer (optional)</label>
+              <textarea
+                placeholder="Any notes about these sites for your designer? e.g. I love the navigation on the first one, the colour palette on the second."
+                value={websiteReferenceNotes}
+                onChange={(e) => setWebsiteReferenceNotes(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+              />
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Design inspiration screenshots</label>
+              <p className="text-xs text-gray-400 mb-3">Upload screenshots of websites or designs you love. PNG, JPG — max 10MB each.</p>
+
+              <button
+                type="button"
+                onClick={() => inspirationImagesRef.current?.click()}
+                className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3"
+              >
+                <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <span className="text-sm text-gray-400">Upload screenshots</span>
+                <span className="text-xs text-gray-300">PNG, JPG, WebP</span>
+              </button>
+
+              {inspirationImages.map((item, idx) => (
+                <div key={idx} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 mb-2">
+                  <div className="flex items-center gap-3">
+                    <p className="flex-1 text-sm text-gray-700 truncate">{item.file.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => setInspirationImages((prev) => prev.filter((_, i) => i !== idx))}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Notes for your designer about this image (optional)"
+                    value={item.note}
+                    onChange={(e) => {
+                      setInspirationImages((prev) =>
+                        prev.map((img, i) => (i === idx ? { ...img, note: e.target.value } : img)),
+                      )
+                    }}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mt-2 bg-white"
+                  />
+                </div>
+              ))}
+
+              <input
+                ref={inspirationImagesRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (!files) return
+                  setInspirationImages((prev) => [...prev, ...Array.from(files).map((file) => ({ file, note: "" }))])
+                }}
+              />
+            </div>
+          </div>
         ) : (
           <div className="space-y-5">
             {step.fields.map((field) => (
-              <div key={field.key} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <label className="block text-sm font-semibold text-gray-800 mb-1">{field.label}</label>
-                {field.hint && <p className="text-xs text-gray-400 mb-3">{field.hint}</p>}
+              <div key={field.key}>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <label className="block text-sm font-semibold text-gray-800 mb-1">{field.label}</label>
+                  {field.hint && <p className="text-xs text-gray-400 mb-3">{field.hint}</p>}
 
-                {field.type === "text" && (
-                  <input type="text" value={textValues[field.key] ?? ""} onChange={(e) => handleText(field.key, e.target.value)} placeholder={field.placeholder}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all" />
-                )}
+                  {field.type === "text" && (
+                    field.key === "launch_date" ? (
+                      <input
+                        type="date"
+                        value={textValues["launch_date"] ?? ""}
+                        onChange={(e) => handleText("launch_date", e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all"
+                      />
+                    ) : (
+                      <input type="text" value={textValues[field.key] ?? ""} onChange={(e) => handleText(field.key, e.target.value)} placeholder={field.placeholder}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all" />
+                    )
+                  )}
 
-                {field.type === "longtext" && (
-                  <textarea value={textValues[field.key] ?? ""} onChange={(e) => handleText(field.key, e.target.value)} placeholder={field.placeholder} rows={4}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none" />
-                )}
+                  {field.type === "longtext" && (
+                    <textarea value={textValues[field.key] ?? ""} onChange={(e) => handleText(field.key, e.target.value)} placeholder={field.placeholder} rows={4}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none" />
+                  )}
 
-                {field.type === "color" && (
-                  <div className="flex items-center gap-3">
-                    <input type="color" value={colorValues[field.key] ?? "#ffffff"} onChange={(e) => handleColor(field.key, e.target.value)} className="h-12 w-12 rounded-lg border border-gray-200 cursor-pointer p-1" />
-                    <input type="text" value={colorValues[field.key] ?? ""} onChange={(e) => handleColor(field.key, e.target.value)} placeholder="#000000"
-                      className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-mono outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all" />
-                  </div>
-                )}
+                  {field.type === "color" && (
+                    <div className="flex items-center gap-3">
+                      <input type="color" value={colorValues[field.key] ?? "#ffffff"} onChange={(e) => handleColor(field.key, e.target.value)} className="h-12 w-12 rounded-lg border border-gray-200 cursor-pointer p-1" />
+                      <input type="text" value={colorValues[field.key] ?? ""} onChange={(e) => handleColor(field.key, e.target.value)} placeholder="#000000"
+                        className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-mono outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all" />
+                    </div>
+                  )}
 
-                {field.type === "file" && !field.multiple && (
-                  <div>
-                    {fileValues[field.key] ? (
+                  {field.type === "file" && !field.multiple && (
+                    <div>
+                      {field.key === "logo" ? (
+                        <>
+                        <button
+                          onClick={() => logoFilesRef.current?.click()}
+                          className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3"
+                        >
+                          <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          <span className="text-sm text-gray-400">Click to select files</span>
+                          <span className="text-xs text-gray-300">PNG, JPG, SVG</span>
+                        </button>
+
+                        {logoFiles.map((logoFile, idx) => (
+                          <div key={idx} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 mb-2">
+                            <div className="flex items-center gap-3">
+                              <p className="flex-1 text-sm text-gray-700 truncate">{logoFile.file.name}</p>
+                              <button
+                                type="button"
+                                onClick={() => setLogoFiles((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder='Label this logo (e.g. "Dark background", "Light background", "Favicon")'
+                              value={logoFile.label}
+                              onChange={(e) => {
+                                setLogoFiles((prev) => prev.map((l, i) => (i === idx ? { ...l, label: e.target.value } : l)))
+                              }}
+                              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mt-2 bg-white"
+                            />
+                          </div>
+                        ))}
+
+                        <input
+                          ref={logoFilesRef}
+                          type="file"
+                          accept="image/png,image/svg+xml,image/jpeg,image/jpg"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = e.target.files
+                            if (!files) return
+                            setLogoFiles((prev) => [...prev, ...Array.from(files).map((file) => ({ file, label: "" }))])
+                          }}
+                        />
+                      </>
+                      ) : (
+                        <>
+                          {fileValues[field.key] ? (
+                            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-700 truncate">{fileValues[field.key]!.name}</p>
+                                <p className="text-xs text-gray-400">{(fileValues[field.key]!.size / 1024 / 1024).toFixed(1)} MB</p>
+                              </div>
+                              <button onClick={() => handleFile(field.key, null)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => fileInputRefs.current[field.key]?.click()}
+                              className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors">
+                              <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                              <span className="text-sm text-gray-400">Click to select file</span>
+                            </button>
+                          )}
+                          <input ref={(el) => { fileInputRefs.current[field.key] = el }} type="file" accept={field.accept} className="hidden"
+                            onChange={(e) => handleFile(field.key, e.target.files?.[0] ?? null)} />
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {field.type === "file" && field.multiple && (
+                    <div>
+                      {field.key === "brand_assets" ? (
+                        <>
+                        <button
+                          onClick={() => brandAssetsRef.current?.click()}
+                          className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3"
+                        >
+                          <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          <span className="text-sm text-gray-400">Click to select files</span>
+                          <span className="text-xs text-gray-300">PNG, JPG, SVG, GIF, WebP</span>
+                        </button>
+
+                        {brandAssets.map((asset, idx) => (
+                          <div key={idx} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 mb-2">
+                            <div className="flex items-center gap-3">
+                              <p className="flex-1 text-sm text-gray-700 truncate">{asset.file.name}</p>
+                              <button type="button" onClick={() => removeBrandAsset(idx)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder='Label this file (e.g. "Contact page photo", "Team headshot", "Product image")'
+                              value={asset.label}
+                              onChange={(e) => {
+                                setBrandAssets((prev) => prev.map((a, i) => (i === idx ? { ...a, label: e.target.value } : a)))
+                              }}
+                              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mt-2 bg-white"
+                            />
+                          </div>
+                        ))}
+
+                        <input
+                          ref={brandAssetsRef}
+                          type="file"
+                          accept={field.accept}
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleBrandAssets(e.target.files)}
+                        />
+                        </>
+                      ) : (
+                        <>
+                        <button onClick={() => fileInputRefs.current[field.key]?.click()}
+                          className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3">
+                          <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          <span className="text-sm text-gray-400">Click to select files</span>
+                          <span className="text-xs text-gray-300">PNG, JPG, SVG, GIF, WebP</span>
+                        </button>
+                        {(multiFiles[field.key] ?? []).map((file, i) => (
+                          <div key={i} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 mb-2">
+                            <p className="flex-1 text-sm text-gray-700 truncate">{file.name}</p>
+                            <button onClick={() => removeMultiFile(field.key, i)} className="text-gray-400 hover:text-red-500 transition-colors">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        ))}
+                        <input ref={(el) => { fileInputRefs.current[field.key] = el }} type="file" accept={field.accept} multiple className="hidden"
+                          onChange={(e) => handleMultiFiles(field.key, e.target.files)} />
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {step.id === "style" && field.key === "brand_accent_color" && (
+                  <div className="mt-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100/70">
+                    <p className="text-sm font-semibold text-gray-800 mb-1">Not sure of your hex codes?</p>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Upload your logo, business card, or any existing brand material — your designer will pull the exact colours from it.
+                    </p>
+
+                    {brandColourRef ? (
                       <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{fileValues[field.key]!.name}</p>
-                          <p className="text-xs text-gray-400">{(fileValues[field.key]!.size / 1024 / 1024).toFixed(1)} MB</p>
-                        </div>
-                        <button onClick={() => handleFile(field.key, null)} className="text-gray-400 hover:text-red-500 transition-colors">
+                        <p className="flex-1 text-sm text-gray-700 truncate">{brandColourRef.name}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBrandColourRef(null)
+                            if (brandColourRefRef.current) brandColourRefRef.current.value = ""
+                          }}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                        >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                     ) : (
-                      <button onClick={() => fileInputRefs.current[field.key]?.click()}
-                        className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors">
-                        <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        <span className="text-sm text-gray-400">Click to select file</span>
+                      <button
+                        type="button"
+                        onClick={() => brandColourRefRef.current?.click()}
+                        className="w-full rounded-xl border border-dashed border-gray-200 bg-white py-6 flex flex-col items-center gap-2 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="h-7 w-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <span className="text-xs text-gray-400">Upload brand material (optional)</span>
                       </button>
                     )}
-                    <input ref={(el) => { fileInputRefs.current[field.key] = el }} type="file" accept={field.accept} className="hidden"
-                      onChange={(e) => handleFile(field.key, e.target.files?.[0] ?? null)} />
-                  </div>
-                )}
 
-                {field.type === "file" && field.multiple && (
-                  <div>
-                    <button onClick={() => fileInputRefs.current[field.key]?.click()}
-                      className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3">
-                      <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                      <span className="text-sm text-gray-400">Click to select files</span>
-                      <span className="text-xs text-gray-300">PNG, JPG, SVG, GIF, WebP</span>
-                    </button>
-                    {(multiFiles[field.key] ?? []).map((file, i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 mb-2">
-                        <p className="flex-1 text-sm text-gray-700 truncate">{file.name}</p>
-                        <button onClick={() => removeMultiFile(field.key, i)} className="text-gray-400 hover:text-red-500 transition-colors">
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                      </div>
-                    ))}
-                    <input ref={(el) => { fileInputRefs.current[field.key] = el }} type="file" accept={field.accept} multiple className="hidden"
-                      onChange={(e) => handleMultiFiles(field.key, e.target.files)} />
+                    <input
+                      ref={brandColourRefRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                      multiple={false}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null
+                        setBrandColourRef(file)
+                        e.target.value = ""
+                      }}
+                    />
                   </div>
                 )}
               </div>

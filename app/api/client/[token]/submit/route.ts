@@ -10,11 +10,11 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 type FieldSubmission = {
   fieldKey: string
   fieldLabel: string
-  fieldType: "text" | "longtext" | "file"
+  fieldType: "text" | "longtext" | "file" | "color"
   pageName: string | null
   stepId?: string | null
-  colorValue?: string | null
   textValue: string | null
+  colorValue?: string | null
   fileUrl: string | null
   isBlank: boolean
 }

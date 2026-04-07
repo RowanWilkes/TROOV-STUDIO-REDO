@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase-server"
 
 export const dynamic = "force-dynamic"
 
-// POST /api/client-review/[projectId]/accept-all — accept all pending submissions and map to project
 export async function POST(
   _: Request,
   { params }: { params: Promise<{ projectId: string }> },
@@ -11,22 +10,13 @@ export async function POST(
   const { projectId } = await params
 
   const supabase = await createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  // Verify ownership
   const { data: project } = await supabase
-    .from("projects")
-    .select("id")
-    .eq("id", projectId)
-    .eq("user_id", session.user.id)
-    .maybeSingle()
-
+    .from("projects").select("id").eq("id", projectId).eq("user_id", session.user.id).maybeSingle()
   if (!project) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  // Fetch all pending submissions for this project
   const { data: submissions } = await supabase
     .from("client_submissions")
     .select("*")
@@ -34,96 +24,212 @@ export async function POST(
     .eq("status", "pending")
     .eq("is_blank", false)
 
-  if (!submissions?.length) {
-    return NextResponse.json({ updated: 0 })
-  }
+  if (!submissions?.length) return NextResponse.json({ updated: 0 })
 
-  // Update all to accepted
   await supabase
     .from("client_submissions")
     .update({ status: "accepted" })
     .eq("project_id", projectId)
     .eq("status", "pending")
 
-  // Batch map to project tables
-  // Collect content items and assets to update in one operation each
-  const contentItems: { id: string; type: string; text: string }[] = []
-  const uploadedAssets: { id: string; name: string; data: string; label: string }[] = []
-
   for (const sub of submissions) {
-    const { field_key, field_label, field_type, text_value, file_url } = sub
-
-    if (field_type === "file" && file_url) {
-      uploadedAssets.push({
-        id: crypto.randomUUID(),
-        name: field_label,
-        data: file_url,
-        label: field_label,
-      })
-    } else if (field_type !== "file" && text_value) {
-      let contentType = "body"
-      if (field_key.endsWith("_hero_headline")) contentType = "heading"
-      else if (field_key.endsWith("_hero_subheadline")) contentType = "subheading"
-      else if (field_key.endsWith("_cta_label")) contentType = "cta"
-      contentItems.push({ id: crypto.randomUUID(), type: contentType, text: text_value })
-    }
-  }
-
-  // Update content_section
-  if (contentItems.length > 0) {
-    const { data: contentRow } = await supabase
-      .from("content_section")
-      .select("id, data")
-      .eq("project_id", projectId)
-      .maybeSingle()
-
-    const currentData = (contentRow?.data as Record<string, unknown>) ?? {}
-    const existing = Array.isArray(currentData.contentItems)
-      ? (currentData.contentItems as { id: string; type: string; text: string }[])
-      : []
-    const updated = { ...currentData, contentItems: [...existing, ...contentItems] }
-
-    if (contentRow) {
-      await supabase
-        .from("content_section")
-        .update({ data: updated, updated_at: new Date().toISOString() })
-        .eq("project_id", projectId)
-    } else {
-      await supabase.from("content_section").insert({
-        project_id: projectId,
-        user_id: session.user.id,
-        data: updated,
-      })
-    }
-  }
-
-  // Update asset_section
-  if (uploadedAssets.length > 0) {
-    const { data: assetRow } = await supabase
-      .from("asset_section")
-      .select("id, data")
-      .eq("project_id", projectId)
-      .maybeSingle()
-
-    const currentData = (assetRow?.data as Record<string, unknown>) ?? {}
-    const existing = Array.isArray(currentData.uploadedAssets)
-      ? (currentData.uploadedAssets as { id: string; name: string; data: string; label: string }[])
-      : []
-    const updated = { ...currentData, uploadedAssets: [...existing, ...uploadedAssets] }
-
-    if (assetRow) {
-      await supabase
-        .from("asset_section")
-        .update({ data: updated, updated_at: new Date().toISOString() })
-        .eq("project_id", projectId)
-    } else {
-      await supabase.from("asset_section").insert({
-        project_id: projectId,
-        user_id: session.user.id,
-        data: updated,
-      })
-    }
+    await mapFieldToProject(supabase, session.user.id, projectId, sub as Record<string, unknown>)
   }
 
   return NextResponse.json({ updated: submissions.length })
+}
+
+async function mapFieldToProject(
+  supabase: Awaited<ReturnType<typeof import("@/lib/supabase-server").createClient>>,
+  userId: string,
+  projectId: string,
+  sub: Record<string, unknown>,
+) {
+  const key = sub.field_key as string
+  const type = sub.field_type as string
+  const text = sub.text_value as string | null
+  const color = sub.color_value as string | null
+  const fileUrl = sub.file_url as string | null
+  const label = sub.field_label as string
+  const pageName = sub.page_name as string | null
+
+  // 0. selected_pages → sitemap
+  if (key === "selected_pages" && text) {
+    let incoming: { id: string; name: string }[] = []
+    try { incoming = JSON.parse(text) } catch { return }
+    if (!incoming.length) return
+    const { data: sitemapRow } = await supabase
+      .from("sitemap").select("id, pages").eq("project_id", projectId).maybeSingle()
+    const existingPages = Array.isArray(sitemapRow?.pages)
+      ? (sitemapRow.pages as { id: string; name: string; path: string; blocks: unknown[]; children: unknown[] }[])
+      : []
+    const existingIds = new Set(existingPages.map((p) => p.id))
+    const newPages = incoming
+      .filter((p) => !existingIds.has(p.id))
+      .map((p) => ({ id: p.id, name: p.name, path: p.id === "home" ? "/" : `/${p.id}`, blocks: [], children: [] }))
+    if (newPages.length === 0) return
+    const merged = [...existingPages, ...newPages]
+    if (sitemapRow) {
+      await supabase.from("sitemap").update({ pages: merged }).eq("project_id", projectId)
+    } else {
+      await supabase.from("sitemap").insert({ project_id: projectId, user_id: userId, pages: merged, custom_blocks: [] })
+    }
+    return
+  }
+
+  // 1. Overview fields → project_overview columns
+  const overviewColMap: Record<string, string> = {
+    business_name: "client_name",
+    business_description: "description",
+    project_goal: "project_goal",
+    target_audience: "target_audience",
+    primary_action: "primary_action",
+    launch_date: "launch_target",
+  }
+  if (overviewColMap[key] && text) {
+    const col = overviewColMap[key]
+    const { data: existing } = await supabase.from("project_overview").select("id").eq("project_id", projectId).maybeSingle()
+    if (existing) {
+      await supabase.from("project_overview").update({ [col]: text }).eq("project_id", projectId)
+    } else {
+      await supabase.from("project_overview").insert({ project_id: projectId, user_id: userId, [col]: text })
+    }
+    if (key === "business_name" && text) {
+      await supabase
+        .from("projects")
+        .update({ title: text })
+        .eq("id", projectId)
+    }
+    return
+  }
+
+  // 2. Colour fields → style_guide.data.standardColors
+  const standardColorKeyMap: Record<string, string> = {
+    brand_primary_color: "primary",
+    brand_secondary_color: "secondary",
+    brand_accent_color: "accent",
+  }
+  if (standardColorKeyMap[key] && color) {
+    const { data: sgRow } = await supabase.from("style_guide").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (sgRow?.data as Record<string, unknown>) ?? {}
+    const existingStandard = (current.standardColors as Record<string, string>) ?? {
+      primary: "", secondary: "", accent: "", highlight: "", background: "", secondaryBackground: ""
+    }
+    const updatedStandard = { ...existingStandard, [standardColorKeyMap[key]]: color }
+    const updated = { ...current, standardColors: updatedStandard }
+    if (sgRow) {
+      await supabase.from("style_guide").update({ data: updated }).eq("project_id", projectId)
+    } else {
+      await supabase.from("style_guide").insert({ project_id: projectId, user_id: userId, data: updated })
+    }
+    return
+  }
+
+  // 3. Style/brand notes → content_section
+  if (key === "font_preference" && text) {
+    const { data: row } = await supabase.from("content_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const bm = (current.brandMessaging as Record<string, unknown>) ?? {}
+    const updated = { ...current, brandMessaging: { ...bm, brandVoice: text } }
+    if (row) { await supabase.from("content_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+    return
+  }
+  if (key === "brand_feeling" && text) {
+    const { data: row } = await supabase.from("content_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const bm = (current.brandMessaging as Record<string, unknown>) ?? {}
+    const existingVoice = typeof bm.brandVoice === "string" && bm.brandVoice ? bm.brandVoice : ""
+    const combined = existingVoice
+      ? `${existingVoice}\n\nDesired feeling: ${text}`
+      : `Desired feeling: ${text}`
+    const updated = { ...current, brandMessaging: { ...bm, brandVoice: combined } }
+    if (row) { await supabase.from("content_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+    return
+  }
+  if (key === "brands_admired" && text) {
+    const entries = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
+    for (const entry of entries) {
+      await supabase.from("mood_board_items").insert({
+        project_id: projectId,
+        user_id: userId,
+        type: "website_reference",
+        url: entry,
+        title: entry,
+        notes: "Added from client link",
+      })
+    }
+    return
+  }
+  if (key === "style_notes" && text) {
+    const { data: row } = await supabase.from("content_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const updated = { ...current, toneNotes: text }
+    if (row) { await supabase.from("content_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+    return
+  }
+  if (key === "tagline" && text) {
+    const { data: row } = await supabase.from("content_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const bm = (current.brandMessaging as Record<string, unknown>) ?? {}
+    const updated = { ...current, brandMessaging: { ...bm, tagline: text } }
+    if (row) { await supabase.from("content_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+    return
+  }
+  if (key === "mission_statement" && text) {
+    const { data: row } = await supabase.from("content_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const bm = (current.brandMessaging as Record<string, unknown>) ?? {}
+    const updated = { ...current, brandMessaging: { ...bm, missionStatement: text } }
+    if (row) { await supabase.from("content_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+    return
+  }
+
+  if (type === "file" && fileUrl && key.startsWith("inspiration_image_")) {
+    await supabase.from("mood_board_items").insert({
+      project_id: projectId,
+      user_id: userId,
+      type: "image",
+      url: fileUrl,
+      title: "Inspiration Screenshot",
+      notes: "Added from client link",
+    })
+    return
+  }
+
+  if (key.startsWith("inspiration_note_") && text) {
+    const { data: lastImage } = await supabase
+      .from("mood_board_items")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("type", "image")
+      .eq("notes", "Added from client link")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (lastImage) {
+      await supabase
+        .from("mood_board_items")
+        .update({ notes: text })
+        .eq("id", lastImage.id)
+    }
+    return
+  }
+
+  // 4. All file uploads → asset_section.data.uploadedAssets
+  if (type === "file" && fileUrl) {
+    const assetLabel = label
+    const { data: row } = await supabase.from("asset_section").select("id, data").eq("project_id", projectId).maybeSingle()
+    const current = (row?.data as Record<string, unknown>) ?? {}
+    const existing = Array.isArray(current.uploadedAssets)
+      ? (current.uploadedAssets as { id: string; name: string; data: string; label: string }[])
+      : []
+    const updated = { ...current, uploadedAssets: [...existing, { id: crypto.randomUUID(), name: label, data: fileUrl, label: assetLabel }] }
+    if (row) { await supabase.from("asset_section").update({ data: updated }).eq("project_id", projectId) }
+    else { await supabase.from("asset_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
+  }
 }

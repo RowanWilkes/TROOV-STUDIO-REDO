@@ -302,13 +302,13 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
 
   const contentBased: SectionCompletionMap = {
     overview: hasOverviewContent(overview),
-    mood: hasMoodBoardContent(moodBoard),
-    styleguide: hasStyleGuideContent(styleGuide),
-    wireframe: hasSitemapContent(sitemapPages),
-    technical: hasTechnicalContent(technical),
-    content: hasContentSectionContent(content),
-    assets: hasAssetsContent({ uploadedAssets: assets }),
-    tasks: hasTasksCompletion(tasks),
+    mood: false,
+    styleguide: false,
+    wireframe: false,
+    technical: false,
+    content: false,
+    assets: false,
+    tasks: false,
   }
 
   const overrideBySection = new Map<string, boolean>()
