@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 // POST /api/client-links — create a new client link (deactivates previous)
 export async function POST(request: Request) {
   const body = await request.json()
-  const { projectId, expiresAt } = body
+  const { projectId, expiresAt, client_email } = body
 
   if (!projectId || !expiresAt) {
     return NextResponse.json({ error: "Missing projectId or expiresAt" }, { status: 400 })
@@ -70,6 +70,9 @@ export async function POST(request: Request) {
   const token =
     crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "")
 
+  const email =
+    typeof client_email === "string" && client_email.trim() ? client_email.trim() : null
+
   const { data: link, error } = await supabase
     .from("client_links")
     .insert({
@@ -77,6 +80,7 @@ export async function POST(request: Request) {
       token,
       expires_at: expiresAt,
       is_active: true,
+      client_email: email,
     })
     .select()
     .single()

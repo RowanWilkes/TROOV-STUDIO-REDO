@@ -1,47 +1,99 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
-import { ArrowLeft, Check, X, CheckSquare, FileImage, Type, AlignLeft, ImageIcon } from "lucide-react"
+import {
+  Check,
+  X,
+  CheckSquare,
+  Send,
+  Briefcase,
+  Palette,
+  Sparkles,
+  LayoutList,
+  FolderOpen,
+  FileImage,
+} from "lucide-react"
+
+type SubmissionStatus = "pending" | "accepted" | "rejected"
+type FieldType = "text" | "longtext" | "file" | "color"
 
 type Submission = {
   id: string
-  client_link_id: string
-  project_id: string
   field_key: string
   field_label: string
-  field_type: "text" | "longtext" | "file"
+  field_type: FieldType
   text_value: string | null
+  color_value: string | null
   file_url: string | null
-  page_name: string | null
-  section_name: string | null
-  is_blank: boolean
-  status: "pending" | "accepted" | "rejected"
+  status: SubmissionStatus
+  step_id: string | null
+  designer_note: string | null
+  resubmission_requested: boolean | null
   created_at: string
+  is_blank: boolean
 }
 
-type ClientLink = {
-  id: string
-  submitted_at: string | null
-  expires_at: string
-  is_active: boolean
+type SectionConfig = { id: string; title: string; icon: React.ComponentType<{ className?: string }> }
+
+const SECTION_ORDER: SectionConfig[] = [
+  { id: "business", title: "About Your Business", icon: Briefcase },
+  { id: "style", title: "Brand & Style", icon: Palette },
+  { id: "inspiration", title: "Websites & Inspiration", icon: Sparkles },
+  { id: "page_selection", title: "Website Pages", icon: LayoutList },
+  { id: "assets", title: "Files & Assets", icon: FolderOpen },
+]
+
+const STATUS_META: Record<SubmissionStatus, { label: string; className: string }> = {
+  accepted: { label: "Accepted", className: "bg-green-50 text-green-700 border border-green-200" },
+  rejected: { label: "Rejected", className: "bg-red-50 text-red-700 border border-red-200" },
+  pending: { label: "Pending", className: "bg-amber-50 text-amber-700 border border-amber-200" },
 }
 
-const STATUS_STYLES: Record<string, { badge: string; label: string }> = {
-  pending: { badge: "bg-amber-100 text-amber-700", label: "Pending" },
-  accepted: { badge: "bg-emerald-100 text-emerald-700", label: "Accepted" },
-  rejected: { badge: "bg-red-100 text-red-700", label: "Rejected" },
+function isLikelyImage(url: string) {
+  const u = url.toLowerCase()
+  return u.includes(".png") || u.includes(".jpg") || u.includes(".jpeg") || u.includes(".webp") || u.includes(".svg")
 }
 
-function FieldTypeIcon({ type }: { type: string }) {
-  if (type === "file") return <FileImage className="h-4 w-4 text-purple-500" />
-  if (type === "longtext") return <AlignLeft className="h-4 w-4 text-blue-500" />
-  return <Type className="h-4 w-4 text-gray-500" />
+function groupIntoBatches(subs: Submission[]) {
+  const sorted = [...subs].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+  const batches: Array<{ id: string; createdAt: string; items: Submission[] }> = []
+  let current: { id: string; createdAt: string; items: Submission[] } | null = null
+  for (const s of sorted) {
+    const t = +new Date(s.created_at)
+    if (!current) {
+      current = { id: `batch_${s.created_at}`, createdAt: s.created_at, items: [s] }
+      continue
+    }
+    const t0 = +new Date(current.createdAt)
+    if (Math.abs(t0 - t) <= 5000) {
+      current.items.push(s)
+    } else {
+      batches.push(current)
+      current = { id: `batch_${s.created_at}`, createdAt: s.created_at, items: [s] }
+    }
+  }
+  if (current) batches.push(current)
+  return batches
+}
+
+function parseSelectedPages(text: string | null) {
+  if (!text) return null
+  try {
+    const parsed = JSON.parse(text) as Array<{ id: string; name: string }>
+    if (!Array.isArray(parsed)) return null
+    return parsed.filter((p) => p && typeof p.name === "string")
+  } catch {
+    return null
+  }
+}
+
+function isBlankFileField(s: Submission) {
+  return s.is_blank && s.field_type === "file"
 }
 
 export default function ClientReviewPage() {
@@ -51,88 +103,214 @@ export default function ClientReviewPage() {
 
   const [loading, setLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
-  const [submissions, setSubmissions] = useState<Submission[]>([])
-  const [link, setLink] = useState<ClientLink | null>(null)
   const [projectName, setProjectName] = useState("")
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [acceptingAll, setAcceptingAll] = useState(false)
+  const [allSubs, setAllSubs] = useState<Submission[]>([])
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null)
 
-  // Auth check
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set())
+  const [draftNotes, setDraftNotes] = useState<Record<string, string>>({})
+  const [sendingFeedback, setSendingFeedback] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState(false)
+  const [resubmitUrl, setResubmitUrl] = useState<string | null>(null)
+  const [feedbackEmailInfo, setFeedbackEmailInfo] = useState<{
+    emailSent: boolean
+    clientEmail?: string
+    message?: string
+  } | null>(null)
+  const [copyResubmitDone, setCopyResubmitDone] = useState(false)
+  const [acceptingAll, setAcceptingAll] = useState(false)
+  const [acceptingSection, setAcceptingSection] = useState<string | null>(null)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace("/login")
-      } else {
-        setAuthChecked(true)
-      }
+      if (!session) router.replace("/login")
+      else setAuthChecked(true)
     })
   }, [router])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [projectRes, reviewRes] = await Promise.all([
-        fetch(`/api/client-links?projectId=${projectId}`),
-        fetch(`/api/client-review/${projectId}`),
+      const [{ data: project }, { data: submissions }] = await Promise.all([
+        supabase.from("projects").select("title").eq("id", projectId).maybeSingle(),
+        supabase
+          .from("client_submissions")
+          .select("id, field_key, field_label, field_type, text_value, color_value, file_url, status, step_id, designer_note, resubmission_requested, created_at, is_blank")
+          .eq("project_id", projectId)
+          .order("created_at", { ascending: false }),
       ])
+      setProjectName(project?.title ?? "")
 
-      // Get project name separately
-      const { data: project } = await supabase
-        .from("projects")
-        .select("title")
-        .eq("id", projectId)
-        .maybeSingle()
-      if (project?.title) setProjectName(project.title)
+      const rows = (submissions ?? []) as Submission[]
+      setAllSubs(rows)
+      const batches = groupIntoBatches(rows)
+      if (!selectedBatchId && batches[0]) setSelectedBatchId(batches[0].id)
 
-      const reviewData = await reviewRes.json()
-      setLink(reviewData.link ?? null)
-      setSubmissions(reviewData.submissions ?? [])
+      const notes: Record<string, string> = {}
+      for (const r of rows) notes[r.id] = (r.designer_note ?? "").toString()
+      setDraftNotes(notes)
     } catch {
-      toast.error("Failed to load submission data.")
+      toast.error("Failed to load client submissions.")
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, selectedBatchId])
 
   useEffect(() => {
     if (authChecked) fetchData()
   }, [authChecked, fetchData])
 
-  async function handleStatusChange(submissionId: string, status: "accepted" | "rejected") {
-    setUpdatingId(submissionId)
+  const batches = useMemo(() => groupIntoBatches(allSubs), [allSubs])
+  const batch = useMemo(() => batches.find((b) => b.id === selectedBatchId) ?? batches[0] ?? null, [batches, selectedBatchId])
+  const submissions = batch?.items ?? []
+
+  const visibleSubmissions = useMemo(
+    () => submissions.filter((s) => !isBlankFileField(s)),
+    [submissions],
+  )
+
+  const acceptedCount = visibleSubmissions.filter((s) => s.status === "accepted").length
+  const totalCount = visibleSubmissions.length
+  const hasRejected = visibleSubmissions.some((s) => s.status === "rejected")
+  const allReviewed = visibleSubmissions.every((s) => s.status === "accepted" || s.status === "rejected")
+  const pendingNonBlank = visibleSubmissions.filter((s) => s.status === "pending" && !s.is_blank)
+
+  const sections = useMemo(() => {
+    const byStep = new Map<string, Submission[]>()
+    for (const s of visibleSubmissions) {
+      const step = s.step_id ?? "unknown"
+      byStep.set(step, [...(byStep.get(step) ?? []), s])
+    }
+
+    const ordered: Array<{ id: string; title: string; icon: React.ComponentType<{ className?: string }>; items: Submission[] }> = []
+    for (const conf of SECTION_ORDER) {
+      const items = byStep.get(conf.id)
+      if (items?.length) ordered.push({ id: conf.id, title: conf.title, icon: conf.icon, items })
+      byStep.delete(conf.id)
+    }
+    for (const [id, items] of byStep.entries()) {
+      ordered.push({ id, title: id, icon: FileImage, items })
+    }
+    return ordered
+  }, [visibleSubmissions])
+
+  async function patchStatus(submissionId: string, action: "accept" | "reject") {
+    setUpdatingIds((prev) => new Set(prev).add(submissionId))
     try {
+      const note = draftNotes[submissionId] ?? ""
       const res = await fetch(`/api/client-review/${projectId}/${submissionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ action, note: note.trim() ? note : undefined }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setSubmissions((prev) =>
-        prev.map((s) => (s.id === submissionId ? { ...s, status: data.submission.status } : s)),
-      )
-      toast.success(status === "accepted" ? "Field accepted and added to project." : "Field rejected.")
+      if (!res.ok) throw new Error(data.error ?? "Update failed")
+
+      setAllSubs((prev) => prev.map((s) => (s.id === submissionId ? { ...s, ...data.submission } : s)))
     } catch {
       toast.error("Failed to update field.")
     } finally {
-      setUpdatingId(null)
+      setUpdatingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(submissionId)
+        return next
+      })
     }
   }
 
-  async function handleAcceptAll() {
+  /** Reset rejected → pending (RLS: project owner). API only supports accept/reject. */
+  async function undoReject(submissionId: string) {
+    setUpdatingIds((prev) => new Set(prev).add(submissionId))
+    try {
+      const { data, error } = await supabase
+        .from("client_submissions")
+        .update({ status: "pending", resubmission_requested: false })
+        .eq("id", submissionId)
+        .eq("project_id", projectId)
+        .select(
+          "id, field_key, field_label, field_type, text_value, color_value, file_url, status, step_id, designer_note, resubmission_requested, created_at, is_blank",
+        )
+        .single()
+      if (error) throw error
+      if (data) {
+        setAllSubs((prev) => prev.map((s) => (s.id === submissionId ? { ...s, ...(data as Submission) } : s)))
+      }
+    } catch {
+      toast.error("Failed to undo reject.")
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(submissionId)
+        return next
+      })
+    }
+  }
+
+  async function saveNote(submissionId: string) {
+    try {
+      const note = (draftNotes[submissionId] ?? "").toString()
+      const res = await fetch(`/api/client-review/${projectId}/note`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionId, note }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Note update failed")
+      setAllSubs((prev) => prev.map((s) => (s.id === submissionId ? { ...s, designer_note: note } : s)))
+    } catch {
+      toast.error("Failed to save note.")
+    }
+  }
+
+  async function acceptAll() {
     setAcceptingAll(true)
     try {
       const res = await fetch(`/api/client-review/${projectId}/accept-all`, { method: "POST" })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setSubmissions((prev) =>
-        prev.map((s) => (s.status === "pending" && !s.is_blank ? { ...s, status: "accepted" } : s)),
-      )
-      toast.success(`${data.updated} fields accepted and added to project.`)
+      if (!res.ok) throw new Error(data.error ?? "Failed")
+      toast.success(`${data.updated ?? 0} fields accepted.`)
+      await fetchData()
     } catch {
       toast.error("Failed to accept all fields.")
     } finally {
       setAcceptingAll(false)
+    }
+  }
+
+  async function acceptSection(stepId: string, ids: string[]) {
+    setAcceptingSection(stepId)
+    try {
+      await Promise.all(ids.map((id) => patchStatus(id, "accept")))
+      toast.success("Section accepted.")
+    } catch {
+      toast.error("Failed to accept section.")
+    } finally {
+      setAcceptingSection(null)
+    }
+  }
+
+  async function sendFeedback() {
+    setSendingFeedback(true)
+    try {
+      const res = await fetch(`/api/client-review/${projectId}/send-feedback`, { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Failed")
+      setFeedbackSent(true)
+      setResubmitUrl(typeof data.resubmitUrl === "string" ? data.resubmitUrl : null)
+      setFeedbackEmailInfo({
+        emailSent: data.emailSent === true,
+        clientEmail: typeof data.clientEmail === "string" ? data.clientEmail : undefined,
+        message: typeof data.message === "string" ? data.message : undefined,
+      })
+      if (data.emailSent === true) {
+        toast.success("Feedback email sent.")
+      } else {
+        toast.success(data.message ?? "Share the resubmit link with your client manually.")
+      }
+    } catch {
+      toast.error("Failed to send feedback.")
+    } finally {
+      setSendingFeedback(false)
     }
   }
 
@@ -141,245 +319,370 @@ export default function ClientReviewPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Loading submission…</p>
+          <p className="text-sm text-gray-500">Loading…</p>
         </div>
       </div>
     )
   }
 
-  const reviewed = submissions.filter((s) => s.status !== "pending").length
-  const total = submissions.length
-  const pendingCount = submissions.filter((s) => s.status === "pending" && !s.is_blank).length
-
-  // Group by page
-  const pages = Array.from(new Set(submissions.map((s) => s.page_name ?? "General")))
+  if (!batch) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?project=${projectId}`)}>
+            ← Back to Project
+          </Button>
+          <div className="mt-8 text-gray-500">No client submissions yet.</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/dashboard")}
-              className="flex-shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Dashboard
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?project=${projectId}`)}>
+              ← Back to Project
             </Button>
             <div className="min-w-0">
-              <h1 className="font-bold text-gray-900 text-lg leading-tight truncate">
-                Client Submission Review
-              </h1>
-              {projectName && <p className="text-xs text-gray-500 truncate">{projectName}</p>}
+              <h1 className="text-lg font-semibold text-gray-900 truncate">Client Submission Review</h1>
+              <p className="text-xs text-gray-500 truncate">{projectName}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-sm text-gray-600 hidden sm:block">
-              {reviewed} of {total} reviewed
-            </span>
-            {pendingCount > 0 && (
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
+              <span>{new Date(batch.createdAt).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+              <span className="text-gray-300">•</span>
+              <span>{totalCount} fields</span>
+              <span className="text-gray-300">•</span>
+              <span className="inline-flex items-center rounded-full border px-2 py-0.5 bg-gray-50 text-gray-700">
+                {acceptedCount} of {totalCount} accepted
+              </span>
+            </div>
+
+            {allReviewed && hasRejected && (
               <Button
                 size="sm"
-                onClick={handleAcceptAll}
-                disabled={acceptingAll}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                variant="outline"
+                disabled={feedbackSent || sendingFeedback}
+                onClick={sendFeedback}
+                className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
               >
-                <CheckSquare className="h-4 w-4 mr-1.5" />
-                {acceptingAll ? "Accepting…" : "Accept All"}
+                <Send className="h-4 w-4" />
+                {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
               </Button>
+            )}
+
+            {allReviewed && !hasRejected && (
+              <div className="flex flex-col items-end gap-2">
+                <p className="text-xs text-gray-600 text-right max-w-xs">All fields accepted — your project has been updated.</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/dashboard?project=${projectId}`)}
+                  className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  ← Back to Project
+                </Button>
+              </div>
+            )}
+
+            {!allReviewed && (
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  onClick={acceptAll}
+                  disabled={acceptingAll || pendingNonBlank.length === 0}
+                  className="bg-green-500 hover:bg-green-600 text-white gap-2 border-green-500"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  {acceptingAll ? "Accepting…" : "Accept All"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={feedbackSent || !hasRejected || sendingFeedback}
+                  onClick={sendFeedback}
+                  className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <Send className="h-4 w-4" />
+                  {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
+                </Button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-1 bg-gray-100">
-          <div
-            className="h-1 bg-emerald-500 transition-all duration-300"
-            style={{ width: total > 0 ? `${(reviewed / total) * 100}%` : "0%" }}
-          />
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Submission meta */}
-        {link?.submitted_at && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4">
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              <div>
-                <span className="font-medium text-gray-900">Submitted</span>{" "}
-                {new Date(link.submitted_at).toLocaleDateString("en-AU", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </div>
-              <div>
-                <span className="font-medium text-gray-900">{total}</span> fields total
-              </div>
-              <div>
-                <span className="font-medium text-gray-900">
-                  {submissions.filter((s) => !s.is_blank).length}
-                </span>{" "}
-                filled in
-              </div>
-              <div>
-                <span className="font-medium text-emerald-700">
-                  {submissions.filter((s) => s.status === "accepted").length}
-                </span>{" "}
-                accepted
-              </div>
+        {batches.length > 1 && (
+          <div className="max-w-5xl mx-auto px-6 pb-4">
+            <div className="flex flex-wrap gap-2">
+              {batches.slice(0, 5).map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setSelectedBatchId(b.id)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    b.id === batch.id ? "bg-gray-900 text-white border-gray-900" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {new Date(b.createdAt).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} ·{" "}
+                  {b.items.filter((s) => !isBlankFileField(s)).length} fields
+                </button>
+              ))}
             </div>
           </div>
         )}
+      </div>
 
-        {!link && !loading && (
-          <div className="text-center py-20 text-gray-400">
-            <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium">No submission yet</p>
-            <p className="text-sm mt-1">Generate a client link from the dashboard to get started.</p>
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="mt-4">
-              Go to Dashboard
-            </Button>
-          </div>
-        )}
-
-        {/* Grouped by page */}
-        {pages.map((pageName) => {
-          const pageSubmissions = submissions.filter((s) => (s.page_name ?? "General") === pageName)
-          return (
-            <div key={pageName} className="mb-8">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3 px-1">
-                {pageName}
-              </h2>
+      {feedbackSent && feedbackEmailInfo && (
+        <div className="max-w-5xl mx-auto px-6 pt-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            {feedbackEmailInfo.emailSent ? (
+              <p className="text-sm text-gray-700">
+                ✅ Feedback email sent to {feedbackEmailInfo.clientEmail ?? "your client"}. They&apos;ll receive a link
+                to update only the flagged fields.
+              </p>
+            ) : (
               <div className="space-y-3">
-                {pageSubmissions.map((sub) => (
-                  <Card
-                    key={sub.id}
-                    className={`transition-all ${
-                      sub.status === "accepted"
-                        ? "border-emerald-200 bg-emerald-50/30"
-                        : sub.status === "rejected"
-                          ? "border-red-100 bg-red-50/20"
-                          : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <CardContent className="p-5">
-                      <div className="flex items-start gap-4">
-                        {/* Left: icon */}
-                        <div className="flex-shrink-0 mt-0.5">
-                          <FieldTypeIcon type={sub.field_type} />
-                        </div>
+                <p className="text-sm text-gray-700">
+                  ⚠️{" "}
+                  {feedbackEmailInfo.message ??
+                    "No client email on file. Share this link with your client manually:"}
+                </p>
+                {resubmitUrl ? (
+                  <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                    <input
+                      readOnly
+                      value={resubmitUrl}
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono text-gray-600 bg-gray-50 min-w-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(resubmitUrl).then(() => {
+                          setCopyResubmitDone(true)
+                          setTimeout(() => setCopyResubmitDone(false), 2000)
+                        })
+                      }}
+                    >
+                      {copyResubmitDone ? "Copied ✓" : "Copy Link"}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-                        {/* Middle: content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span className="text-sm font-semibold text-gray-900">{sub.field_label}</span>
-                            <span
-                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[sub.status].badge}`}
-                            >
-                              {STATUS_STYLES[sub.status].label}
-                            </span>
-                            {sub.is_blank && (
-                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">
-                                Left blank
-                              </span>
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        {sections.map((section) => {
+          const Icon = section.icon
+          const nonBlankFields = section.items.filter((f) => !(f.is_blank && f.field_type === "file"))
+          const pendingIds = section.items.filter((s) => s.status === "pending" && !s.is_blank).map((s) => s.id)
+
+          const inspirationNotesByIndex = new Map<number, Submission>()
+          const inspirationImagesByIndex = new Map<number, Submission>()
+          if (section.id === "inspiration") {
+            for (const s of section.items) {
+              const noteMatch = s.field_key.match(/^inspiration_note_(\d+)$/)
+              if (noteMatch && s.text_value) inspirationNotesByIndex.set(Number(noteMatch[1]), s)
+              const imgMatch = s.field_key.match(/^inspiration_image_(\d+)$/)
+              if (imgMatch) inspirationImagesByIndex.set(Number(imgMatch[1]), s)
+            }
+          }
+
+          const skipBlankFile = (s: Submission) => !isBlankFileField(s)
+          const itemsToRender =
+            section.id === "inspiration"
+              ? section.items.filter((s) => !s.field_key.startsWith("inspiration_note_")).filter(skipBlankFile)
+              : section.items.filter(skipBlankFile)
+
+          return (
+            <Card key={section.id} className="rounded-xl border border-gray-200 bg-white">
+              <CardContent className="p-0">
+                <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <Icon className="h-4 w-4 text-gray-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-sm font-semibold text-gray-900">{section.title}</h2>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                          {nonBlankFields.length} fields
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => acceptSection(section.id, pendingIds)}
+                    disabled={pendingIds.length === 0 || acceptingSection === section.id}
+                    className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    <Check className="h-4 w-4" />
+                    {acceptingSection === section.id ? "Accepting…" : "Accept Section"}
+                  </Button>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {itemsToRender.map((s) => {
+                    const isUpdating = updatingIds.has(s.id)
+                    const statusMeta = STATUS_META[s.status]
+
+                    const selectedPages = s.field_key === "selected_pages" ? parseSelectedPages(s.text_value) : null
+                    const noteText = (draftNotes[s.id] ?? "").toString()
+                    const noteCharCount = noteText.length
+
+                    const baseRow = (
+                      <div key={s.id} className="px-5 py-4">
+                        <div className="flex items-start gap-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium text-gray-600">{s.field_label}</p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
+                              {s.is_blank && (
+                                <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">Blank</span>
+                              )}
+                            </div>
+
+                            {s.field_type === "color" && (
+                              <div className="mt-2 flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-md border border-gray-200" style={{ backgroundColor: s.color_value ?? "#ffffff" }} />
+                                <div className="text-sm text-gray-900 font-mono">{s.color_value ?? "—"}</div>
+                              </div>
+                            )}
+
+                            {(s.field_type === "text" || s.field_type === "longtext") && (
+                              <div className="mt-2">
+                                {selectedPages ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {selectedPages.map((p) => (
+                                      <span key={p.id} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+                                        {p.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className={`text-sm text-gray-900 ${s.field_type === "longtext" ? "whitespace-pre-wrap leading-relaxed" : ""}`}>
+                                    {s.text_value || (s.is_blank ? "—" : "")}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {s.field_type === "file" && (
+                              <div className="mt-2">
+                                {s.file_url ? (
+                                  <div className="flex items-start gap-3">
+                                    {isLikelyImage(s.file_url) ? (
+                                      <img src={s.file_url} alt={s.field_label} className="h-20 w-20 rounded-xl object-cover border border-gray-200 bg-gray-50" />
+                                    ) : (
+                                      <div className="h-20 w-20 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-500">
+                                        File
+                                      </div>
+                                    )}
+                                    <div className="min-w-0">
+                                      <a href={s.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                                        View full size ↗
+                                      </a>
+                                      {section.id === "inspiration" && (() => {
+                                        const m = s.field_key.match(/^inspiration_image_(\d+)$/)
+                                        if (!m) return null
+                                        const idx = Number(m[1])
+                                        const note = inspirationNotesByIndex.get(idx)
+                                        if (!note?.text_value) return null
+                                        return (
+                                          <p className="mt-2 text-xs text-gray-600 whitespace-pre-wrap">{note.text_value}</p>
+                                        )
+                                      })()}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">No file provided</p>
+                                )}
+                              </div>
                             )}
                           </div>
 
-                          {/* Value display */}
-                          {sub.is_blank ? (
-                            <p className="text-sm text-gray-400 italic">No content provided</p>
-                          ) : sub.field_type === "file" && sub.file_url ? (
-                            <div>
-                              <img
-                                src={sub.file_url}
-                                alt={sub.field_label}
-                                className="h-32 w-auto rounded-lg object-cover border border-gray-200"
-                                onError={(e) => {
-                                  ;(e.target as HTMLImageElement).style.display = "none"
-                                }}
-                              />
-                              <a
-                                href={sub.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline mt-1 inline-block"
-                              >
-                                View full size ↗
-                              </a>
+                          {s.status !== "accepted" && (
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {s.status === "pending" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={isUpdating || s.is_blank}
+                                    onClick={() => patchStatus(s.id, "accept")}
+                                    className="h-8 w-8 rounded-lg bg-white border border-green-500 text-green-600 hover:bg-green-50 flex items-center justify-center disabled:opacity-50"
+                                    title="Accept"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isUpdating || s.is_blank}
+                                    onClick={() => patchStatus(s.id, "reject")}
+                                    className="h-8 w-8 rounded-lg bg-white border border-red-400 text-red-500 hover:bg-red-50 flex items-center justify-center disabled:opacity-50"
+                                    title="Reject"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+                              {s.status === "rejected" && (
+                                <button
+                                  type="button"
+                                  disabled={isUpdating || s.is_blank}
+                                  onClick={() => undoReject(s.id)}
+                                  className="h-8 w-8 rounded-lg bg-white border border-red-400 text-red-500 hover:bg-red-50 flex items-center justify-center disabled:opacity-50"
+                                  title="Undo reject"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
-                          ) : sub.field_type === "longtext" ? (
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                              {sub.text_value}
-                            </p>
-                          ) : (
-                            <p className="text-sm text-gray-700">{sub.text_value}</p>
                           )}
                         </div>
 
-                        {/* Right: actions */}
-                        {!sub.is_blank && sub.status === "pending" && (
-                          <div className="flex gap-2 flex-shrink-0">
-                            <Button
-                              size="sm"
-                              onClick={() => handleStatusChange(sub.id, "accepted")}
-                              disabled={updatingId === sub.id}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3"
+                        {s.status === "rejected" && (
+                          <div className="mt-4 pl-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-gray-500">Designer note</p>
+                              <p className="text-[11px] text-gray-400">{noteCharCount} chars</p>
+                            </div>
+                            <textarea
+                              value={noteText}
+                              onChange={(e) => setDraftNotes((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                              onBlur={() => saveNote(s.id)}
+                              placeholder="Leave a note for your client about this field..."
+                              rows={3}
+                              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => saveNote(s.id)}
+                              className="mt-2 text-xs text-gray-500 hover:text-gray-700"
                             >
-                              <Check className="h-3.5 w-3.5 mr-1" />
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleStatusChange(sub.id, "rejected")}
-                              disabled={updatingId === sub.id}
-                              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3"
-                            >
-                              <X className="h-3.5 w-3.5 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-
-                        {/* Accepted/rejected state — allow undo-ish by re-setting */}
-                        {!sub.is_blank && sub.status !== "pending" && (
-                          <div className="flex-shrink-0">
-                            {sub.status === "accepted" ? (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleStatusChange(sub.id, "rejected")}
-                                disabled={updatingId === sub.id}
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50 h-8 px-2"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleStatusChange(sub.id, "accepted")}
-                                disabled={updatingId === sub.id}
-                                className="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 h-8 px-2"
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
+                              Save note
+                            </button>
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+                    )
+
+                    return baseRow
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           )
         })}
       </div>

@@ -1,10 +1,16 @@
 import { createServiceRoleClient } from "@/lib/supabase-service"
 import { ClientForm } from "./client-form"
 
-type Props = { params: Promise<{ token: string }> }
+type Props = { params: Promise<{ token: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }
 
-export default async function ClientPage({ params }: Props) {
+export default async function ClientPage({ params, searchParams }: Props) {
   const { token } = await params
+  const sp = (await searchParams) ?? {}
+  const resubmit = sp.resubmit === "true"
+  const fieldsParam = typeof sp.fields === "string" ? sp.fields : Array.isArray(sp.fields) ? sp.fields[0] : undefined
+  const resubmitFields = resubmit && fieldsParam
+    ? fieldsParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : undefined
   const supabase = createServiceRoleClient()
 
   const { data: link } = await supabase
@@ -73,6 +79,7 @@ export default async function ClientPage({ params }: Props) {
       projectName={project?.title ?? "Your Project"}
       pages={pages}
       alreadySubmitted={!!link.submitted_at}
+      resubmitFields={resubmitFields}
     />
   )
 }

@@ -118,7 +118,7 @@ export async function fetchCriticalSectionCompletion(projectId: string): Promise
   }
 
   const contentBased: SectionCompletionMap = {
-    overview: hasOverviewContent(overview),
+    overview: false,
     mood: false,
     styleguide: false,
     wireframe: false,
@@ -301,7 +301,7 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
   const tasks = (tasksData ?? []) as Array<{ completed?: boolean }>
 
   const contentBased: SectionCompletionMap = {
-    overview: hasOverviewContent(overview),
+    overview: false,
     mood: false,
     styleguide: false,
     wireframe: false,

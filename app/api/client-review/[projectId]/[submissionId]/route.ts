@@ -9,10 +9,10 @@ export async function PATCH(
 ) {
   const { projectId, submissionId } = await params
   const body = await request.json()
-  const { status } = body
+  const { action, note } = body
 
-  if (!["accepted", "rejected"].includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+  if (!["accept", "reject"].includes(action)) {
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   }
 
   const supabase = await createClient()
@@ -23,9 +23,14 @@ export async function PATCH(
     .from("projects").select("id").eq("id", projectId).eq("user_id", session.user.id).maybeSingle()
   if (!project) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
+  const nextStatus = action === "accept" ? "accepted" : "rejected"
+  const update: Record<string, unknown> = { status: nextStatus }
+  if (typeof note === "string") update.designer_note = note
+  if (action === "reject") update.resubmission_requested = true
+
   const { data: submission, error: updateError } = await supabase
     .from("client_submissions")
-    .update({ status })
+    .update(update)
     .eq("id", submissionId)
     .eq("project_id", projectId)
     .select()
@@ -35,7 +40,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Update failed" }, { status: 500 })
   }
 
-  if (status === "accepted") {
+  if (action === "accept") {
     await mapFieldToProject(supabase, session.user.id, projectId, submission as Record<string, unknown>)
   }
 
@@ -151,7 +156,7 @@ async function mapFieldToProject(
     else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
     return
   }
-  if (key === "brands_admired" && text) {
+  if ((key === "brands_admired" || key.startsWith("brands_admired_")) && text) {
     const entries = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
     for (const entry of entries) {
       await supabase.from("mood_board_items").insert({

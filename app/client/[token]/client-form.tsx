@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 type SitemapPage = { id: string; name: string; path?: string }
 type FormField = {
@@ -20,6 +20,12 @@ type FormStep = {
 }
 type PageSelection = { id: string; name: string; isCustom?: boolean }
 type InspirationImage = { file: File; note: string }
+type WebsiteReference = { url: string; note: string }
+
+type ReviewItem =
+  | { kind: "text"; key: string; stepTitle: string; label: string; value: string }
+  | { kind: "color"; key: string; stepTitle: string; label: string; colorValue: string }
+  | { kind: "file"; key: string; stepTitle: string; label: string; objectUrl: string; note?: string }
 type BrandAsset = { file: File; label: string }
 type LogoFile = { file: File; label: string }
 type Props = {
@@ -28,6 +34,7 @@ type Props = {
   projectName: string
   pages: SitemapPage[]
   alreadySubmitted: boolean
+  resubmitFields?: string[]
 }
 
 function buildSteps(): FormStep[] {
@@ -98,7 +105,7 @@ function buildSteps(): FormStep[] {
   return steps
 }
 
-export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
+export function ClientForm({ token, projectName, alreadySubmitted, resubmitFields }: Props) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isReview, setIsReview] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -108,8 +115,9 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
   const [colorValues, setColorValues] = useState<Record<string, string>>({})
   const [fileValues, setFileValues] = useState<Record<string, File | null>>({})
   const [multiFiles, setMultiFiles] = useState<Record<string, File[]>>({})
-  const [websiteReferences, setWebsiteReferences] = useState<string>("")
-  const [websiteReferenceNotes, setWebsiteReferenceNotes] = useState<string>("")
+  const [websiteRefs, setWebsiteRefs] = useState<WebsiteReference[]>([])
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState<string>("")
+  const [newWebsiteNote, setNewWebsiteNote] = useState<string>("")
   const [inspirationImages, setInspirationImages] = useState<InspirationImage[]>([])
   const inspirationImagesRef = useRef<HTMLInputElement | null>(null)
   const [brandAssets, setBrandAssets] = useState<BrandAsset[]>([])
@@ -121,7 +129,167 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
   const [selectedPages, setSelectedPages] = useState<PageSelection[]>([{ id: "home", name: "Home" }])
   const [customPageInput, setCustomPageInput] = useState("")
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const steps = buildSteps()
+  const resubmitSet = useMemo(() => new Set(resubmitFields ?? []), [resubmitFields])
+  const isResubmit = (resubmitFields?.length ?? 0) > 0
+
+  const allSteps = buildSteps()
+  const steps = useMemo(() => {
+    if (!isResubmit) return allSteps
+
+    const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
+    const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
+    const wantsSelectedPages = resubmitSet.has("selected_pages")
+    const wantsWebsiteRefs =
+      resubmitSet.has("brands_admired") || Array.from(resubmitSet).some((k) => k.startsWith("brands_admired_"))
+    const wantsInspirationImages = Array.from(resubmitSet).some((k) => k === "inspiration_images" || k.startsWith("inspiration_image_"))
+
+    const filtered: FormStep[] = []
+    for (const s of allSteps) {
+      if (s.id === "page_selection") {
+        if (wantsSelectedPages) filtered.push(s)
+        continue
+      }
+      if (s.id === "inspiration") {
+        if (wantsWebsiteRefs || wantsInspirationImages) filtered.push(s)
+        continue
+      }
+      if (s.id === "assets") {
+        if (wantsLogo || wantsBrandAssets) filtered.push(s)
+        continue
+      }
+      const fields = s.fields.filter((f) => resubmitSet.has(f.key))
+      if (fields.length > 0) filtered.push({ ...s, fields })
+    }
+    return filtered.length > 0 ? filtered : allSteps
+  }, [allSteps, isResubmit, resubmitSet])
+
+  const reviewItems = useMemo((): ReviewItem[] => {
+    if (!isReview) return []
+    const out: ReviewItem[] = []
+    let n = 0
+    const nextKey = () => `rv-${n++}`
+
+    for (const s of steps) {
+      for (const f of s.fields) {
+        if (f.type === "file" && f.key === "logo") {
+          if (logoFiles.length > 0) {
+            for (const lf of logoFiles) {
+              out.push({
+                kind: "file",
+                key: nextKey(),
+                stepTitle: s.title,
+                label: lf.label.trim() || "Logo",
+                objectUrl: URL.createObjectURL(lf.file),
+              })
+            }
+          } else if (fileValues["logo"]) {
+            out.push({
+              kind: "file",
+              key: nextKey(),
+              stepTitle: s.title,
+              label: "Logo",
+              objectUrl: URL.createObjectURL(fileValues["logo"]!),
+            })
+          }
+          continue
+        }
+        if (f.type === "file" && f.multiple && f.key === "brand_assets") {
+          for (const a of brandAssets) {
+            out.push({
+              kind: "file",
+              key: nextKey(),
+              stepTitle: s.title,
+              label: a.label.trim() || "Brand Asset",
+              objectUrl: URL.createObjectURL(a.file),
+            })
+          }
+          continue
+        }
+        if (f.type === "file" && f.multiple) {
+          for (const file of multiFiles[f.key] ?? []) {
+            out.push({
+              kind: "file",
+              key: nextKey(),
+              stepTitle: s.title,
+              label: f.label,
+              objectUrl: URL.createObjectURL(file),
+            })
+          }
+          continue
+        }
+        if (f.type === "file") {
+          const file = fileValues[f.key]
+          if (file) {
+            out.push({
+              kind: "file",
+              key: nextKey(),
+              stepTitle: s.title,
+              label: f.label,
+              objectUrl: URL.createObjectURL(file),
+            })
+          }
+          continue
+        }
+        if (f.type === "color") {
+          const val = colorValues[f.key] ?? ""
+          if (val) {
+            out.push({ kind: "color", key: nextKey(), stepTitle: s.title, label: f.label, colorValue: val })
+          }
+          continue
+        }
+        const val = textValues[f.key] ?? ""
+        if (val.trim()) {
+          out.push({ kind: "text", key: nextKey(), stepTitle: s.title, label: f.label, value: val })
+        }
+      }
+    }
+
+    const inspStep = steps.find((ss) => ss.id === "inspiration")
+    const inspTitle = inspStep?.title ?? "Websites & Inspiration"
+    for (const item of inspirationImages) {
+      const noteTrim = item.note.trim()
+      out.push({
+        kind: "file",
+        key: nextKey(),
+        stepTitle: inspTitle,
+        label: "Inspiration Screenshot",
+        objectUrl: URL.createObjectURL(item.file),
+        ...(noteTrim ? { note: item.note } : {}),
+      })
+    }
+
+    if (brandColourRef) {
+      const styleStep = steps.find((ss) => ss.id === "style")
+      out.push({
+        kind: "file",
+        key: nextKey(),
+        stepTitle: styleStep?.title ?? "Brand & Style",
+        label: "Brand Colour Reference",
+        objectUrl: URL.createObjectURL(brandColourRef),
+      })
+    }
+
+    return out
+  }, [
+    isReview,
+    steps,
+    textValues,
+    colorValues,
+    fileValues,
+    multiFiles,
+    logoFiles,
+    brandAssets,
+    inspirationImages,
+    brandColourRef,
+  ])
+
+  useEffect(() => {
+    const urls = reviewItems.filter((i): i is Extract<ReviewItem, { kind: "file" }> => i.kind === "file").map((i) => i.objectUrl)
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u))
+    }
+  }, [reviewItems])
+
   const step = steps[currentStep]
   const isLastStep = currentStep === steps.length - 1
 
@@ -169,17 +337,78 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
       }
       const fields: FieldPayload[] = []
 
+      const wantsInspirationImages =
+        !isResubmit || Array.from(resubmitSet).some((k) => k === "inspiration_images" || k.startsWith("inspiration_image_"))
+      const shouldUploadColourRef =
+        (!isResubmit || resubmitSet.has("inspiration_image_colour_ref")) && Boolean(brandColourRef)
+      const wantsLogoUpload =
+        !isResubmit || Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
+      const wantsBrandAssetsUpload =
+        !isResubmit || Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
+
+      const [logoUrls, brandAssetUrls, inspirationUrls, colourRefUrl] = await Promise.all([
+        wantsLogoUpload && logoFiles.length > 0
+          ? Promise.all(logoFiles.map((f) => uploadFile(f.file)))
+          : Promise.resolve([] as (string | null)[]),
+        wantsBrandAssetsUpload && brandAssets.length > 0
+          ? Promise.all(brandAssets.map((a) => uploadFile(a.file)))
+          : Promise.resolve([] as (string | null)[]),
+        wantsInspirationImages && inspirationImages.length > 0
+          ? Promise.all(inspirationImages.map((img) => uploadFile(img.file)))
+          : Promise.resolve([] as (string | null)[]),
+        shouldUploadColourRef && brandColourRef ? uploadFile(brandColourRef) : Promise.resolve(null as string | null),
+      ])
+
+      const otherFiles: File[] = []
+      for (const s of steps) {
+        for (const field of s.fields) {
+          if (isResubmit) {
+            if (field.type === "file" && field.multiple && field.key === "brand_assets") {
+              const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
+              if (!wantsBrandAssets) continue
+            } else if (field.type === "file" && field.key === "logo") {
+              const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
+              if (!wantsLogo) continue
+            } else if (!resubmitSet.has(field.key)) {
+              continue
+            }
+          }
+          if (field.type === "file" && field.multiple) {
+            if (field.key === "brand_assets") continue
+            for (const file of multiFiles[field.key] ?? []) otherFiles.push(file)
+          } else if (field.type === "file" && field.key !== "logo") {
+            const file = fileValues[field.key] ?? null
+            if (file) otherFiles.push(file)
+          }
+        }
+      }
+      const otherUrls =
+        otherFiles.length > 0 ? await Promise.all(otherFiles.map((f) => uploadFile(f))) : []
+      let otherIx = 0
+      const nextOtherUrl = () => otherUrls[otherIx++]
+
       for (const s of steps) {
         const isPageStep = s.id.startsWith("page_")
         const pageName = isPageStep ? s.title.replace(" Page", "") : null
 
         for (const field of s.fields) {
+          if (isResubmit) {
+            if (field.type === "file" && field.multiple && field.key === "brand_assets") {
+              const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
+              if (!wantsBrandAssets) continue
+            } else if (field.type === "file" && field.key === "logo") {
+              const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
+              if (!wantsLogo) continue
+            } else if (!resubmitSet.has(field.key)) {
+              continue
+            }
+          }
           if (field.type === "file" && field.multiple) {
             if (field.key === "brand_assets") {
               if (brandAssets.length > 0) {
                 for (let i = 0; i < brandAssets.length; i++) {
                   const asset = brandAssets[i]
-                  const url = await uploadFile(asset.file)
+                  const url = brandAssetUrls[i] ?? null
                   fields.push({
                     fieldKey: `brand_asset_${i}`,
                     fieldLabel: asset.label.trim() ? asset.label.trim() : "Brand Asset",
@@ -199,7 +428,7 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
               const files = multiFiles[field.key] ?? []
               if (files.length > 0) {
                 for (let i = 0; i < files.length; i++) {
-                  const url = await uploadFile(files[i])
+                  const url = nextOtherUrl()
                   fields.push({ fieldKey: `${field.key}_${i}`, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
                 }
               } else {
@@ -210,7 +439,7 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
             if (field.key === "logo") {
               if (logoFiles.length > 0) {
                 for (let i = 0; i < logoFiles.length; i++) {
-                  const url = await uploadFile(logoFiles[i].file)
+                  const url = logoUrls[i] ?? null
                   fields.push({
                     fieldKey: `logo_${i}`,
                     fieldLabel: logoFiles[i].label.trim() ? logoFiles[i].label.trim() : "Logo",
@@ -238,7 +467,7 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
               }
             } else {
               const file = fileValues[field.key] ?? null
-              const url = file ? await uploadFile(file) : null
+              const url = file ? nextOtherUrl() : null
               fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
             }
           } else if (field.type === "color") {
@@ -251,8 +480,8 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
         }
       }
 
-      if (brandColourRef) {
-        const url = await uploadFile(brandColourRef)
+      if (shouldUploadColourRef && brandColourRef) {
+        const url = colourRefUrl
         fields.push({
           fieldKey: "inspiration_image_colour_ref",
           fieldLabel: "Brand Colour Reference",
@@ -266,26 +495,46 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
         })
       }
 
-      if (websiteReferences.trim()) {
-        fields.push({
-          fieldKey: "brands_admired",
-          fieldLabel: "Websites or brands you admire",
-          fieldType: "longtext",
-          pageName: null,
-          textValue: websiteReferenceNotes
-            ? `${websiteReferences}\n\nDesigner notes: ${websiteReferenceNotes}`
-            : websiteReferences || null,
-          fileUrl: null,
-          isBlank: !websiteReferences.trim(),
-          stepId: "inspiration",
-          colorValue: null,
-        })
+      const wantsBrandsAdmired =
+        !isResubmit ||
+        resubmitSet.has("brands_admired") ||
+        Array.from(resubmitSet).some((k) => k.startsWith("brands_admired_"))
+      if (wantsBrandsAdmired) {
+        if (websiteRefs.length > 0) {
+          for (let i = 0; i < websiteRefs.length; i++) {
+            const entry = websiteRefs[i]
+            const hasNote = Boolean(entry.note.trim())
+            fields.push({
+              fieldKey: `brands_admired_${i}`,
+              fieldLabel: hasNote ? `${entry.url} — ${entry.note}` : entry.url,
+              fieldType: "longtext",
+              pageName: null,
+              textValue: hasNote ? `${entry.url}\n\nDesigner notes: ${entry.note}` : entry.url,
+              fileUrl: null,
+              isBlank: false,
+              stepId: "inspiration",
+              colorValue: null,
+            })
+          }
+        } else {
+          fields.push({
+            fieldKey: "brands_admired",
+            fieldLabel: "Websites or brands you admire",
+            fieldType: "longtext",
+            pageName: null,
+            textValue: null,
+            fileUrl: null,
+            isBlank: true,
+            stepId: "inspiration",
+            colorValue: null,
+          })
+        }
       }
 
-      if (inspirationImages.length > 0) {
+      if (wantsInspirationImages && inspirationImages.length > 0) {
         for (let i = 0; i < inspirationImages.length; i++) {
           const item = inspirationImages[i]
-          const url = await uploadFile(item.file)
+          const url = inspirationUrls[i] ?? null
           fields.push({
             fieldKey: `inspiration_image_${i}`,
             fieldLabel: "Inspiration Screenshot",
@@ -311,7 +560,7 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
             })
           }
         }
-      } else {
+      } else if (wantsInspirationImages) {
         fields.push({
           fieldKey: "inspiration_images",
           fieldLabel: "Inspiration Screenshots",
@@ -326,17 +575,19 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
       }
 
       // Add selected pages as a special submission field
-      fields.push({
-        fieldKey: "selected_pages",
-        fieldLabel: "Selected Pages",
-        fieldType: "text",
-        pageName: null,
-        stepId: "page_selection",
-        textValue: JSON.stringify(selectedPages.map((p) => ({ id: p.id, name: p.name }))),
-        colorValue: null,
-        fileUrl: null,
-        isBlank: selectedPages.length === 0,
-      })
+      if (!isResubmit || resubmitSet.has("selected_pages")) {
+        fields.push({
+          fieldKey: "selected_pages",
+          fieldLabel: "Selected Pages",
+          fieldType: "text",
+          pageName: null,
+          stepId: "page_selection",
+          textValue: JSON.stringify(selectedPages.map((p) => ({ id: p.id, name: p.name }))),
+          colorValue: null,
+          fileUrl: null,
+          isBlank: selectedPages.length === 0,
+        })
+      }
 
       const res = await fetch(`/api/client/${token}/submit`, {
         method: "POST",
@@ -356,28 +607,6 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
     }
   }
 
-  function getFilledFields() {
-    const result: { stepTitle: string; label: string; value: string | null; colorValue: string | null; fileUrl: string | null; fileName: string | null }[] = []
-    for (const s of steps) {
-      for (const f of s.fields) {
-        if (f.type === "file" && f.multiple) {
-          const files = multiFiles[f.key] ?? []
-          if (files.length > 0) result.push({ stepTitle: s.title, label: f.label, value: null, colorValue: null, fileUrl: null, fileName: `${files.length} file(s): ${files.map(x => x.name).join(", ")}` })
-        } else if (f.type === "file") {
-          const file = fileValues[f.key]
-          if (file) result.push({ stepTitle: s.title, label: f.label, value: null, colorValue: null, fileUrl: URL.createObjectURL(file), fileName: file.name })
-        } else if (f.type === "color") {
-          const val = colorValues[f.key] ?? ""
-          if (val) result.push({ stepTitle: s.title, label: f.label, value: null, colorValue: val, fileUrl: null, fileName: null })
-        } else {
-          const val = textValues[f.key] ?? ""
-          if (val.trim()) result.push({ stepTitle: s.title, label: f.label, value: val, colorValue: null, fileUrl: null, fileName: null })
-        }
-      }
-    }
-    return result
-  }
-
   const totalFields = steps.reduce((acc, s) => acc + s.fields.length, 0)
 
   if (submitted) {
@@ -395,32 +624,38 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
   }
 
   if (isReview) {
-    const filled = getFilledFields()
     return (
       <div className="min-h-screen" style={{ backgroundColor: "#F7F5FF", fontFamily: "var(--font-body)" }}>
         <div className="max-w-2xl mx-auto px-4 py-10">
           <div className="text-center mb-8">
             <p className="text-sm font-medium mb-2" style={{ color: "#4E4499" }}>{projectName}</p>
             <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-display)", color: "#4E4499" }}>Review Your Submission</h1>
-            <p className="text-gray-600">{filled.length} of {totalFields} fields filled in.</p>
+            <p className="text-gray-600">{reviewItems.length} of {totalFields} fields filled in.</p>
           </div>
           <div className="space-y-2 mb-8">
-            {filled.map((item, i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#4E4499" }}>
+            {reviewItems.map((item) => (
+              <div key={item.key} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
                   {item.stepTitle} — {item.label}
                 </p>
-                {item.fileUrl ? (
-                  <img src={item.fileUrl} alt={item.label} className="h-16 w-auto rounded-lg object-cover" />
-                ) : item.fileName ? (
-                  <p className="text-sm text-gray-600">{item.fileName}</p>
-                ) : item.colorValue ? (
+                {item.kind === "file" ? (
+                  <div>
+                    <img
+                      src={item.objectUrl}
+                      alt={item.label}
+                      className="max-h-[80px] w-auto rounded-lg object-contain"
+                    />
+                    {item.note ? (
+                      <p className="text-sm text-gray-500 mt-2 whitespace-pre-wrap">{item.note}</p>
+                    ) : null}
+                  </div>
+                ) : item.kind === "color" ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full border border-gray-200" style={{ backgroundColor: item.colorValue }} />
+                    <div className="h-6 w-6 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: item.colorValue }} />
                     <span className="text-sm font-mono text-gray-600">{item.colorValue}</span>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-700 line-clamp-2">{item.value}</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.value}</p>
                 )}
               </div>
             ))}
@@ -450,6 +685,14 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
+        {isResubmit && (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-semibold text-amber-900">Your designer has requested updates to a few fields.</p>
+            <p className="text-xs text-amber-700 mt-1">
+              Only the highlighted fields below need to be filled in.
+            </p>
+          </div>
+        )}
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#4E4499" }}>Step {currentStep + 1} of {steps.length}</p>
           <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "#4E4499" }}>{step.title}</h2>
@@ -582,22 +825,59 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
         ) : step.id === "inspiration" ? (
           <div className="space-y-5">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Websites or brands you admire</label>
-              <p className="text-xs text-gray-400 mb-3">Paste URLs separated by commas or new lines. e.g. apple.com, notion.so</p>
-              <textarea
-                value={websiteReferences}
-                onChange={(e) => setWebsiteReferences(e.target.value)}
-                rows={4}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Websites or brands you admire</h3>
+
+              <div className="space-y-2 mb-5">
+                {websiteRefs.map((entry, idx) => (
+                  <div
+                    key={`${entry.url}-${idx}`}
+                    className="relative rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 pr-10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setWebsiteRefs((prev) => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg leading-none w-8 h-8 flex items-center justify-center"
+                      aria-label="Remove"
+                    >
+                      ×
+                    </button>
+                    <p className="text-sm font-semibold text-gray-900 break-all pr-2">{entry.url}</p>
+                    {entry.note.trim() ? (
+                      <p className="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{entry.note}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs font-medium text-gray-700 mb-2">Add a website</p>
+              <input
+                type="text"
+                placeholder="e.g. apple.com"
+                value={newWebsiteUrl}
+                onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-2"
               />
-              <label className="block text-sm font-semibold text-gray-800 mb-1 mt-4">Notes for your designer (optional)</label>
-              <textarea
-                placeholder="Any notes about these sites for your designer? e.g. I love the navigation on the first one, the colour palette on the second."
-                value={websiteReferenceNotes}
-                onChange={(e) => setWebsiteReferenceNotes(e.target.value)}
-                rows={3}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+              <input
+                type="text"
+                placeholder="What do you like about it? (optional)"
+                value={newWebsiteNote}
+                onChange={(e) => setNewWebsiteNote(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-3"
               />
+              <button
+                type="button"
+                onClick={() => {
+                  const url = newWebsiteUrl.trim()
+                  if (!url) return
+                  setWebsiteRefs((prev) => [...prev, { url, note: newWebsiteNote.trim() }])
+                  setNewWebsiteUrl("")
+                  setNewWebsiteNote("")
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
+                style={{ backgroundColor: "#4E4499" }}
+              >
+                + Add Website
+              </button>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -831,7 +1111,9 @@ export function ClientForm({ token, projectName, alreadySubmitted }: Props) {
                   )}
                 </div>
 
-                {step.id === "style" && field.key === "brand_accent_color" && (
+                {step.id === "style" &&
+                  field.key === "brand_accent_color" &&
+                  (!isResubmit || resubmitSet.has("inspiration_image_colour_ref")) && (
                   <div className="mt-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100/70">
                     <p className="text-sm font-semibold text-gray-800 mb-1">Not sure of your hex codes?</p>
                     <p className="text-xs text-gray-400 mb-3">

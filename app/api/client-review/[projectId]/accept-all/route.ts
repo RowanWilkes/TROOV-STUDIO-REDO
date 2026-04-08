@@ -148,7 +148,7 @@ async function mapFieldToProject(
     else { await supabase.from("content_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
     return
   }
-  if (key === "brands_admired" && text) {
+  if ((key === "brands_admired" || key.startsWith("brands_admired_")) && text) {
     const entries = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
     for (const entry of entries) {
       await supabase.from("mood_board_items").insert({

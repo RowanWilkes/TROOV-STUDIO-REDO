@@ -18,6 +18,7 @@ type ClientLink = {
   is_active: boolean
   created_at: string
   submitted_at: string | null
+  client_email?: string | null
 }
 
 type Props = {
@@ -67,6 +68,10 @@ export function ClientLinkCard({ projectId }: Props) {
   const [generating, setGenerating] = useState(false)
   const [copied, setCopied] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [clientEmail, setClientEmail] = useState("")
+  const [showEmailEdit, setShowEmailEdit] = useState(false)
+  const [emailEditValue, setEmailEditValue] = useState("")
+  const [savingEmail, setSavingEmail] = useState(false)
 
   useEffect(() => {
     if (!projectId) return
@@ -102,7 +107,11 @@ export function ClientLinkCard({ projectId }: Props) {
       const res = await fetch("/api/client-links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, expiresAt: new Date(expiresAt).toISOString() }),
+        body: JSON.stringify({
+          projectId,
+          expiresAt: new Date(expiresAt).toISOString(),
+          client_email: clientEmail,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Failed")
@@ -110,6 +119,7 @@ export function ClientLinkCard({ projectId }: Props) {
       toast.success("Client link generated!")
       setShowModal(false)
       setExpiresAt("")
+      setClientEmail("")
     } catch {
       toast.error("Failed to generate link. Try again.")
     } finally {
@@ -130,6 +140,29 @@ export function ClientLinkCard({ projectId }: Props) {
       toast.error("Failed to update link.")
     } finally {
       setToggling(false)
+    }
+  }
+
+  async function saveClientEmailToServer() {
+    if (!link) return
+    setSavingEmail(true)
+    try {
+      const res = await fetch(`/api/client-links/${link.id}/email`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_email: emailEditValue.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? "Failed")
+      setLink((prev) =>
+        prev ? { ...prev, client_email: emailEditValue.trim() || null } : prev,
+      )
+      setShowEmailEdit(false)
+      toast.success("Client email saved.")
+    } catch {
+      toast.error("Could not save client email.")
+    } finally {
+      setSavingEmail(false)
     }
   }
 
@@ -227,6 +260,21 @@ export function ClientLinkCard({ projectId }: Props) {
           </div>
         )}
 
+        {/* ── Optional client email (no link yet) ── */}
+        {status === "none" && !loading && (
+          <div className="px-6 py-4 border-b border-gray-100 bg-white">
+            <label className="text-sm font-medium text-gray-700">Client email (optional)</label>
+            <p className="text-xs text-gray-400 mb-1">Used to send feedback requests directly to your client</p>
+            <input
+              type="email"
+              placeholder="client@example.com"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        )}
+
         {/* ── Active / Disabled — show URL + controls ── */}
         {(status === "active" || status === "disabled") && link && shareUrl && !loading && (
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/70">
@@ -256,6 +304,50 @@ export function ClientLinkCard({ projectId }: Props) {
                 <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
               </button>
             </div>
+            {(link.client_email ?? "").trim() ? (
+              <p className="text-xs text-gray-400 mb-2">Client: {(link.client_email ?? "").trim()}</p>
+            ) : showEmailEdit ? (
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <input
+                  type="email"
+                  placeholder="client@example.com"
+                  value={emailEditValue}
+                  onChange={(e) => setEmailEditValue(e.target.value)}
+                  className="flex-1 min-w-[12rem] border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <Button type="button" size="sm" disabled={savingEmail} onClick={() => void saveClientEmailToServer()}>
+                  {savingEmail ? "Saving…" : "Save"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={savingEmail}
+                  onClick={() => setShowEmailEdit(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <p
+                className="text-xs text-gray-400 cursor-pointer underline mb-2"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    setEmailEditValue("")
+                    setShowEmailEdit(true)
+                  }
+                }}
+                onClick={() => {
+                  setEmailEditValue("")
+                  setShowEmailEdit(true)
+                }}
+              >
+                + Add client email
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <Calendar className="h-3 w-3" />
@@ -372,6 +464,17 @@ export function ClientLinkCard({ projectId }: Props) {
                 min={minDateStr}
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Client email (optional)</label>
+              <p className="text-xs text-gray-400 mb-1">Used to send feedback requests directly to your client</p>
+              <input
+                type="email"
+                placeholder="client@example.com"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
             {expiresAt && (
