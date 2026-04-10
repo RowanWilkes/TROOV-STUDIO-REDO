@@ -50,7 +50,7 @@ const SECTION_ORDER: SectionConfig[] = [
 
 const STATUS_META: Record<SubmissionStatus, { label: string; className: string }> = {
   accepted: { label: "Accepted", className: "bg-green-50 text-green-700 border border-green-200" },
-  rejected: { label: "Rejected", className: "bg-red-50 text-red-700 border border-red-200" },
+  rejected: { label: "Rejected", className: "bg-red-50 text-red-600 border border-red-200" },
   pending: { label: "Pending", className: "bg-amber-50 text-amber-700 border border-amber-200" },
 }
 
@@ -173,6 +173,7 @@ export default function ClientReviewPage() {
   const totalCount = visibleSubmissions.length
   const hasRejected = visibleSubmissions.some((s) => s.status === "rejected")
   const allReviewed = visibleSubmissions.every((s) => s.status === "accepted" || s.status === "rejected")
+  const rejectedCount = visibleSubmissions.filter((s) => s.status === "rejected").length
   const pendingNonBlank = visibleSubmissions.filter((s) => s.status === "pending" && !s.is_blank)
 
   const sections = useMemo(() => {
@@ -329,9 +330,13 @@ export default function ClientReviewPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-5xl mx-auto px-6 py-12">
-          <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?project=${projectId}`)}>
+          <button
+            type="button"
+            onClick={() => router.push(`/dashboard?project=${projectId}`)}
+            className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+          >
             ← Back to Project
-          </Button>
+          </button>
           <div className="mt-8 text-gray-500">No client submissions yet.</div>
         </div>
       </div>
@@ -343,9 +348,15 @@ export default function ClientReviewPage() {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?project=${projectId}`)}>
-              ← Back to Project
-            </Button>
+            {!allReviewed || hasRejected ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/dashboard?project=${projectId}`)}
+                className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+              >
+                ← Back to Project
+              </button>
+            ) : null}
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-gray-900 truncate">Client Submission Review</h1>
               <p className="text-xs text-gray-500 truncate">{projectName}</p>
@@ -363,54 +374,50 @@ export default function ClientReviewPage() {
               </span>
             </div>
 
-            {allReviewed && hasRejected && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={feedbackSent || sendingFeedback}
-                onClick={sendFeedback}
-                className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                <Send className="h-4 w-4" />
-                {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
-              </Button>
-            )}
-
-            {allReviewed && !hasRejected && (
-              <div className="flex flex-col items-end gap-2">
-                <p className="text-xs text-gray-600 text-right max-w-xs">All fields accepted — your project has been updated.</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => router.push(`/dashboard?project=${projectId}`)}
-                  className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  ← Back to Project
-                </Button>
-              </div>
-            )}
-
-            {!allReviewed && (
+            {!allReviewed ? (
               <div className="flex items-center gap-3">
-                <Button
-                  size="sm"
+                <button
+                  type="button"
                   onClick={acceptAll}
                   disabled={acceptingAll || pendingNonBlank.length === 0}
-                  className="bg-green-500 hover:bg-green-600 text-white gap-2 border-green-500"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
                 >
                   <CheckSquare className="h-4 w-4" />
                   {acceptingAll ? "Accepting…" : "Accept All"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                </button>
+                <button
+                  type="button"
                   disabled={feedbackSent || !hasRejected || sendingFeedback}
                   onClick={sendFeedback}
-                  className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
                   {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
-                </Button>
+                </button>
+              </div>
+            ) : allReviewed && hasRejected ? (
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  disabled={feedbackSent || sendingFeedback}
+                  onClick={sendFeedback}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
+                </button>
+                <p className="text-xs text-gray-600 text-right">You have {rejectedCount} fields flagged for the client</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => router.push(`/dashboard?project=${projectId}`)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+                >
+                  ← Back to Project
+                </button>
+                <p className="text-xs text-gray-600 text-right max-w-xs">All fields accepted — your project has been updated.</p>
               </div>
             )}
           </div>
@@ -462,7 +469,7 @@ export default function ClientReviewPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="shrink-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
                       onClick={() => {
                         void navigator.clipboard.writeText(resubmitUrl).then(() => {
                           setCopyResubmitDone(true)
@@ -504,7 +511,7 @@ export default function ClientReviewPage() {
               : section.items.filter(skipBlankFile)
 
           return (
-            <Card key={section.id} className="rounded-xl border border-gray-200 bg-white">
+            <Card key={section.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <CardContent className="p-0">
                 <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
                   <div className="flex items-center gap-3 min-w-0">
@@ -514,23 +521,22 @@ export default function ClientReviewPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-sm font-semibold text-gray-900">{section.title}</h2>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                        <span className="bg-gray-100 text-gray-500 text-xs font-medium px-2 py-0.5 rounded-full">
                           {nonBlankFields.length} fields
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  <button
+                    type="button"
                     onClick={() => acceptSection(section.id, pendingIds)}
                     disabled={pendingIds.length === 0 || acceptingSection === section.id}
-                    className="gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 font-medium px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1.5"
                   >
                     <Check className="h-4 w-4" />
                     {acceptingSection === section.id ? "Accepting…" : "Accept Section"}
-                  </Button>
+                  </button>
                 </div>
 
                 <div className="divide-y divide-gray-100">
@@ -543,12 +549,15 @@ export default function ClientReviewPage() {
                     const noteCharCount = noteText.length
 
                     const baseRow = (
-                      <div key={s.id} className="px-5 py-4">
+                      <div
+                        key={s.id}
+                        className={`px-5 py-4 ${s.status === "rejected" ? "bg-amber-50/30" : ""}`}
+                      >
                         <div className="flex items-start gap-4">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-medium text-gray-600">{s.field_label}</p>
-                              <span className={`text-xs px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
                               {s.is_blank && (
                                 <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">Blank</span>
                               )}
@@ -613,41 +622,40 @@ export default function ClientReviewPage() {
                             )}
                           </div>
 
-                          {s.status !== "accepted" && (
+                          {s.status === "pending" && (
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              {s.status === "pending" && (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={isUpdating || s.is_blank}
-                                    onClick={() => patchStatus(s.id, "accept")}
-                                    className="h-8 w-8 rounded-lg bg-white border border-green-500 text-green-600 hover:bg-green-50 flex items-center justify-center disabled:opacity-50"
-                                    title="Accept"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={isUpdating || s.is_blank}
-                                    onClick={() => patchStatus(s.id, "reject")}
-                                    className="h-8 w-8 rounded-lg bg-white border border-red-400 text-red-500 hover:bg-red-50 flex items-center justify-center disabled:opacity-50"
-                                    title="Reject"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </button>
-                                </>
-                              )}
-                              {s.status === "rejected" && (
-                                <button
-                                  type="button"
-                                  disabled={isUpdating || s.is_blank}
-                                  onClick={() => undoReject(s.id)}
-                                  className="h-8 w-8 rounded-lg bg-white border border-red-400 text-red-500 hover:bg-red-50 flex items-center justify-center disabled:opacity-50"
-                                  title="Undo reject"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                disabled={isUpdating || s.is_blank}
+                                onClick={() => patchStatus(s.id, "accept")}
+                                className="border border-gray-300 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                title="Accept"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isUpdating || s.is_blank}
+                                onClick={() => patchStatus(s.id, "reject")}
+                                className="border border-gray-300 bg-white hover:border-red-400 hover:bg-red-50 hover:text-red-500 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                title="Reject"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+
+                          {s.status === "rejected" && (
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                type="button"
+                                disabled={isUpdating || s.is_blank}
+                                onClick={() => undoReject(s.id)}
+                                className="border border-gray-300 bg-white hover:border-red-400 hover:bg-red-50 hover:text-red-500 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                title="Reset to pending"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
                           )}
                         </div>
@@ -669,7 +677,7 @@ export default function ClientReviewPage() {
                             <button
                               type="button"
                               onClick={() => saveNote(s.id)}
-                              className="mt-2 text-xs text-gray-500 hover:text-gray-700"
+                              className="mt-2 text-xs text-emerald-600 hover:text-emerald-700"
                             >
                               Save note
                             </button>

@@ -105,6 +105,97 @@ function buildSteps(): FormStep[] {
   return steps
 }
 
+function wantsSelectedPagesResubmit(set: Set<string>) {
+  return set.has("selected_pages")
+}
+
+function wantsAssetsResubmit(set: Set<string>) {
+  if (set.has("logo") || set.has("brand_assets") || set.has("logo_0") || set.has("brand_asset_0")) return true
+  for (const k of set) {
+    if (k.startsWith("logo_") || k.startsWith("brand_asset_")) return true
+  }
+  return false
+}
+
+function wantsLogoField(set: Set<string>) {
+  if (set.has("logo")) return true
+  for (const k of set) {
+    if (k.startsWith("logo_")) return true
+  }
+  return false
+}
+
+function wantsBrandAssetsField(set: Set<string>) {
+  if (set.has("brand_assets")) return true
+  for (const k of set) {
+    if (k.startsWith("brand_asset_")) return true
+  }
+  return false
+}
+
+function wantsInspirationStepResubmit(set: Set<string>) {
+  if (set.has("brands_admired") || set.has("inspiration_images")) return true
+  for (const k of set) {
+    if (k.startsWith("brands_admired_") || k.startsWith("inspiration_image_")) return true
+  }
+  return false
+}
+
+function wantsWebsitesInspirationSection(set: Set<string>) {
+  if (set.has("brands_admired")) return true
+  for (const k of set) {
+    if (k.startsWith("brands_admired_")) return true
+  }
+  return false
+}
+
+function wantsScreenshotsInspirationSection(set: Set<string>) {
+  if (set.has("inspiration_images")) return true
+  for (const k of set) {
+    if (k.startsWith("inspiration_image_")) return true
+  }
+  return false
+}
+
+/** Whether a submitted payload fieldKey is in scope for resubmit mode */
+function resubmitAllowsFieldKey(fieldKey: string, resubmitSet: Set<string>): boolean {
+  if (resubmitSet.has(fieldKey)) return true
+  if (fieldKey.startsWith("logo_")) {
+    return resubmitSet.has("logo") || Array.from(resubmitSet).some((k) => k.startsWith("logo_"))
+  }
+  if (fieldKey.startsWith("brand_asset_")) {
+    return resubmitSet.has("brand_assets") || Array.from(resubmitSet).some((k) => k.startsWith("brand_asset_"))
+  }
+  if (fieldKey.startsWith("inspiration_image_")) {
+    return resubmitSet.has("inspiration_images") || Array.from(resubmitSet).some((k) => k.startsWith("inspiration_image_"))
+  }
+  if (fieldKey.startsWith("inspiration_note_")) {
+    const idx = fieldKey.slice("inspiration_note_".length)
+    return (
+      resubmitSet.has(`inspiration_image_${idx}`) ||
+      resubmitSet.has("inspiration_images") ||
+      Array.from(resubmitSet).some((k) => k.startsWith("inspiration_image_"))
+    )
+  }
+  return false
+}
+
+function fieldMatchesResubmitFormField(fieldKey: string, resubmitSet: Set<string>): boolean {
+  if (resubmitSet.has(fieldKey)) return true
+  if (fieldKey === "logo") return wantsLogoField(resubmitSet)
+  if (fieldKey === "brand_assets") return wantsBrandAssetsField(resubmitSet)
+  return false
+}
+
+function fieldCardHighlightClass(isResubmit: boolean, field: FormField, resubmitSet: Set<string>) {
+  if (!isResubmit) return ""
+  const match =
+    resubmitSet.has(field.key) ||
+    (field.key === "logo" && wantsLogoField(resubmitSet)) ||
+    (field.key === "brand_assets" && wantsBrandAssetsField(resubmitSet))
+  return match ? "ring-2 ring-amber-300 border-amber-200" : ""
+}
+
 export function ClientForm({ token, projectName, alreadySubmitted, resubmitFields }: Props) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isReview, setIsReview] = useState(false)
@@ -136,32 +227,32 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
   const steps = useMemo(() => {
     if (!isResubmit) return allSteps
 
-    const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
-    const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
-    const wantsSelectedPages = resubmitSet.has("selected_pages")
-    const wantsWebsiteRefs =
-      resubmitSet.has("brands_admired") || Array.from(resubmitSet).some((k) => k.startsWith("brands_admired_"))
-    const wantsInspirationImages = Array.from(resubmitSet).some((k) => k === "inspiration_images" || k.startsWith("inspiration_image_"))
-
     const filtered: FormStep[] = []
     for (const s of allSteps) {
       if (s.id === "page_selection") {
-        if (wantsSelectedPages) filtered.push(s)
+        if (wantsSelectedPagesResubmit(resubmitSet)) filtered.push(s)
         continue
       }
       if (s.id === "inspiration") {
-        if (wantsWebsiteRefs || wantsInspirationImages) filtered.push(s)
+        if (wantsInspirationStepResubmit(resubmitSet)) filtered.push(s)
         continue
       }
       if (s.id === "assets") {
-        if (wantsLogo || wantsBrandAssets) filtered.push(s)
+        if (!wantsAssetsResubmit(resubmitSet)) continue
+        const fields = s.fields.filter((f) => fieldMatchesResubmitFormField(f.key, resubmitSet))
+        if (fields.length > 0) filtered.push({ ...s, fields })
         continue
       }
       const fields = s.fields.filter((f) => resubmitSet.has(f.key))
       if (fields.length > 0) filtered.push({ ...s, fields })
     }
-    return filtered.length > 0 ? filtered : allSteps
+    return filtered
   }, [allSteps, isResubmit, resubmitSet])
+
+  useEffect(() => {
+    if (steps.length === 0) return
+    setCurrentStep((s) => (s >= steps.length ? Math.max(0, steps.length - 1) : s))
+  }, [steps.length])
 
   const reviewItems = useMemo((): ReviewItem[] => {
     if (!isReview) return []
@@ -246,19 +337,21 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
 
     const inspStep = steps.find((ss) => ss.id === "inspiration")
     const inspTitle = inspStep?.title ?? "Websites & Inspiration"
-    for (const item of inspirationImages) {
-      const noteTrim = item.note.trim()
-      out.push({
-        kind: "file",
-        key: nextKey(),
-        stepTitle: inspTitle,
-        label: "Inspiration Screenshot",
-        objectUrl: URL.createObjectURL(item.file),
-        ...(noteTrim ? { note: item.note } : {}),
-      })
+    if (!isResubmit || wantsScreenshotsInspirationSection(resubmitSet)) {
+      for (const item of inspirationImages) {
+        const noteTrim = item.note.trim()
+        out.push({
+          kind: "file",
+          key: nextKey(),
+          stepTitle: inspTitle,
+          label: "Inspiration Screenshot",
+          objectUrl: URL.createObjectURL(item.file),
+          ...(noteTrim ? { note: item.note } : {}),
+        })
+      }
     }
 
-    if (brandColourRef) {
+    if (brandColourRef && (!isResubmit || resubmitSet.has("inspiration_image_colour_ref"))) {
       const styleStep = steps.find((ss) => ss.id === "style")
       out.push({
         kind: "file",
@@ -272,6 +365,8 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
     return out
   }, [
     isReview,
+    isResubmit,
+    resubmitSet,
     steps,
     textValues,
     colorValues,
@@ -289,9 +384,6 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       urls.forEach((u) => URL.revokeObjectURL(u))
     }
   }, [reviewItems])
-
-  const step = steps[currentStep]
-  const isLastStep = currentStep === steps.length - 1
 
   function handleText(key: string, value: string) { setTextValues((p) => ({ ...p, [key]: value })) }
   function handleColor(key: string, value: string) { setColorValues((p) => ({ ...p, [key]: value })) }
@@ -337,14 +429,11 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       }
       const fields: FieldPayload[] = []
 
-      const wantsInspirationImages =
-        !isResubmit || Array.from(resubmitSet).some((k) => k === "inspiration_images" || k.startsWith("inspiration_image_"))
+      const wantsInspirationImages = !isResubmit || wantsScreenshotsInspirationSection(resubmitSet)
       const shouldUploadColourRef =
         (!isResubmit || resubmitSet.has("inspiration_image_colour_ref")) && Boolean(brandColourRef)
-      const wantsLogoUpload =
-        !isResubmit || Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
-      const wantsBrandAssetsUpload =
-        !isResubmit || Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
+      const wantsLogoUpload = !isResubmit || wantsLogoField(resubmitSet)
+      const wantsBrandAssetsUpload = !isResubmit || wantsBrandAssetsField(resubmitSet)
 
       const [logoUrls, brandAssetUrls, inspirationUrls, colourRefUrl] = await Promise.all([
         wantsLogoUpload && logoFiles.length > 0
@@ -364,11 +453,9 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
         for (const field of s.fields) {
           if (isResubmit) {
             if (field.type === "file" && field.multiple && field.key === "brand_assets") {
-              const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
-              if (!wantsBrandAssets) continue
+              if (!wantsBrandAssetsField(resubmitSet)) continue
             } else if (field.type === "file" && field.key === "logo") {
-              const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
-              if (!wantsLogo) continue
+              if (!wantsLogoField(resubmitSet)) continue
             } else if (!resubmitSet.has(field.key)) {
               continue
             }
@@ -394,11 +481,9 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
         for (const field of s.fields) {
           if (isResubmit) {
             if (field.type === "file" && field.multiple && field.key === "brand_assets") {
-              const wantsBrandAssets = Array.from(resubmitSet).some((k) => k === "brand_assets" || k.startsWith("brand_asset_"))
-              if (!wantsBrandAssets) continue
+              if (!wantsBrandAssetsField(resubmitSet)) continue
             } else if (field.type === "file" && field.key === "logo") {
-              const wantsLogo = Array.from(resubmitSet).some((k) => k === "logo" || k.startsWith("logo_"))
-              if (!wantsLogo) continue
+              if (!wantsLogoField(resubmitSet)) continue
             } else if (!resubmitSet.has(field.key)) {
               continue
             }
@@ -409,8 +494,10 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
                 for (let i = 0; i < brandAssets.length; i++) {
                   const asset = brandAssets[i]
                   const url = brandAssetUrls[i] ?? null
+                  const fk = `brand_asset_${i}`
+                  if (isResubmit && !resubmitAllowsFieldKey(fk, resubmitSet)) continue
                   fields.push({
-                    fieldKey: `brand_asset_${i}`,
+                    fieldKey: fk,
                     fieldLabel: asset.label.trim() ? asset.label.trim() : "Brand Asset",
                     fieldType: "file",
                     pageName,
@@ -421,7 +508,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
                     isBlank: url === null,
                   })
                 }
-              } else {
+              } else if (!isResubmit || resubmitAllowsFieldKey(field.key, resubmitSet)) {
                 fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: null, isBlank: true })
               }
             } else {
@@ -429,9 +516,11 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
               if (files.length > 0) {
                 for (let i = 0; i < files.length; i++) {
                   const url = nextOtherUrl()
-                  fields.push({ fieldKey: `${field.key}_${i}`, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
+                  const fk = `${field.key}_${i}`
+                  if (isResubmit && !resubmitAllowsFieldKey(fk, resubmitSet)) continue
+                  fields.push({ fieldKey: fk, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: url, isBlank: url === null })
                 }
-              } else {
+              } else if (!isResubmit || resubmitAllowsFieldKey(field.key, resubmitSet)) {
                 fields.push({ fieldKey: field.key, fieldLabel: field.label, fieldType: "file", pageName, stepId: s.id, textValue: null, colorValue: null, fileUrl: null, isBlank: true })
               }
             }
@@ -440,8 +529,10 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
               if (logoFiles.length > 0) {
                 for (let i = 0; i < logoFiles.length; i++) {
                   const url = logoUrls[i] ?? null
+                  const fk = `logo_${i}`
+                  if (isResubmit && !resubmitAllowsFieldKey(fk, resubmitSet)) continue
                   fields.push({
-                    fieldKey: `logo_${i}`,
+                    fieldKey: fk,
                     fieldLabel: logoFiles[i].label.trim() ? logoFiles[i].label.trim() : "Logo",
                     fieldType: "file",
                     pageName: null,
@@ -452,7 +543,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
                     colorValue: null,
                   })
                 }
-              } else {
+              } else if (!isResubmit || resubmitAllowsFieldKey("logo", resubmitSet)) {
                 fields.push({
                   fieldKey: "logo",
                   fieldLabel: "Logo",
@@ -482,30 +573,31 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
 
       if (shouldUploadColourRef && brandColourRef) {
         const url = colourRefUrl
-        fields.push({
-          fieldKey: "inspiration_image_colour_ref",
-          fieldLabel: "Brand Colour Reference",
-          fieldType: "file",
-          pageName: null,
-          textValue: null,
-          fileUrl: url,
-          isBlank: url === null,
-          stepId: "inspiration",
-          colorValue: null,
-        })
+        if (!isResubmit || resubmitAllowsFieldKey("inspiration_image_colour_ref", resubmitSet)) {
+          fields.push({
+            fieldKey: "inspiration_image_colour_ref",
+            fieldLabel: "Brand Colour Reference",
+            fieldType: "file",
+            pageName: null,
+            textValue: null,
+            fileUrl: url,
+            isBlank: url === null,
+            stepId: "inspiration",
+            colorValue: null,
+          })
+        }
       }
 
-      const wantsBrandsAdmired =
-        !isResubmit ||
-        resubmitSet.has("brands_admired") ||
-        Array.from(resubmitSet).some((k) => k.startsWith("brands_admired_"))
+      const wantsBrandsAdmired = !isResubmit || wantsWebsitesInspirationSection(resubmitSet)
       if (wantsBrandsAdmired) {
         if (websiteRefs.length > 0) {
           for (let i = 0; i < websiteRefs.length; i++) {
+            const fk = `brands_admired_${i}`
+            if (isResubmit && !resubmitAllowsFieldKey(fk, resubmitSet)) continue
             const entry = websiteRefs[i]
             const hasNote = Boolean(entry.note.trim())
             fields.push({
-              fieldKey: `brands_admired_${i}`,
+              fieldKey: fk,
               fieldLabel: hasNote ? `${entry.url} — ${entry.note}` : entry.url,
               fieldType: "longtext",
               pageName: null,
@@ -516,7 +608,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
               colorValue: null,
             })
           }
-        } else {
+        } else if (!isResubmit || resubmitAllowsFieldKey("brands_admired", resubmitSet)) {
           fields.push({
             fieldKey: "brands_admired",
             fieldLabel: "Websites or brands you admire",
@@ -535,8 +627,10 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
         for (let i = 0; i < inspirationImages.length; i++) {
           const item = inspirationImages[i]
           const url = inspirationUrls[i] ?? null
+          const fk = `inspiration_image_${i}`
+          if (isResubmit && !resubmitAllowsFieldKey(fk, resubmitSet)) continue
           fields.push({
-            fieldKey: `inspiration_image_${i}`,
+            fieldKey: fk,
             fieldLabel: "Inspiration Screenshot",
             fieldType: "file",
             pageName: null,
@@ -547,20 +641,23 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
             colorValue: null,
           })
           if (item.note.trim()) {
-            fields.push({
-              fieldKey: `inspiration_note_${i}`,
-              fieldLabel: "Inspiration Note",
-              fieldType: "longtext",
-              pageName: null,
-              textValue: item.note,
-              fileUrl: null,
-              isBlank: false,
-              stepId: "inspiration",
-              colorValue: null,
-            })
+            const nk = `inspiration_note_${i}`
+            if (!isResubmit || resubmitAllowsFieldKey(nk, resubmitSet)) {
+              fields.push({
+                fieldKey: nk,
+                fieldLabel: "Inspiration Note",
+                fieldType: "longtext",
+                pageName: null,
+                textValue: item.note,
+                fileUrl: null,
+                isBlank: false,
+                stepId: "inspiration",
+                colorValue: null,
+              })
+            }
           }
         }
-      } else if (wantsInspirationImages) {
+      } else if (wantsInspirationImages && (!isResubmit || resubmitAllowsFieldKey("inspiration_images", resubmitSet))) {
         fields.push({
           fieldKey: "inspiration_images",
           fieldLabel: "Inspiration Screenshots",
@@ -592,7 +689,10 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       const res = await fetch(`/api/client/${token}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields }),
+        body: JSON.stringify({
+          fields,
+          resubmit: resubmitFields && resubmitFields.length > 0 ? true : false,
+        }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -672,8 +772,35 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
     )
   }
 
+  if (isResubmit && steps.length === 0) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ backgroundColor: "#F7F5FF", fontFamily: "var(--font-body)" }}
+      >
+        <p className="text-gray-600 text-center max-w-md text-sm leading-relaxed">
+          No form fields match this resubmit link. Please use the link from your designer&apos;s email or ask them to send an updated one.
+        </p>
+      </div>
+    )
+  }
+
+  const step = steps[currentStep]!
+  const isLastStep = currentStep === steps.length - 1
+  const showWebsitesInspiration = !isResubmit || wantsWebsitesInspirationSection(resubmitSet)
+  const showScreenshotsInspiration = !isResubmit || wantsScreenshotsInspirationSection(resubmitSet)
+  const pageSelectionHighlight =
+    isResubmit && wantsSelectedPagesResubmit(resubmitSet) ? "ring-2 ring-amber-300 border-amber-200" : ""
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F7F5FF", fontFamily: "var(--font-body)" }}>
+      <div className="max-w-2xl mx-auto px-4 pt-6">
+        {isResubmit && resubmitFields && resubmitFields.length > 0 ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-sm text-amber-800">
+            <strong>Your designer needs a few updates.</strong> Only the highlighted fields below need to be filled in — you can skip the rest.
+          </div>
+        ) : null}
+      </div>
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <p className="text-sm font-medium text-gray-600">{projectName}</p>
@@ -685,14 +812,6 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
-        {isResubmit && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
-            <p className="text-sm font-semibold text-amber-900">Your designer has requested updates to a few fields.</p>
-            <p className="text-xs text-amber-700 mt-1">
-              Only the highlighted fields below need to be filled in.
-            </p>
-          </div>
-        )}
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#4E4499" }}>Step {currentStep + 1} of {steps.length}</p>
           <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "#4E4499" }}>{step.title}</h2>
@@ -701,7 +820,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
 
         {step.id === "page_selection" ? (
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${pageSelectionHighlight}`}>
               <p className="text-sm font-semibold text-gray-800 mb-1">Which pages do you need?</p>
               <p className="text-xs text-gray-400 mb-4">Select all that apply. Home is always included.</p>
               <div className="space-y-2">
@@ -755,7 +874,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${pageSelectionHighlight}`}>
               <p className="text-sm font-semibold text-gray-800 mb-1">Need a page not listed above?</p>
               <p className="text-xs text-gray-400 mb-3">Type the name and press Add.</p>
               <div className="flex gap-2">
@@ -824,121 +943,135 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
           </div>
         ) : step.id === "inspiration" ? (
           <div className="space-y-5">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3">Websites or brands you admire</h3>
+            {showWebsitesInspiration ? (
+              <div
+                className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${
+                  isResubmit && wantsWebsitesInspirationSection(resubmitSet) ? "ring-2 ring-amber-300 border-amber-200" : ""
+                }`}
+              >
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Websites or brands you admire</h3>
 
-              <div className="space-y-2 mb-5">
-                {websiteRefs.map((entry, idx) => (
-                  <div
-                    key={`${entry.url}-${idx}`}
-                    className="relative rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 pr-10"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setWebsiteRefs((prev) => prev.filter((_, i) => i !== idx))}
-                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg leading-none w-8 h-8 flex items-center justify-center"
-                      aria-label="Remove"
+                <div className="space-y-2 mb-5">
+                  {websiteRefs.map((entry, idx) => (
+                    <div
+                      key={`${entry.url}-${idx}`}
+                      className="relative rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 pr-10"
                     >
-                      ×
-                    </button>
-                    <p className="text-sm font-semibold text-gray-900 break-all pr-2">{entry.url}</p>
-                    {entry.note.trim() ? (
-                      <p className="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{entry.note}</p>
-                    ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setWebsiteRefs((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg leading-none w-8 h-8 flex items-center justify-center"
+                        aria-label="Remove"
+                      >
+                        ×
+                      </button>
+                      <p className="text-sm font-semibold text-gray-900 break-all pr-2">{entry.url}</p>
+                      {entry.note.trim() ? (
+                        <p className="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{entry.note}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-xs font-medium text-gray-700 mb-2">Add a website</p>
+                <input
+                  type="text"
+                  placeholder="e.g. apple.com"
+                  value={newWebsiteUrl}
+                  onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-2"
+                />
+                <input
+                  type="text"
+                  placeholder="What do you like about it? (optional)"
+                  value={newWebsiteNote}
+                  onChange={(e) => setNewWebsiteNote(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-3"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = newWebsiteUrl.trim()
+                    if (!url) return
+                    setWebsiteRefs((prev) => [...prev, { url, note: newWebsiteNote.trim() }])
+                    setNewWebsiteUrl("")
+                    setNewWebsiteNote("")
+                  }}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
+                  style={{ backgroundColor: "#4E4499" }}
+                >
+                  + Add Website
+                </button>
+              </div>
+            ) : null}
+
+            {showScreenshotsInspiration ? (
+              <div
+                className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${
+                  isResubmit && wantsScreenshotsInspirationSection(resubmitSet) ? "ring-2 ring-amber-300 border-amber-200" : ""
+                }`}
+              >
+                <label className="block text-sm font-semibold text-gray-800 mb-1">Design inspiration screenshots</label>
+                <p className="text-xs text-gray-400 mb-3">Upload screenshots of websites or designs you love. PNG, JPG — max 10MB each.</p>
+
+                <button
+                  type="button"
+                  onClick={() => inspirationImagesRef.current?.click()}
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3"
+                >
+                  <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                  <span className="text-sm text-gray-400">Upload screenshots</span>
+                  <span className="text-xs text-gray-300">PNG, JPG, WebP</span>
+                </button>
+
+                {inspirationImages.map((item, idx) => (
+                  <div key={idx} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 mb-2">
+                    <div className="flex items-center gap-3">
+                      <p className="flex-1 text-sm text-gray-700 truncate">{item.file.name}</p>
+                      <button
+                        type="button"
+                        onClick={() => setInspirationImages((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Notes for your designer about this image (optional)"
+                      value={item.note}
+                      onChange={(e) => {
+                        setInspirationImages((prev) =>
+                          prev.map((img, i) => (i === idx ? { ...img, note: e.target.value } : img)),
+                        )
+                      }}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mt-2 bg-white"
+                    />
                   </div>
                 ))}
+
+                <input
+                  ref={inspirationImagesRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = e.target.files
+                    if (!files) return
+                    setInspirationImages((prev) => [...prev, ...Array.from(files).map((file) => ({ file, note: "" }))])
+                  }}
+                />
               </div>
-
-              <p className="text-xs font-medium text-gray-700 mb-2">Add a website</p>
-              <input
-                type="text"
-                placeholder="e.g. apple.com"
-                value={newWebsiteUrl}
-                onChange={(e) => setNewWebsiteUrl(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-2"
-              />
-              <input
-                type="text"
-                placeholder="What do you like about it? (optional)"
-                value={newWebsiteNote}
-                onChange={(e) => setNewWebsiteNote(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mb-3"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const url = newWebsiteUrl.trim()
-                  if (!url) return
-                  setWebsiteRefs((prev) => [...prev, { url, note: newWebsiteNote.trim() }])
-                  setNewWebsiteUrl("")
-                  setNewWebsiteNote("")
-                }}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
-                style={{ backgroundColor: "#4E4499" }}
-              >
-                + Add Website
-              </button>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Design inspiration screenshots</label>
-              <p className="text-xs text-gray-400 mb-3">Upload screenshots of websites or designs you love. PNG, JPG — max 10MB each.</p>
-
-              <button
-                type="button"
-                onClick={() => inspirationImagesRef.current?.click()}
-                className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors mb-3"
-              >
-                <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                <span className="text-sm text-gray-400">Upload screenshots</span>
-                <span className="text-xs text-gray-300">PNG, JPG, WebP</span>
-              </button>
-
-              {inspirationImages.map((item, idx) => (
-                <div key={idx} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 mb-2">
-                  <div className="flex items-center gap-3">
-                    <p className="flex-1 text-sm text-gray-700 truncate">{item.file.name}</p>
-                    <button
-                      type="button"
-                      onClick={() => setInspirationImages((prev) => prev.filter((_, i) => i !== idx))}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Notes for your designer about this image (optional)"
-                    value={item.note}
-                    onChange={(e) => {
-                      setInspirationImages((prev) =>
-                        prev.map((img, i) => (i === idx ? { ...img, note: e.target.value } : img)),
-                      )
-                    }}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all mt-2 bg-white"
-                  />
-                </div>
-              ))}
-
-              <input
-                ref={inspirationImagesRef}
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/webp"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = e.target.files
-                  if (!files) return
-                  setInspirationImages((prev) => [...prev, ...Array.from(files).map((file) => ({ file, note: "" }))])
-                }}
-              />
-            </div>
+            ) : null}
           </div>
         ) : (
           <div className="space-y-5">
             {step.fields.map((field) => (
               <div key={field.key}>
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div
+                  className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${fieldCardHighlightClass(isResubmit, field, resubmitSet)}`}
+                >
                   <label className="block text-sm font-semibold text-gray-800 mb-1">{field.label}</label>
                   {field.hint && <p className="text-xs text-gray-400 mb-3">{field.hint}</p>}
 

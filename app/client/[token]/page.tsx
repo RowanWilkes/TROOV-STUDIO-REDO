@@ -6,11 +6,16 @@ type Props = { params: Promise<{ token: string }>; searchParams?: Promise<Record
 export default async function ClientPage({ params, searchParams }: Props) {
   const { token } = await params
   const sp = (await searchParams) ?? {}
-  const resubmit = sp.resubmit === "true"
-  const fieldsParam = typeof sp.fields === "string" ? sp.fields : Array.isArray(sp.fields) ? sp.fields[0] : undefined
-  const resubmitFields = resubmit && fieldsParam
-    ? fieldsParam.split(",").map((s) => s.trim()).filter(Boolean)
-    : undefined
+  // Next.js passes searchParams as a Promise; after resolve, match `?resubmit=true`
+  const resubmit =
+    sp.resubmit === "true" || (Array.isArray(sp.resubmit) && sp.resubmit[0] === "true")
+  const rawFields = sp.fields
+  const fieldsParam =
+    typeof rawFields === "string" ? rawFields : Array.isArray(rawFields) ? (rawFields[0] ?? "") : ""
+  const resubmitFields =
+    resubmit && fieldsParam
+      ? fieldsParam.split(",").map((f) => f.trim()).filter(Boolean)
+      : []
   const supabase = createServiceRoleClient()
 
   const { data: link } = await supabase
@@ -72,13 +77,15 @@ export default async function ClientPage({ params, searchParams }: Props) {
       ? (rawPages as { id: string; name: string; path?: string }[])
       : [{ id: "home", name: "Home", path: "/" }]
 
+  const alreadySubmitted = resubmit ? false : Boolean(link.submitted_at)
+
   return (
     <ClientForm
       token={token}
       projectId={link.project_id}
       projectName={project?.title ?? "Your Project"}
       pages={pages}
-      alreadySubmitted={!!link.submitted_at}
+      alreadySubmitted={alreadySubmitted}
       resubmitFields={resubmitFields}
     />
   )

@@ -35,12 +35,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     return NextResponse.json({ error: "Invalid or expired link" }, { status: 410 })
   }
 
-  if (link.submitted_at) {
-    return NextResponse.json({ error: "Already submitted" }, { status: 409 })
-  }
-
   const body = await request.json()
   const fields: FieldSubmission[] = body.fields ?? []
+  const isResubmit = body.resubmit === true
+
+  if (link.submitted_at && !isResubmit) {
+    return NextResponse.json({ error: "Already submitted" }, { status: 409 })
+  }
 
   if (!fields.length) {
     return NextResponse.json({ error: "No fields provided" }, { status: 400 })
@@ -70,11 +71,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     return NextResponse.json({ error: "Failed to save submission" }, { status: 500 })
   }
 
-  // Mark link as submitted
-  await supabase
-    .from("client_links")
-    .update({ submitted_at: new Date().toISOString() })
-    .eq("id", link.id)
+  if (!isResubmit) {
+    await supabase
+      .from("client_links")
+      .update({ submitted_at: new Date().toISOString() })
+      .eq("id", link.id)
+  }
 
   // Fetch project + owner for notifications
   const { data: project } = await supabase
