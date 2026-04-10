@@ -20,7 +20,7 @@ const tabImages: Record<string, string> = {
   "style-guide": "/images/styleguide-preview.png",
   "sitemap": "/images/sitemap-preview.png",
   "tasks": "/images/tasks-preview.png",
-  "summary": "/images/summary-preview.png",
+  "handoff": "/images/feature-handoff.png",
 }
 
 const tabs = [
@@ -30,7 +30,7 @@ const tabs = [
   { id: "style-guide", label: "Style Guide", icon: PenTool },
   { id: "sitemap", label: "Sitemap", icon: GitBranch },
   { id: "tasks", label: "Tasks", icon: CheckSquare },
-  { id: "summary", label: "Summary", icon: FileText },
+  { id: "handoff", label: "Handoff", icon: FileText },
 ]
 
 const mockupContent: Record<string, { title: string; description: string }> = {
@@ -58,9 +58,9 @@ const mockupContent: Record<string, { title: string; description: string }> = {
     title: "Tasks",
     description: "Track every design task with priorities and categories. Stay organised throughout the entire project lifecycle.",
   },
-  "summary": {
-    title: "Summary",
-    description: "Export a comprehensive project summary as a professional PDF. Perfect for client handoffs and developer documentation.",
+  "handoff": {
+    title: "Handoff",
+    description: "Export to Figma, share your client content link, and download your project brief and developer-ready assets.",
   },
 }
 
@@ -335,7 +335,7 @@ function ProductMockup({ activeTab }: { activeTab: string }) {
     "style-guide": "Troov Studio Style Guide - Colors, typography, and button styles configuration",
     "sitemap": "Troov Studio Sitemap - Build your website structure with pages and blocks",
     "tasks": "Troov Studio Tasks - Track your to-do list with progress tracking and task management",
-    "summary": "Troov Studio Summary - Design project summary with client details, timeline, and downloadable PDF",
+    "handoff": "Troov Studio Handoff & Export - Export to Figma, client content link and project brief downloads",
   }
   
   // Fixed container for all tabs - prevents resizing when images are inserted
