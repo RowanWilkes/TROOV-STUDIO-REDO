@@ -149,17 +149,34 @@ async function mapFieldToProject(
     return
   }
   if ((key === "brands_admired" || key.startsWith("brands_admired_")) && text) {
-    const entries = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
-    for (const entry of entries) {
-      await supabase.from("mood_board_items").insert({
-        project_id: projectId,
-        user_id: userId,
-        type: "website_reference",
-        url: entry,
-        title: entry,
-        notes: "Added from client link",
-      })
+    const notesSeparator = "\n\nDesigner notes: "
+    const separatorIndex = text.indexOf(notesSeparator)
+
+    let rawUrl: string
+    let clientNote: string | null
+
+    if (separatorIndex !== -1) {
+      rawUrl = text.substring(0, separatorIndex).trim()
+      clientNote = text.substring(separatorIndex + notesSeparator.length).trim() || null
+    } else {
+      rawUrl = text.trim()
+      clientNote = null
     }
+
+    if (!rawUrl) return
+
+    const url = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+      ? rawUrl
+      : `https://${rawUrl}`
+
+    await supabase.from("mood_board_items").insert({
+      project_id: projectId,
+      user_id: userId,
+      type: "website_reference",
+      url: url,
+      title: rawUrl,
+      notes: clientNote ?? "Added from client link",
+    })
     return
   }
   if (key === "style_notes" && text) {

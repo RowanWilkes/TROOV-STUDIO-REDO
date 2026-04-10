@@ -278,9 +278,11 @@ export function MoodBoard({ projectId }: MoodBoardProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{site.title}</p>
+                        <span className="text-sm font-medium text-purple-600 truncate">
+                          {site.title || site.url}
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{site.url}</p>
+                      <p className="text-xs text-gray-400 truncate">{site.notes || site.url}</p>
                     </div>
                   </a>
 

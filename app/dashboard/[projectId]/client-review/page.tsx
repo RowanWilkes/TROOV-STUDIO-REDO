@@ -469,7 +469,7 @@ export default function ClientReviewPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
+                      className="border border-gray-300 bg-white hover:bg-gray-200 hover:text-gray-900 text-gray-700 font-medium px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
                       onClick={() => {
                         void navigator.clipboard.writeText(resubmitUrl).then(() => {
                           setCopyResubmitDone(true)
