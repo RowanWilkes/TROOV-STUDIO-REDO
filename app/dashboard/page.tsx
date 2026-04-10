@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useTransition } from "react"
+import { Suspense, useState, useEffect, useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -441,6 +441,26 @@ function ProfileSettingsForm({
 function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const viewParam = searchParams.get("view")
+  const initialView =
+    viewParam === "home" ||
+    viewParam === "overview" ||
+    viewParam === "moodboard" ||
+    viewParam === "styleguide" ||
+    viewParam === "sitemap" ||
+    viewParam === "technical" ||
+    viewParam === "content" ||
+    viewParam === "assets" ||
+    viewParam === "tasks" ||
+    viewParam === "summary" ||
+    viewParam === "handoff" ||
+    viewParam === "account-profile" ||
+    viewParam === "account-preferences" ||
+    viewParam === "account-usage" ||
+    viewParam === "account-help" ||
+    viewParam === "admin-settings"
+      ? viewParam
+      : "overview"
   const [activeView, setActiveView] = useState<
     | "home"
     | "overview"
@@ -458,7 +478,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
     | "account-usage"
     | "account-help"
     | "admin-settings"
-  >("home")
+  >(initialView)
   const [projects, setProjects] = useState<Project[]>([])
   const [user, setUser] = useState<UserServiceUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -2647,5 +2667,9 @@ function DashboardRoot() {
 }
 
 export default function DashboardPage() {
-  return <DashboardRoot />
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <DashboardRoot />
+    </Suspense>
+  )
 }
