@@ -21,7 +21,6 @@ import {
   HelpCircle,
   CreditCard,
   MessageCircle,
-  Sparkles,
   ArrowRight,
   Newspaper,
   PlayCircle
@@ -371,19 +370,22 @@ export function Navigation() {
                     border: '1px solid rgba(255,255,255,0.25)',
                   }}
                 >
-                  NEW FEATURE
+                  COMING SOON
                 </span>
                 
-                {/* Sparkles cluster */}
-                <div className="flex items-center gap-1 mb-3">
-                  <Sparkles className="h-6 w-6 text-white" />
-                  <Sparkles className="h-4 w-4 text-white/60" />
-                  <Sparkles className="h-3 w-3 text-white/40" />
+                <div className="flex items-center gap-1 mb-3" aria-hidden>
+                  <svg width="20" height="30" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 28.5C19 23.8056 22.8056 20 27.5 20C32.1944 20 36 23.8056 36 28.5C36 33.1944 32.1944 37 27.5 37C22.8056 37 19 33.1944 19 28.5Z" fill="#1ABCFE"/>
+                    <path d="M2 47.5C2 42.8056 5.80558 39 10.5 39H19V47.5C19 52.1944 15.1944 56 10.5 56C5.80558 56 2 52.1944 2 47.5Z" fill="#0ACF83"/>
+                    <path d="M19 1H10.5C5.80558 1 2 4.80558 2 9.5C2 14.1944 5.80558 18 10.5 18H19V1Z" fill="#FF7262"/>
+                    <path d="M19 20H10.5C5.80558 20 2 23.8056 2 28.5C2 33.1944 5.80558 37 10.5 37H19V20Z" fill="#F24E1E"/>
+                    <path d="M19 1H27.5C32.1944 1 36 4.80558 36 9.5C36 14.1944 32.1944 18 27.5 18H19V1Z" fill="#FF7262"/>
+                  </svg>
                 </div>
                 
                 {/* Title */}
                 <h3 className="font-bold text-white text-lg leading-tight mb-1">
-                  AI-Assisted Project Suggestions
+                  Export to Figma
                 </h3>
                 
                 {/* Subtitle */}

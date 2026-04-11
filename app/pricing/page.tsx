@@ -16,44 +16,55 @@ export default function PricingPage() {
   const freeFeatures = [
     "1 active project",
     "All 8 dashboard sections",
-    "PDF summary export",
-    "1 team member",
+    "Client content link",
+    "Client review and accept workflow",
+    "PDF project brief export",
+    "CSS variables export",
+    "JSON export",
     "Project progress tracking",
   ]
 
   const proFeatures = [
     { text: "Unlimited projects", comingSoon: false },
-    { text: "Unlimited PDF summary exports", comingSoon: false },
+    { text: "Unlimited PDF exports", comingSoon: false },
     { text: "Priority support", comingSoon: false },
+    { text: "Export to Figma", comingSoon: true },
     { text: "AI-assisted project suggestions", comingSoon: true },
-    { text: "Client sharing & collaboration", comingSoon: true },
     { text: "Custom branding on exports", comingSoon: true },
   ]
 
   const faqs = [
     {
       question: "Is Troov Studio really free to start?",
-      answer: "Yes. The Free plan gives you full access to all 8 dashboard sections on your first project. No credit card needed, no time limit. Try it out and upgrade only when you need more.",
+      answer: "Yes. The free plan gives you full access to all 8 dashboard sections, the client content link and review workflow, PDF export, CSS variables and JSON export on your first project. No credit card needed, no time limit.",
+    },
+    {
+      question: "What is the client content link?",
+      answer: "The client content link is a unique shareable URL you send to your client. They fill in their business info, brand colours, logo and inspiration sites in a clean multi-step form. You then review and accept each field and it populates directly into your project. This feature is free on all plans.",
+    },
+    {
+      question: "What is the Figma export?",
+      answer: "The Figma export is a Pro feature coming soon. It will create a ready-to-design Figma file from your project — colour styles, text styles, one page per sitemap page, mood board frame and project brief all built automatically via the Troov Studio Figma plugin.",
     },
     {
       question: "What do I get on the Pro plan?",
-      answer: "Pro unlocks unlimited projects, unlimited PDF summary exports, and priority support. You also get early access to upcoming features like AI-assisted project suggestions, client sharing, and custom branding on exports.",
+      answer: "Pro gives you unlimited projects, unlimited PDF exports, and priority support. You also get early access to upcoming Pro features including Figma export, AI-assisted project suggestions, and custom branding on exports.",
     },
     {
       question: "Can I upgrade or downgrade at any time?",
-      answer: "Yes, you can change your plan at any time from your account settings. Changes take effect at the end of your current billing period.",
+      answer: "Yes. You can change your plan at any time from your account settings. Upgrades take effect immediately. Downgrades take effect at the end of your current billing period.",
     },
     {
       question: "What happens to my projects if I downgrade?",
-      answer: "Your data is never deleted. If you downgrade to Free, all your projects are preserved but you can only actively work on 1 project at a time.",
+      answer: "Your data is never deleted. If you downgrade to free, all your projects are preserved but you can only actively work on 1 project at a time.",
     },
     {
-      question: "Do you charge per team member?",
-      answer: "No. The Pro plan includes unlimited team members across all your projects. No per-seat fees.",
+      question: "Do you offer refunds?",
+      answer: "Yes. We offer a 14-day money-back guarantee on all paid plans. Contact us at contact@troov-marketing.com within 14 days of your payment for a full refund.",
     },
     {
       question: "When should I upgrade to Pro?",
-      answer: "When you are ready to take on more than one client project at a time, or you want unlimited PDF exports for professional client handoffs, that is when Pro makes sense.",
+      answer: "When you are ready to run more than one client project at a time, or you want early access to the Figma export and AI features as they launch, that is when Pro makes sense.",
     },
   ]
 
