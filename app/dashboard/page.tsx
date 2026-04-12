@@ -1668,40 +1668,98 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                         <div className="space-y-6">
                           {/* Next Recommended Step or Completion Celebration */}
                           {allComplete ? (
-                            <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-                              <CardContent className="py-8">
-                                <div className="flex items-start gap-4">
-                                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                                    <svg
-                                      className="h-6 w-6 text-white"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
+                            <Card className="relative overflow-hidden border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+                              <CardContent className="relative py-4 px-6">
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: -24,
+                                    right: -24,
+                                    width: 120,
+                                    height: 120,
+                                    borderRadius: "50%",
+                                    background: "rgba(22, 163, 74, 0.08)",
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    bottom: -20,
+                                    right: 80,
+                                    width: 80,
+                                    height: 80,
+                                    borderRadius: "50%",
+                                    background: "rgba(22, 163, 74, 0.05)",
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                                <div className="relative z-[1]">
+                                <div className="relative">
+                                  <div
+                                    className="pointer-events-none absolute right-0 top-0 opacity-50 hidden sm:block"
+                                    aria-hidden
+                                  >
+                                    <svg width="48" height="72" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M19 28.5C19 23.8056 22.8056 20 27.5 20C32.1944 20 36 23.8056 36 28.5C36 33.1944 32.1944 37 27.5 37C22.8056 37 19 33.1944 19 28.5Z" fill="#1ABCFE" />
+                                      <path d="M2 47.5C2 42.8056 5.80558 39 10.5 39H19V47.5C19 52.1944 15.1944 56 10.5 56C5.80558 56 2 52.1944 2 47.5Z" fill="#0ACF83" />
+                                      <path d="M19 1H10.5C5.80558 1 2 4.80558 2 9.5C2 14.1944 5.80558 18 10.5 18H19V1Z" fill="#FF7262" />
+                                      <path d="M19 20H10.5C5.80558 20 2 23.8056 2 28.5C2 33.1944 5.80558 37 10.5 37H19V20Z" fill="#F24E1E" />
+                                      <path d="M19 1H27.5C32.1944 1 36 4.80558 36 9.5C36 14.1944 32.1944 18 27.5 18H19V1Z" fill="#FF7262" />
                                     </svg>
                                   </div>
-                                  <div className="flex-1 min-w-0 space-y-3">
-                                    <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                                      Ready to Export!
+                                  <div className="relative z-[1] min-w-0 space-y-4 sm:pr-44">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                      <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                                      ALL SECTIONS COMPLETE
+                                    </div>
+                                    <h3 className="font-bold text-xl text-gray-900">
+                                      Your project is ready to export to Figma
                                     </h3>
-                                    <p className="text-sm text-gray-700 leading-relaxed">
-                                      All sections complete. Export your project to Figma or send your client a content
-                                      link from the Handoff section.
+                                    <p className="text-sm text-gray-700 leading-relaxed max-w-xl">
+                                      Colour styles, text styles, sitemap pages, mood board and brief — built
+                                      automatically. No manual Figma setup.
                                     </p>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
+                                      {[
+                                        "Colour styles",
+                                        "Text styles",
+                                        "Sitemap pages",
+                                        "Mood board",
+                                        "Project brief",
+                                      ].map((label) => (
+                                        <span
+                                          key={label}
+                                          className="rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700"
+                                        >
+                                          {label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
                                       <Button
                                         size="sm"
                                         onClick={() => setActiveView("handoff")}
                                         className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md"
                                       >
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Go to Handoff
+                                        <span className="inline-flex items-center gap-2">
+                                          <svg
+                                            width="14"
+                                            height="21"
+                                            viewBox="0 0 38 57"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="shrink-0"
+                                            aria-hidden
+                                          >
+                                            <path d="M19 28.5C19 23.8056 22.8056 20 27.5 20C32.1944 20 36 23.8056 36 28.5C36 33.1944 32.1944 37 27.5 37C22.8056 37 19 33.1944 19 28.5Z" fill="#1ABCFE" />
+                                            <path d="M2 47.5C2 42.8056 5.80558 39 10.5 39H19V47.5C19 52.1944 15.1944 56 10.5 56C5.80558 56 2 52.1944 2 47.5Z" fill="#0ACF83" />
+                                            <path d="M19 1H10.5C5.80558 1 2 4.80558 2 9.5C2 14.1944 5.80558 18 10.5 18H19V1Z" fill="#FF7262" />
+                                            <path d="M19 20H10.5C5.80558 20 2 23.8056 2 28.5C2 33.1944 5.80558 37 10.5 37H19V20Z" fill="#F24E1E" />
+                                            <path d="M19 1H27.5C32.1944 1 36 4.80558 36 9.5C36 14.1944 32.1944 18 27.5 18H19V1Z" fill="#FF7262" />
+                                          </svg>
+                                          Go to Handoff
+                                        </span>
                                       </Button>
                                       <Button
                                         size="sm"
@@ -1713,6 +1771,7 @@ function DashboardContent({ currentProjectId, setCurrentProjectId }: DashboardCo
                                       </Button>
                                     </div>
                                   </div>
+                                </div>
                                 </div>
                               </CardContent>
                             </Card>

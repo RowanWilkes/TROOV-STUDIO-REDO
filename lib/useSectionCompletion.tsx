@@ -308,7 +308,7 @@ export async function fetchSectionCompletion(projectId: string): Promise<Section
     technical: false,
     content: false,
     assets: false,
-    tasks: false,
+    tasks: hasTasksCompletion(tasks),
   }
 
   const overrideBySection = new Map<string, boolean>()
