@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,20 +18,24 @@ import {
   Pencil,
   Trash2,
   Target,
-  MessageSquare,
   Megaphone,
   Lightbulb,
   FileEdit,
-  Search,
-  BookOpen,
+  Info,
+  CheckCircle2,
+  Layout,
+  LayoutTemplate,
+  Map,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useSectionCompletion } from "@/lib/useSectionCompletion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useProjectRow } from "@/lib/useProjectRow"
+import { supabase } from "@/lib/supabase"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
-// Define interfaces for BrandMessaging, MessagingPillar, and ContentGuideline
+// Define interfaces for BrandMessaging and MessagingPillar
 interface BrandMessaging {
   missionStatement: string
   visionStatement: string
@@ -47,10 +52,79 @@ interface MessagingPillar {
   description: string
 }
 
-interface ContentGuideline {
+type PageContentFieldType = "heading" | "paragraph" | "cta" | "custom" | "image"
+
+interface PageContentField {
   id: string
-  category: string
-  guideline: string
+  label: string
+  type: PageContentFieldType
+  hint: string
+  dimensions?: string
+  file_url?: string
+  value: string
+}
+
+interface PageContentEntry {
+  pageName: string
+  fields: PageContentField[]
+}
+
+type PageContentMap = Record<string, PageContentEntry>
+
+type SitemapPageNode = {
+  id: string
+  name: string
+  children?: SitemapPageNode[]
+}
+
+function flattenSitemapPages(pages: SitemapPageNode[]): SitemapPageNode[] {
+  const out: SitemapPageNode[] = []
+  for (const p of pages) {
+    if (!p?.id) continue
+    out.push(p)
+    if (Array.isArray(p.children) && p.children.length > 0) {
+      out.push(...flattenSitemapPages(p.children))
+    }
+  }
+  return out
+}
+
+function newFieldId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function pageFieldTypeBadgeClass(type: PageContentFieldType): string {
+  switch (type) {
+    case "heading":
+      return "border-0 bg-emerald-100 text-emerald-900 dark:bg-[#2DCE73] dark:text-white"
+    case "paragraph":
+      return "border-0 bg-blue-100 text-blue-900 dark:bg-blue-500/25 dark:text-blue-100"
+    case "cta":
+      return "border-0 bg-purple-100 text-purple-900 dark:bg-purple-500/25 dark:text-purple-100"
+    case "custom":
+      return "border-0 bg-muted text-muted-foreground dark:bg-zinc-600 dark:text-zinc-100"
+    case "image":
+      return "border-0 bg-orange-100 text-orange-700"
+    default:
+      return "border-0 bg-muted text-muted-foreground"
+  }
+}
+
+function pageFieldTypeLabel(type: PageContentFieldType): string {
+  switch (type) {
+    case "heading":
+      return "Heading"
+    case "paragraph":
+      return "Paragraph"
+    case "cta":
+      return "CTA"
+    case "custom":
+      return "Custom"
+    case "image":
+      return "Image"
+    default:
+      return type
+  }
 }
 
 interface ContentItem {
@@ -82,17 +156,11 @@ type ContentAssetsProps = {
 
 type ContentSectionData = {
   contentItems: ContentItem[]
+  pageContent: PageContentMap
   assets: Asset[]
   toneNotes: string
   brandMessaging: BrandMessaging
   messagingPillars: MessagingPillar[]
-  contentGuidelines: ContentGuideline[]
-  seoKeywords: string[]
-  metaTitle: string
-  metaDescription: string
-  focusKeyword: string
-  keywordDifficulty: Record<string, "easy" | "medium" | "hard">
-  competitorAnalysis: string
   isComplete?: boolean
 }
 
@@ -113,17 +181,11 @@ const defaultBrandMessaging: BrandMessaging = {
 
 const defaultContentSectionData: ContentSectionData = {
   contentItems: [],
+  pageContent: {},
   assets: [],
   toneNotes: "",
   brandMessaging: defaultBrandMessaging,
   messagingPillars: [],
-  contentGuidelines: [],
-  seoKeywords: [],
-  metaTitle: "",
-  metaDescription: "",
-  focusKeyword: "",
-  keywordDifficulty: {},
-  competitorAnalysis: "",
 }
 
 const defaultAssetSectionData: AssetSectionData = {
@@ -131,6 +193,7 @@ const defaultAssetSectionData: AssetSectionData = {
 }
 
 export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAssetsProps) {
+  const router = useRouter()
   const { completion, setOverride } = useSectionCompletion(projectId)
   const sectionId = showAssetsOnly ? "assets" : "content"
   const isComplete = completion[sectionId]
@@ -143,17 +206,14 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
       if (!raw) return defaultContentSectionData
       return {
         contentItems: Array.isArray(raw.contentItems) ? (raw.contentItems as ContentItem[]) : [],
+        pageContent:
+          raw.pageContent && typeof raw.pageContent === "object" && !Array.isArray(raw.pageContent)
+            ? (raw.pageContent as PageContentMap)
+            : {},
         assets: Array.isArray(raw.assets) ? (raw.assets as Asset[]) : [],
         toneNotes: typeof raw.toneNotes === "string" ? raw.toneNotes : "",
         brandMessaging: raw.brandMessaging && typeof raw.brandMessaging === "object" ? { ...defaultBrandMessaging, ...(raw.brandMessaging as object) } : defaultBrandMessaging,
         messagingPillars: Array.isArray(raw.messagingPillars) ? (raw.messagingPillars as MessagingPillar[]) : [],
-        contentGuidelines: Array.isArray(raw.contentGuidelines) ? (raw.contentGuidelines as ContentGuideline[]) : [],
-        seoKeywords: Array.isArray(raw.seoKeywords) ? (raw.seoKeywords as string[]) : [],
-        metaTitle: typeof raw.metaTitle === "string" ? raw.metaTitle : "",
-        metaDescription: typeof raw.metaDescription === "string" ? raw.metaDescription : "",
-        focusKeyword: typeof raw.focusKeyword === "string" ? raw.focusKeyword : "",
-        keywordDifficulty: raw.keywordDifficulty && typeof raw.keywordDifficulty === "object" ? (raw.keywordDifficulty as Record<string, "easy" | "medium" | "hard">) : {},
-        competitorAnalysis: typeof raw.competitorAnalysis === "string" ? raw.competitorAnalysis : "",
         isComplete: raw.isComplete === true,
       }
     },
@@ -176,8 +236,6 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   })
 
   const content = contentData ?? defaultContentSectionData
-  const contentItems = content.contentItems
-  const setContentItems = (v: ContentItem[] | ((p: ContentItem[]) => ContentItem[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), contentItems: typeof v === "function" ? v(p?.contentItems ?? []) : v }))
   const assets = content.assets
   const setAssets = (v: Asset[] | ((p: Asset[]) => Asset[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), assets: typeof v === "function" ? v(p?.assets ?? []) : v }))
   const toneNotes = content.toneNotes
@@ -186,20 +244,7 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   const setBrandMessaging = (v: BrandMessaging | ((p: BrandMessaging) => BrandMessaging)) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), brandMessaging: typeof v === "function" ? v(p?.brandMessaging ?? defaultBrandMessaging) : v }))
   const messagingPillars = content.messagingPillars
   const setMessagingPillars = (v: MessagingPillar[] | ((p: MessagingPillar[]) => MessagingPillar[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), messagingPillars: typeof v === "function" ? v(p?.messagingPillars ?? []) : v }))
-  const contentGuidelines = content.contentGuidelines
-  const setContentGuidelines = (v: ContentGuideline[] | ((p: ContentGuideline[]) => ContentGuideline[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), contentGuidelines: typeof v === "function" ? v(p?.contentGuidelines ?? []) : v }))
-  const seoKeywords = content.seoKeywords
-  const setSeoKeywords = (v: string[] | ((p: string[]) => string[])) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), seoKeywords: typeof v === "function" ? v(p?.seoKeywords ?? []) : v }))
-  const metaTitle = content.metaTitle
-  const setMetaTitle = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), metaTitle: v }))
-  const metaDescription = content.metaDescription
-  const setMetaDescription = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), metaDescription: v }))
-  const focusKeyword = content.focusKeyword
-  const setFocusKeyword = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), focusKeyword: v }))
-  const keywordDifficulty = content.keywordDifficulty
-  const setKeywordDifficulty = (v: Record<string, "easy" | "medium" | "hard"> | ((p: Record<string, "easy" | "medium" | "hard">) => Record<string, "easy" | "medium" | "hard">)) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), keywordDifficulty: typeof v === "function" ? v(p?.keywordDifficulty ?? {}) : v }))
-  const competitorAnalysis = content.competitorAnalysis
-  const setCompetitorAnalysis = (v: string) => setContentData((p) => ({ ...(p ?? defaultContentSectionData), competitorAnalysis: v }))
+  const pageContent = content.pageContent
 
   const assetsSection = assetData ?? defaultAssetSectionData
   const uploadedAssets = assetsSection.uploadedAssets
@@ -212,27 +257,38 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   const [selectedTab, setSelectedTab] = useState<string>("all")
   const [enlargedAsset, setEnlargedAsset] = useState<UploadedAsset | null>(null)
 
-  const [newKeyword, setNewKeyword] = useState("")
-  const [newContentType, setNewContentType] = useState<string>("heading")
-  const [newContentText, setNewContentText] = useState("")
-  const [editingContentId, setEditingContentId] = useState<string | null>(null)
-  const [isCustomType, setIsCustomType] = useState(false)
-  const [customTypeName, setCustomTypeName] = useState("")
+  const [sitemapPagesRaw, setSitemapPagesRaw] = useState<SitemapPageNode[]>([])
+  const [pageFieldForm, setPageFieldForm] = useState<
+    | null
+    | { mode: "add"; pageId: string }
+    | { mode: "edit"; pageId: string; fieldId: string }
+  >(null)
+  const [pfType, setPfType] = useState<PageContentFieldType>("paragraph")
+  const [pfLabel, setPfLabel] = useState("")
+  const [pfHint, setPfHint] = useState("")
+  const [pfDimensions, setPfDimensions] = useState("")
+  const [pfValue, setPfValue] = useState("")
+
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase.from("sitemap").select("pages").eq("project_id", projectId).maybeSingle()
+      if (cancelled) return
+      const rawPages = data?.pages
+      const pages = Array.isArray(rawPages) ? (rawPages as SitemapPageNode[]) : []
+      setSitemapPagesRaw(pages)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
+
+  const sitemapFlatPages = useMemo(() => flattenSitemapPages(sitemapPagesRaw), [sitemapPagesRaw])
 
   const persistCompletion = (checked: boolean) => {
     if (showAssetsOnly) setAssetData((p) => ({ ...(p ?? defaultAssetSectionData), isComplete: checked }))
     else setContentData((p) => ({ ...(p ?? defaultContentSectionData), isComplete: checked }))
-  }
-
-  const removeSeoKeyword = (index: number) => {
-    setSeoKeywords((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const addSeoKeyword = () => {
-    if (newKeyword.trim()) {
-      setSeoKeywords((prev) => [...prev, newKeyword.trim()])
-      setNewKeyword("")
-    }
   }
 
   const toggleCompletion = (checked: boolean) => {
@@ -281,25 +337,6 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
     setMessagingPillars(messagingPillars.filter((p) => p.id !== id))
   }
 
-  const addContentGuideline = () => {
-    setContentGuidelines([
-      ...contentGuidelines,
-      {
-        id: Date.now().toString(),
-        category: "General",
-        guideline: "",
-      },
-    ])
-  }
-
-  const updateContentGuideline = (id: string, updates: Partial<ContentGuideline>) => {
-    setContentGuidelines(contentGuidelines.map((g) => (g.id === id ? { ...g, ...updates } : g)))
-  }
-
-  const removeContentGuideline = (id: string) => {
-    setContentGuidelines(contentGuidelines.filter((g) => g.id !== id))
-  }
-
   // const addKeyMessage = () => { // REMOVED: Now part of BrandMessaging
   //   setKeyMessages([...keyMessages, "New key message"])
   // }
@@ -314,11 +351,10 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
   //   setKeyMessages(keyMessages.filter((_, i) => i !== index))
   // }
 
-  const setKeywordDifficultyLevel = (keyword: string, level: "easy" | "medium" | "hard") => {
-    setKeywordDifficulty({ ...keywordDifficulty, [keyword]: level })
-  }
-
   const extractCategory = (label: string): string => {
+    const explicitPagePrefix = label.split("—")[0]?.trim()
+    if (explicitPagePrefix && explicitPagePrefix.toLowerCase() !== "page") return explicitPagePrefix
+
     const lowerLabel = label.toLowerCase()
 
     // Check for specific keywords
@@ -327,6 +363,7 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
     if (lowerLabel.includes("home") || lowerLabel.includes("homepage")) return "Home Page"
     if (lowerLabel.includes("about")) return "About Page"
     if (lowerLabel.includes("contact")) return "Contact Page"
+    if (lowerLabel.includes("service")) return "Services"
     if (lowerLabel.includes("product")) return "Products"
     if (lowerLabel.includes("icon")) return "Icons"
     if (lowerLabel.includes("background") || lowerLabel.includes("bg")) return "Backgrounds"
@@ -396,68 +433,95 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
     handleFileUpload(e.dataTransfer.files)
   }
 
-  const addContentSnippet = () => {
-    if (!newContentText.trim()) return
-    const contentType = isCustomType ? customTypeName.trim() : newContentType
-
-    if (isCustomType && !customTypeName.trim()) return
-
-    const newItem: ContentItem = {
-      id: Date.now().toString(),
-      type: contentType,
-      text: newContentText.trim(),
-    }
-
-    setContentItems([...contentItems, newItem])
-    setNewContentText("")
-    setNewContentType("heading")
-    setCustomTypeName("")
-    setIsCustomType(false)
+  const replacePageContentFields = (pageId: string, pageName: string, fields: PageContentField[]) => {
+    setContentData((p) => {
+      const base = p ?? defaultContentSectionData
+      const nextMap = { ...base.pageContent }
+      if (fields.length === 0) {
+        delete nextMap[pageId]
+      } else {
+        nextMap[pageId] = { pageName, fields }
+      }
+      return { ...base, pageContent: nextMap }
+    })
   }
 
-  const deleteContentSnippet = (id: string) => {
-    setContentItems(contentItems.filter((item) => item.id !== id))
+  const openAddPageField = (pageId: string) => {
+    setPageFieldForm({ mode: "add", pageId })
+    setPfType("paragraph")
+    setPfLabel("")
+    setPfHint("")
+    setPfDimensions("")
+    setPfValue("")
   }
 
-  const startEditingContent = (item: ContentItem) => {
-    setEditingContentId(item.id)
-    const predefinedTypes = ["heading", "subheading", "cta", "button", "tagline", "body"]
-    if (predefinedTypes.includes(item.type)) {
-      setIsCustomType(false)
-      setNewContentType(item.type)
-      setCustomTypeName("")
+  const openEditPageField = (pageId: string, field: PageContentField) => {
+    setPageFieldForm({ mode: "edit", pageId, fieldId: field.id })
+    setPfType(field.type)
+    setPfLabel(field.label)
+    setPfHint(field.hint)
+    setPfDimensions(field.dimensions ?? "")
+    setPfValue(field.value)
+  }
+
+  const cancelPageFieldForm = () => {
+    setPageFieldForm(null)
+    setPfType("paragraph")
+    setPfLabel("")
+    setPfHint("")
+    setPfDimensions("")
+    setPfValue("")
+  }
+
+  const confirmPageFieldForm = (pageName: string) => {
+    if (!pageFieldForm || !pfLabel.trim()) return
+    const pageId = pageFieldForm.pageId
+    const prevFields = pageContent[pageId]?.fields ?? []
+
+    if (pageFieldForm.mode === "add") {
+      const next: PageContentField = {
+        id: newFieldId(),
+        label: pfLabel.trim(),
+        type: pfType,
+        hint: pfHint.trim(),
+        dimensions: pfType === "image" ? pfDimensions.trim() : undefined,
+        value: pfType === "image" ? "" : "",
+      }
+      replacePageContentFields(pageId, pageName, [...prevFields, next])
     } else {
-      setIsCustomType(true)
-      setCustomTypeName(item.type)
-      setNewContentType("heading")
+      const nextFields = prevFields.map((f) =>
+        f.id === pageFieldForm.fieldId
+          ? {
+              ...f,
+              label: pfLabel.trim(),
+              type: pfType,
+              hint: pfHint.trim(),
+              dimensions: pfType === "image" ? pfDimensions.trim() : undefined,
+              value: pfType === "image" ? "" : pfValue,
+            }
+          : f,
+      )
+      replacePageContentFields(pageId, pageName, nextFields)
     }
-    setNewContentText(item.text)
+    cancelPageFieldForm()
   }
 
-  const saveContentEdit = () => {
-    if (!editingContentId || !newContentText.trim()) return
-    const contentType = isCustomType ? customTypeName.trim() : newContentType
-
-    if (isCustomType && !customTypeName.trim()) return
-
-    setContentItems(
-      contentItems.map((item) =>
-        item.id === editingContentId ? { ...item, type: contentType, text: newContentText.trim() } : item,
-      ),
+  const deletePageField = (pageId: string, pageName: string, fieldId: string) => {
+    const prevFields = pageContent[pageId]?.fields ?? []
+    replacePageContentFields(
+      pageId,
+      pageName,
+      prevFields.filter((f) => f.id !== fieldId),
     )
-    setEditingContentId(null)
-    setNewContentText("")
-    setNewContentType("heading")
-    setCustomTypeName("")
-    setIsCustomType(false)
   }
 
-  const cancelContentEdit = () => {
-    setEditingContentId(null)
-    setNewContentText("")
-    setNewContentType("heading")
-    setCustomTypeName("")
-    setIsCustomType(false)
+  const updatePageFieldValue = (pageId: string, pageName: string, fieldId: string, value: string) => {
+    const prevFields = pageContent[pageId]?.fields ?? []
+    replacePageContentFields(
+      pageId,
+      pageName,
+      prevFields.map((f) => (f.id === fieldId ? { ...f, value } : f)),
+    )
   }
 
   if (showAssetsOnly) {
@@ -868,351 +932,330 @@ export function ContentAssets({ projectId, showAssetsOnly = false }: ContentAsse
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-card dark:bg-[#012B26] border-border dark:border-[#2DCE73]/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-              <Lightbulb className="size-5 text-red-600" />
-              Key Messages
-            </CardTitle>
-            <CardDescription className="dark:text-gray-400">
-              Important points to communicate consistently
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div
-              className={`space-y-2 ${brandMessaging.keyMessages.length > 5 ? "max-h-[250px] overflow-y-auto pr-2" : ""}`}
-            >
-              {brandMessaging.keyMessages.map((message, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50"
-                >
-                  <Input
-                    value={message}
-                    onChange={(e) => {
-                      const updatedMessages = [...brandMessaging.keyMessages]
-                      updatedMessages[index] = e.target.value
-                      setBrandMessaging({ ...brandMessaging, keyMessages: updatedMessages })
-                    }}
-                    placeholder="Enter key message"
-                    className="bg-card dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setBrandMessaging({
-                        ...brandMessaging,
-                        keyMessages: brandMessaging.keyMessages.filter((_, i) => i !== index),
-                      })
-                    }}
-                    className="shrink-0"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-            <Button
-              onClick={() => {
-                if (brandMessaging.keyMessages.length < 5) {
-                  setBrandMessaging({ ...brandMessaging, keyMessages: [...brandMessaging.keyMessages, ""] })
-                }
-              }}
-              variant="outline"
-              className="w-full border-dashed dark:border-[#2DCE73] bg-transparent"
-              disabled={brandMessaging.keyMessages.length >= 5}
-            >
-              <Plus className="size-4 mr-2" />
-              Add Key Message
-            </Button>
-            {brandMessaging.keyMessages.length >= 5 && (
-              <p className="text-xs text-muted-foreground dark:text-gray-400">Maximum of 5 key messages reached.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card dark:bg-[#012B26] border-border dark:border-[#2DCE73]/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-              <MessageSquare className="size-5 text-red-600" />
-              Content Snippets
-            </CardTitle>
-            <CardDescription className="dark:text-gray-400">
-              Add key headings, CTAs, and copy for your website
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3 p-4 rounded-lg border border-border dark:border-[#2DCE73]/30 bg-background dark:bg-[#013B34]/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Checkbox
-                  id="custom-type"
-                  checked={isCustomType}
-                  onCheckedChange={(checked) => setIsCustomType(checked as boolean)}
-                />
-                <Label htmlFor="custom-type" className="text-sm text-foreground dark:text-white cursor-pointer">
-                  Use custom type
-                </Label>
-              </div>
-
-              <div className="flex gap-2">
-                {isCustomType ? (
-                  <Input
-                    placeholder="Enter custom type..."
-                    value={customTypeName}
-                    onChange={(e) => setCustomTypeName(e.target.value)}
-                    className="w-[180px] bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
-                  />
-                ) : (
-                  <Select
-                    value={newContentType}
-                    onValueChange={(value: ContentItem["type"]) => setNewContentType(value)}
-                  >
-                    <SelectTrigger className="w-[180px] bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="heading">Heading</SelectItem>
-                      <SelectItem value="subheading">Subheading</SelectItem>
-                      <SelectItem value="cta">CTA</SelectItem>
-                      <SelectItem value="button">Button Text</SelectItem>
-                      <SelectItem value="tagline">Tagline</SelectItem>
-                      <SelectItem value="body">Body Copy</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-                <Input
-                  placeholder="Enter content text..."
-                  value={newContentText}
-                  onChange={(e) => setNewContentText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !editingContentId) {
-                      addContentSnippet()
-                    } else if (e.key === "Enter" && editingContentId) {
-                      saveContentEdit()
-                    }
-                  }}
-                  className="flex-1 bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
-                />
-                {editingContentId ? (
-                  <>
-                    <Button
-                      onClick={saveContentEdit}
-                      className="bg-primary hover:bg-primary/90 dark:bg-[#2DCE73] dark:hover:bg-[#2DCE73]/90"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={cancelContentEdit}
-                      className="dark:border-[#2DCE73]/50 bg-transparent"
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    onClick={addContentSnippet}
-                    className="bg-primary hover:bg-primary/90 dark:bg-[#2DCE73] dark:hover:bg-[#2DCE73]/90"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {contentItems.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-gray-400">
-                  No content snippets yet. Add your first one above!
-                </div>
-              ) : (
-                contentItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50 flex items-start justify-between gap-3"
-                  >
-                    <div className="flex-1">
-                      <Badge
-                        variant="secondary"
-                        className="mb-2 bg-secondary text-secondary-foreground dark:bg-[#2DCE73] dark:text-white"
-                      >
-                        {item.type}
-                      </Badge>
-                      <p className="text-foreground dark:text-white">{item.text}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => startEditingContent(item)}
-                        className="h-8 w-8 p-0 hover:bg-accent dark:hover:bg-[#2DCE73]/20"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteContentSnippet(item.id)}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10 dark:hover:bg-red-500/20"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* SEO Strategy now full width with enhanced content */}
-      <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#012B26]">
+      <Card className="bg-card dark:bg-[#012B26] border-border dark:border-[#2DCE73]/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-            <Search className="size-5 text-red-600" />
-            SEO Strategy
+            <Lightbulb className="size-5 text-red-600" />
+            Key Messages
           </CardTitle>
-          <CardDescription className="dark:text-gray-400">Plan your page SEO and content strategy</CardDescription>
+          <CardDescription className="dark:text-gray-400">
+            Important points to communicate consistently
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-foreground dark:text-gray-300 text-sm font-medium">Meta Title</Label>
-              <Input
-                value={metaTitle}
-                onChange={(e) => setMetaTitle(e.target.value)}
-                placeholder="Page title for search results (50-60 chars)"
-                maxLength={60}
-                className="bg-background dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white"
-              />
-              <p className="text-xs text-muted-foreground dark:text-gray-400">{metaTitle.length}/60 characters</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground dark:text-gray-300 text-sm font-medium">Meta Description</Label>
-              <Textarea
-                value={metaDescription}
-                onChange={(e) => setMetaDescription(e.target.value)}
-                placeholder="Page description for search results (150-160 chars)"
-                maxLength={160}
-                rows={3}
-                className="bg-background dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground resize-none dark:text-white"
-              />
-              <p className="text-xs text-muted-foreground dark:text-gray-400">
-                {metaDescription.length}/160 characters
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground dark:text-gray-300 text-sm font-medium">Target Keywords</Label>
-              <div className="flex flex-wrap gap-2 min-h-[60px] p-3 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50">
-                {seoKeywords.map((keyword, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="h-6 px-2 py-0 gap-1 bg-secondary text-secondary-foreground dark:bg-[#2DCE73] dark:text-white text-sm"
-                  >
-                    {keyword}
-                    <button
-                      onClick={() => removeSeoKeyword(index)}
-                      className="ml-1 hover:text-destructive dark:hover:text-white"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
+        <CardContent className="space-y-3">
+          <div
+            className={`space-y-2 ${brandMessaging.keyMessages.length > 5 ? "max-h-[250px] overflow-y-auto pr-2" : ""}`}
+          >
+            {brandMessaging.keyMessages.map((message, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 p-3 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50"
+              >
                 <Input
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addSeoKeyword()}
-                  placeholder="Add keyword..."
-                  className="bg-background dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white"
+                  value={message}
+                  onChange={(e) => {
+                    const updatedMessages = [...brandMessaging.keyMessages]
+                    updatedMessages[index] = e.target.value
+                    setBrandMessaging({ ...brandMessaging, keyMessages: updatedMessages })
+                  }}
+                  placeholder="Enter key message"
+                  className="bg-card dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white"
                 />
                 <Button
-                  onClick={addSeoKeyword}
-                  className="bg-primary text-primary-foreground dark:bg-[#2DCE73] dark:text-white shrink-0"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setBrandMessaging({
+                      ...brandMessaging,
+                      keyMessages: brandMessaging.keyMessages.filter((_, i) => i !== index),
+                    })
+                  }}
+                  className="shrink-0"
                 >
-                  <Plus className="size-4" />
+                  <X className="size-4" />
                 </Button>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground dark:text-gray-300 text-sm font-medium">Competitor Analysis</Label>
-              <Textarea
-                value={competitorAnalysis}
-                onChange={(e) => setCompetitorAnalysis(e.target.value)}
-                placeholder="Note competitor strengths, content gaps, and opportunities..."
-                rows={4}
-                className="bg-background dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground resize-none dark:text-white"
-              />
-            </div>
+            ))}
           </div>
+          <Button
+            onClick={() => {
+              if (brandMessaging.keyMessages.length < 5) {
+                setBrandMessaging({ ...brandMessaging, keyMessages: [...brandMessaging.keyMessages, ""] })
+              }
+            }}
+            variant="outline"
+            className="w-full border-dashed dark:border-[#2DCE73] bg-transparent"
+            disabled={brandMessaging.keyMessages.length >= 5}
+          >
+            <Plus className="size-4 mr-2" />
+            Add Key Message
+          </Button>
+          {brandMessaging.keyMessages.length >= 5 && (
+            <p className="text-xs text-muted-foreground dark:text-gray-400">Maximum of 5 key messages reached.</p>
+          )}
         </CardContent>
       </Card>
 
       <Card className="border-border dark:border-[#2DCE73] bg-card dark:bg-[#012B26]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-            <BookOpen className="size-5 text-red-600" />
-            Content Guidelines
+            <Layout className="size-5 text-red-600" />
+            Page Content
           </CardTitle>
           <CardDescription className="dark:text-gray-400">
-            Rules and best practices for content creation
+            Add content fields for each page of the site
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className={`space-y-3 ${contentGuidelines.length > 4 ? "max-h-[300px] overflow-y-auto pr-2" : ""}`}>
-            {contentGuidelines.map((guideline) => (
-              <div
-                key={guideline.id}
-                className="p-4 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50 space-y-2"
+          {sitemapFlatPages.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10">
+              <LayoutTemplate className="size-8 text-gray-300" aria-hidden />
+              <p className="text-center text-sm font-medium text-gray-500">No sitemap pages yet</p>
+              <p className="max-w-xs text-center text-xs text-gray-400">
+                Add pages to your Sitemap first, then come back to set up content fields for each page.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/dashboard?project=${encodeURIComponent(projectId)}&view=sitemap`)}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <select
-                    value={guideline.category}
-                    onChange={(e) => updateContentGuideline(guideline.id, { category: e.target.value })}
-                    className="flex h-9 rounded-md border border-input dark:border-[#2DCE73] bg-card dark:bg-[#013B34] px-3 py-1 text-sm text-foreground dark:text-white"
+                <Map className="size-4 shrink-0" aria-hidden />
+                Go to Sitemap
+              </Button>
+            </div>
+          ) : (
+            <Accordion type="multiple" className="space-y-3 w-full">
+              {sitemapFlatPages.map((page) => {
+                const fields = pageContent[page.id]?.fields ?? []
+                const n = fields.length
+                const fieldLabel = n === 1 ? "1 field" : `${n} fields`
+                const formOpenOnPage = pageFieldForm?.pageId === page.id
+                const editingFieldId = pageFieldForm?.mode === "edit" ? pageFieldForm.fieldId : null
+
+                return (
+                  <AccordionItem
+                    key={page.id}
+                    value={page.id}
+                    className="overflow-hidden rounded-lg border border-solid border-border bg-background px-4 dark:border-[#2DCE73]/50 dark:bg-[#013B34] data-[state=open]:shadow-sm last:border-b"
                   >
-                    <option value="General">General</option>
-                    <option value="Writing Style">Writing Style</option>
-                    <option value="Grammar">Grammar</option>
-                    <option value="Formatting">Formatting</option>
-                    <option value="Accessibility">Accessibility</option>
-                    <option value="Legal">Legal</option>
-                  </select>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeContentGuideline(guideline.id)}
-                    className="shrink-0"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </div>
-                <Input
-                  value={guideline.guideline}
-                  onChange={(e) => updateContentGuideline(guideline.id, { guideline: e.target.value })}
-                  placeholder="Enter guideline or rule..."
-                  className="bg-card dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white"
-                />
-              </div>
-            ))}
-          </div>
-          <Button
-            onClick={addContentGuideline}
-            variant="outline"
-            className="w-full border-dashed dark:border-[#2DCE73] bg-transparent"
-          >
-            <Plus className="size-4 mr-2" />
-            Add Content Guideline
-          </Button>
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex flex-1 items-center justify-between gap-3 pr-2">
+                        <span className="font-medium text-foreground dark:text-white text-left">{page.name}</span>
+                        <span className="text-xs text-muted-foreground dark:text-gray-400 shrink-0">{fieldLabel}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4">
+                      <div className="space-y-3 pt-1">
+                        {formOpenOnPage && (
+                          <div className="p-4 rounded-lg border border-border dark:border-[#2DCE73]/30 bg-card dark:bg-[#024039] space-y-3">
+                            <div className="space-y-2">
+                              <Label className="text-foreground dark:text-gray-300 text-sm">Field type</Label>
+                              <Select value={pfType} onValueChange={(v) => setPfType(v as PageContentFieldType)}>
+                                <SelectTrigger className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="heading">Heading</SelectItem>
+                                  <SelectItem value="paragraph">Paragraph</SelectItem>
+                                  <SelectItem value="cta">CTA</SelectItem>
+                                  <SelectItem value="custom">Custom</SelectItem>
+                                  <SelectItem value="image">Image</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-foreground dark:text-gray-300 text-sm">
+                                {pfType === "image" ? "Image Name" : "Label"}
+                              </Label>
+                              <Input
+                                value={pfLabel}
+                                onChange={(e) => setPfLabel(e.target.value)}
+                                placeholder={
+                                  pfType === "image"
+                                    ? 'e.g. "Team Photo", "Hero Background", "About Page Banner"'
+                                    : 'e.g. "Hero Heading", "Contact Form Intro"'
+                                }
+                                className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-foreground dark:text-gray-300 text-sm">Client Guidance (optional)</Label>
+                              <Input
+                                value={pfHint}
+                                onChange={(e) => setPfHint(e.target.value)}
+                                placeholder={
+                                  pfType === "image"
+                                    ? "e.g. A professional team photo, landscape orientation, no filters"
+                                    : "e.g. Keep this under 8 words — shown to your client in the content form"
+                                }
+                                className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
+                              />
+                              <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                                <Info className="size-4 shrink-0" aria-hidden />
+                                <span>
+                                  {pfType === "image"
+                                    ? "Your client will see this guidance when uploading the image in their content form."
+                                    : "This text appears below the field in your client’s content form to guide their response."}
+                                </span>
+                              </div>
+                            </div>
+                            {pfType === "image" && (
+                              <div className="space-y-2">
+                                <Label className="text-foreground dark:text-gray-300 text-sm">Dimensions / Size (optional)</Label>
+                                <Input
+                                  value={pfDimensions}
+                                  onChange={(e) => setPfDimensions(e.target.value)}
+                                  placeholder="e.g. 1920 x 1080px, landscape, at least 1MB"
+                                  className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
+                                />
+                              </div>
+                            )}
+                            {pageFieldForm.mode === "edit" && pfType !== "image" && (
+                              <div className="space-y-2">
+                                <Label className="text-foreground dark:text-gray-300 text-sm">Value (optional pre-fill)</Label>
+                                {pfType === "paragraph" ? (
+                                  <Textarea
+                                    value={pfValue}
+                                    onChange={(e) => setPfValue(e.target.value)}
+                                    rows={3}
+                                    className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50 resize-none"
+                                  />
+                                ) : (
+                                  <Input
+                                    value={pfValue}
+                                    onChange={(e) => setPfValue(e.target.value)}
+                                    className="bg-background dark:bg-[#013B34] border-border dark:border-[#2DCE73]/50"
+                                  />
+                                )}
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              <Button
+                                type="button"
+                                onClick={() => confirmPageFieldForm(page.name)}
+                                disabled={!pfLabel.trim()}
+                                className="bg-gray-900 text-white hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-50 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
+                              >
+                                {pageFieldForm.mode === "add" ? "Add Field" : "Save"}
+                              </Button>
+                              <Button type="button" variant="outline" onClick={cancelPageFieldForm} className="dark:border-[#2DCE73]/50 bg-transparent">
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {fields.map((field) => {
+                          const isRowEdit = editingFieldId === field.id
+                          const imageUrl = field.file_url && field.file_url.trim() ? field.file_url : null
+                          return (
+                            <div
+                              key={field.id}
+                              className="p-3 rounded-lg bg-background dark:bg-[#013B34] border border-border dark:border-[#2DCE73]/50 space-y-2"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 space-y-2 min-w-0">
+                                  <Badge variant="secondary" className={pageFieldTypeBadgeClass(field.type)}>
+                                    {pageFieldTypeLabel(field.type)}
+                                  </Badge>
+                                  <p className="font-medium text-foreground dark:text-white">{field.label}</p>
+                                  {field.hint ? (
+                                    <p className="text-sm text-muted-foreground dark:text-gray-400">{field.hint}</p>
+                                  ) : null}
+                                  {!isRowEdit &&
+                                    (field.type === "image" ? (
+                                      imageUrl ? (
+                                        <div className="space-y-2">
+                                          <img
+                                            src={imageUrl}
+                                            alt={field.label}
+                                            className="max-h-20 rounded-md object-cover border border-gray-200 bg-gray-50"
+                                          />
+                                          <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                                            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+                                            <span>
+                                              Image uploaded by client — find it in your{" "}
+                                              <button
+                                                type="button"
+                                                className="underline"
+                                                onClick={() => router.push(`/dashboard?project=${encodeURIComponent(projectId)}&view=assets`)}
+                                              >
+                                                Assets page
+                                              </button>
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs italic text-gray-400">
+                                          Awaiting client upload — will appear in Assets when submitted
+                                        </p>
+                                      )
+                                    ) : field.type === "paragraph" ? (
+                                      <Textarea
+                                        value={field.value}
+                                        onChange={(e) => updatePageFieldValue(page.id, page.name, field.id, e.target.value)}
+                                        placeholder="Pre-fill or leave empty for the client…"
+                                        rows={3}
+                                        className="bg-card dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white resize-none text-sm"
+                                      />
+                                    ) : (
+                                      <Input
+                                        value={field.value}
+                                        onChange={(e) => updatePageFieldValue(page.id, page.name, field.id, e.target.value)}
+                                        placeholder="Pre-fill or leave empty for the client…"
+                                        className="bg-card dark:bg-[#013B34] border-input dark:border-[#2DCE73] text-foreground dark:text-white text-sm"
+                                      />
+                                    ))}
+                                  {isRowEdit && (
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400 italic">Editing field details above…</p>
+                                  )}
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 bg-transparent p-0 text-gray-400 hover:bg-transparent hover:text-green-500 dark:bg-transparent dark:text-gray-400 dark:hover:bg-transparent dark:hover:text-green-500"
+                                    onClick={() => openEditPageField(page.id, field)}
+                                    disabled={formOpenOnPage}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 bg-transparent p-0 text-gray-400 hover:bg-transparent hover:text-red-500 dark:bg-transparent dark:text-gray-400 dark:hover:bg-transparent dark:hover:text-red-500"
+                                    onClick={() => deletePageField(page.id, page.name, field.id)}
+                                    disabled={formOpenOnPage}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {!formOpenOnPage && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => openAddPageField(page.id)}
+                            className="w-full border-dashed dark:border-[#2DCE73] bg-transparent"
+                          >
+                            <Plus className="size-4 mr-2" />
+                            Add Field
+                          </Button>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )
+              })}
+            </Accordion>
+          )}
         </CardContent>
       </Card>
     </div>

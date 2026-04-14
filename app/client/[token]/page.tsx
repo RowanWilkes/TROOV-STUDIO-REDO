@@ -2,6 +2,13 @@ import { createServiceRoleClient } from "@/lib/supabase-service"
 import { ClientForm } from "./client-form"
 
 type Props = { params: Promise<{ token: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }
+type PageContentMap = Record<
+  string,
+  {
+    pageName: string
+    fields: Array<{ id: string; label: string; type: "heading" | "paragraph" | "cta" | "custom" | "image"; hint?: string; value?: string }>
+  }
+>
 
 export default async function ClientPage({ params, searchParams }: Props) {
   const { token } = await params
@@ -66,16 +73,15 @@ export default async function ClientPage({ params, searchParams }: Props) {
     )
   }
 
-  const [{ data: project }, { data: sitemap }] = await Promise.all([
+  const [{ data: project }, { data: contentRow }] = await Promise.all([
     supabase.from("projects").select("id, title").eq("id", link.project_id).maybeSingle(),
-    supabase.from("sitemap").select("pages").eq("project_id", link.project_id).maybeSingle(),
+    supabase.from("content_section").select("data").eq("project_id", link.project_id).maybeSingle(),
   ])
-
-  const rawPages = sitemap?.pages
-  const pages =
-    Array.isArray(rawPages) && (rawPages as unknown[]).length > 0
-      ? (rawPages as { id: string; name: string; path?: string }[])
-      : [{ id: "home", name: "Home", path: "/" }]
+  const contentData = (contentRow?.data as Record<string, unknown> | null) ?? null
+  const pageContent: PageContentMap =
+    contentData && typeof contentData.pageContent === "object" && contentData.pageContent && !Array.isArray(contentData.pageContent)
+      ? (contentData.pageContent as PageContentMap)
+      : {}
 
   const alreadySubmitted = resubmit ? false : Boolean(link.submitted_at)
 
@@ -84,7 +90,7 @@ export default async function ClientPage({ params, searchParams }: Props) {
       token={token}
       projectId={link.project_id}
       projectName={project?.title ?? "Your Project"}
-      pages={pages}
+      pageContent={pageContent}
       alreadySubmitted={alreadySubmitted}
       resubmitFields={resubmitFields}
     />

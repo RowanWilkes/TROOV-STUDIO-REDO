@@ -3,6 +3,16 @@ import { createClient } from "@/lib/supabase-server"
 
 export const dynamic = "force-dynamic"
 
+function formatPageCategoryName(pageName: string | null | undefined) {
+  const raw = (pageName ?? "").trim()
+  if (!raw) return "Page"
+  return raw
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
 export async function POST(
   _: Request,
   { params }: { params: Promise<{ projectId: string }> },
@@ -24,19 +34,26 @@ export async function POST(
     .eq("status", "pending")
     .eq("is_blank", false)
 
-  if (!submissions?.length) return NextResponse.json({ updated: 0 })
+  const withActualValue = (submissions ?? []).filter((s) => {
+    const text = (s as { text_value?: string | null }).text_value
+    const fileUrl = (s as { file_url?: string | null }).file_url
+    const hasText = typeof text === "string" && text.trim() !== ""
+    const hasFile = typeof fileUrl === "string" && fileUrl.trim() !== ""
+    return hasText || hasFile
+  })
+
+  if (!withActualValue.length) return NextResponse.json({ updated: 0 })
 
   await supabase
     .from("client_submissions")
     .update({ status: "accepted" })
-    .eq("project_id", projectId)
-    .eq("status", "pending")
+    .in("id", withActualValue.map((s) => (s as { id: string }).id))
 
-  for (const sub of submissions) {
+  for (const sub of withActualValue) {
     await mapFieldToProject(supabase, session.user.id, projectId, sub as Record<string, unknown>)
   }
 
-  return NextResponse.json({ updated: submissions.length })
+  return NextResponse.json({ updated: withActualValue.length })
 }
 
 async function mapFieldToProject(
@@ -52,6 +69,14 @@ async function mapFieldToProject(
   const fileUrl = sub.file_url as string | null
   const label = sub.field_label as string
   const pageName = sub.page_name as string | null
+
+  await writeAcceptedPageContentValue(supabase, userId, projectId, {
+    type,
+    label,
+    pageName,
+    text,
+    fileUrl,
+  })
 
   // 0. selected_pages → sitemap
   if (key === "selected_pages" && text) {
@@ -206,6 +231,22 @@ async function mapFieldToProject(
     return
   }
 
+  if (key === "inspiration_image_colour_ref" && fileUrl) {
+    const { data: sgRow } = await supabase
+      .from("style_guide")
+      .select("id, data")
+      .eq("project_id", projectId)
+      .maybeSingle()
+    const current = (sgRow?.data as Record<string, unknown>) ?? {}
+    const updated = { ...current, colorReferenceImage: fileUrl }
+    if (sgRow) {
+      await supabase.from("style_guide").update({ data: updated }).eq("project_id", projectId)
+    } else {
+      await supabase.from("style_guide").insert({ project_id: projectId, user_id: userId, data: updated })
+    }
+    return
+  }
+
   if (type === "file" && fileUrl && key.startsWith("inspiration_image_")) {
     await supabase.from("mood_board_items").insert({
       project_id: projectId,
@@ -238,8 +279,8 @@ async function mapFieldToProject(
   }
 
   // 4. All file uploads → asset_section.data.uploadedAssets
-  if (type === "file" && fileUrl) {
-    const assetLabel = label
+  if ((type === "file" || type === "image") && fileUrl) {
+    const assetLabel = type === "image" ? `${formatPageCategoryName(pageName)} — ${label}` : label
     const { data: row } = await supabase.from("asset_section").select("id, data").eq("project_id", projectId).maybeSingle()
     const current = (row?.data as Record<string, unknown>) ?? {}
     const existing = Array.isArray(current.uploadedAssets)
@@ -249,4 +290,89 @@ async function mapFieldToProject(
     if (row) { await supabase.from("asset_section").update({ data: updated }).eq("project_id", projectId) }
     else { await supabase.from("asset_section").insert({ project_id: projectId, user_id: userId, data: updated }) }
   }
+}
+
+type AcceptedPageContentInput = {
+  type: string
+  label: string
+  pageName: string | null
+  text: string | null
+  fileUrl: string | null
+}
+
+async function writeAcceptedPageContentValue(
+  supabase: Awaited<ReturnType<typeof import("@/lib/supabase-server").createClient>>,
+  userId: string,
+  projectId: string,
+  input: AcceptedPageContentInput,
+) {
+  const normalizedPageName = (input.pageName ?? "").trim()
+  const normalizedLabel = (input.label ?? "").trim()
+  if (!normalizedPageName || !normalizedLabel) return
+
+  const acceptedValue =
+    input.type === "image"
+      ? (input.fileUrl ?? "").trim()
+      : (input.text ?? "").trim()
+  if (!acceptedValue) return
+
+  const { data: row } = await supabase
+    .from("content_section")
+    .select("id, data")
+    .eq("project_id", projectId)
+    .maybeSingle()
+
+  const current = (row?.data as Record<string, unknown>) ?? {}
+  const pageContentRaw = current.pageContent
+  if (!pageContentRaw || typeof pageContentRaw !== "object" || Array.isArray(pageContentRaw)) {
+    return
+  }
+
+  const pageContent = pageContentRaw as Record<string, unknown>
+  let didUpdate = false
+
+  const updatedPageContent = Object.fromEntries(
+    Object.entries(pageContent).map(([entryKey, entryValue]) => {
+      if (!entryValue || typeof entryValue !== "object" || Array.isArray(entryValue)) {
+        return [entryKey, entryValue]
+      }
+
+      const entry = entryValue as Record<string, unknown>
+      const entryPageName = typeof entry.pageName === "string" ? entry.pageName.trim() : ""
+      if (entryPageName !== normalizedPageName) {
+        return [entryKey, entryValue]
+      }
+
+      const fieldsRaw = entry.fields
+      if (!Array.isArray(fieldsRaw)) {
+        return [entryKey, entryValue]
+      }
+
+      const updatedFields = fieldsRaw.map((field) => {
+        if (!field || typeof field !== "object" || Array.isArray(field)) {
+          return field
+        }
+        const fieldRecord = field as Record<string, unknown>
+        const fieldLabel = typeof fieldRecord.label === "string" ? fieldRecord.label.trim() : ""
+        if (fieldLabel !== normalizedLabel) {
+          return field
+        }
+
+        didUpdate = true
+        if (input.type === "image") {
+          return { ...fieldRecord, value: acceptedValue, file_url: acceptedValue }
+        }
+        return { ...fieldRecord, value: acceptedValue }
+      })
+
+      return [entryKey, { ...entry, fields: updatedFields }]
+    }),
+  )
+
+  if (!didUpdate) return
+
+  const updatedData = { ...current, pageContent: updatedPageContent }
+  await supabase
+    .from("content_section")
+    .upsert({ project_id: projectId, user_id: userId, data: updatedData }, { onConflict: "project_id" })
 }

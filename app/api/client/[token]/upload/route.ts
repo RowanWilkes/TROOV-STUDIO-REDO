@@ -22,8 +22,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
 
   const formData = await request.formData()
   const file = formData.get("file") as File | null
+  const pageNameRaw = formData.get("pageName")
+  const fieldLabelRaw = formData.get("fieldLabel")
 
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 })
+
+  const sanitizePathPart = (value: string) =>
+    value
+      .trim()
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80)
 
   // Sanitize filename
   const ext = file.name.split(".").pop() ?? "bin"
@@ -31,7 +40,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     .replace(/\.[^.]+$/, "")
     .replace(/[^a-zA-Z0-9_-]/g, "_")
     .slice(0, 60)
-  const path = `${link.project_id}/${token}/${Date.now()}_${safeName}.${ext}`
+  const pageName =
+    typeof pageNameRaw === "string" && pageNameRaw.trim()
+      ? sanitizePathPart(pageNameRaw) || "page"
+      : null
+  const fieldLabel =
+    typeof fieldLabelRaw === "string" && fieldLabelRaw.trim()
+      ? sanitizePathPart(fieldLabelRaw) || "field"
+      : null
+  const path =
+    pageName && fieldLabel
+      ? `${link.project_id}/${pageName}/${fieldLabel}/${Date.now()}_${safeName}.${ext}`
+      : `${link.project_id}/${token}/${Date.now()}_${safeName}.${ext}`
 
   const bytes = await file.arrayBuffer()
   const buffer = Buffer.from(bytes)

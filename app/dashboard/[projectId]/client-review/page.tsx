@@ -11,16 +11,18 @@ import {
   X,
   CheckSquare,
   Send,
+  CheckCircle2,
   Briefcase,
   Palette,
   Sparkles,
   LayoutList,
   FolderOpen,
   FileImage,
+  FileText,
 } from "lucide-react"
 
 type SubmissionStatus = "pending" | "accepted" | "rejected"
-type FieldType = "text" | "longtext" | "file" | "color"
+type FieldType = "text" | "longtext" | "file" | "color" | "image"
 
 type Submission = {
   id: string
@@ -30,6 +32,7 @@ type Submission = {
   text_value: string | null
   color_value: string | null
   file_url: string | null
+  page_name: string | null
   status: SubmissionStatus
   step_id: string | null
   designer_note: string | null
@@ -44,6 +47,7 @@ const SECTION_ORDER: SectionConfig[] = [
   { id: "business", title: "About Your Business", icon: Briefcase },
   { id: "style", title: "Brand & Style", icon: Palette },
   { id: "inspiration", title: "Websites & Inspiration", icon: Sparkles },
+  { id: "page_content", title: "Page Content", icon: FileText },
   { id: "page_selection", title: "Website Pages", icon: LayoutList },
   { id: "assets", title: "Files & Assets", icon: FolderOpen },
 ]
@@ -57,6 +61,17 @@ const STATUS_META: Record<SubmissionStatus, { label: string; className: string }
 function isLikelyImage(url: string) {
   const u = url.toLowerCase()
   return u.includes(".png") || u.includes(".jpg") || u.includes(".jpeg") || u.includes(".webp") || u.includes(".svg")
+}
+
+function getFileNameFromUrl(url: string) {
+  try {
+    const u = new URL(url)
+    const name = u.pathname.split("/").pop() ?? ""
+    return decodeURIComponent(name)
+  } catch {
+    const parts = url.split("/")
+    return decodeURIComponent(parts[parts.length - 1] ?? "")
+  }
 }
 
 function groupIntoBatches(subs: Submission[]) {
@@ -94,6 +109,12 @@ function parseSelectedPages(text: string | null) {
 
 function isBlankFileField(s: Submission) {
   return s.is_blank && s.field_type === "file"
+}
+
+function isSubmissionBlankish(s: Submission) {
+  const textEmpty = s.text_value == null || s.text_value.trim() === ""
+  const fileEmpty = s.file_url == null || s.file_url.trim() === ""
+  return s.is_blank || (textEmpty && fileEmpty)
 }
 
 export default function ClientReviewPage() {
@@ -135,7 +156,7 @@ export default function ClientReviewPage() {
         supabase.from("projects").select("title").eq("id", projectId).maybeSingle(),
         supabase
           .from("client_submissions")
-          .select("id, field_key, field_label, field_type, text_value, color_value, file_url, status, step_id, designer_note, resubmission_requested, created_at, is_blank")
+          .select("id, field_key, field_label, field_type, text_value, color_value, file_url, page_name, status, step_id, designer_note, resubmission_requested, created_at, is_blank")
           .eq("project_id", projectId)
           .order("created_at", { ascending: false }),
       ])
@@ -169,12 +190,14 @@ export default function ClientReviewPage() {
     [submissions],
   )
 
-  const acceptedCount = visibleSubmissions.filter((s) => s.status === "accepted").length
-  const totalCount = visibleSubmissions.length
-  const hasRejected = visibleSubmissions.some((s) => s.status === "rejected")
-  const allReviewed = visibleSubmissions.every((s) => s.status === "accepted" || s.status === "rejected")
-  const rejectedCount = visibleSubmissions.filter((s) => s.status === "rejected").length
-  const pendingNonBlank = visibleSubmissions.filter((s) => s.status === "pending" && !s.is_blank)
+  const fillableSubmissions = visibleSubmissions.filter((s) => !isSubmissionBlankish(s))
+  const acceptedCount = fillableSubmissions.filter((s) => s.status === "accepted").length
+  const totalCount = fillableSubmissions.length
+  const hasRejected = fillableSubmissions.some((s) => s.status === "rejected")
+  const allReviewed = fillableSubmissions.every((s) => s.status === "accepted" || s.status === "rejected")
+  const allAccepted = totalCount > 0 && acceptedCount === totalCount
+  const rejectedCount = fillableSubmissions.filter((s) => s.status === "rejected").length
+  const pendingNonBlank = fillableSubmissions.filter((s) => s.status === "pending")
 
   const sections = useMemo(() => {
     const byStep = new Map<string, Submission[]>()
@@ -348,7 +371,7 @@ export default function ClientReviewPage() {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {!allReviewed || hasRejected ? (
+            {!allAccepted ? (
               <button
                 type="button"
                 onClick={() => router.push(`/dashboard?project=${projectId}`)}
@@ -395,7 +418,7 @@ export default function ClientReviewPage() {
                   {feedbackSent ? "Feedback Sent ✓" : "Send Feedback to Client"}
                 </button>
               </div>
-            ) : allReviewed && hasRejected ? (
+            ) : hasRejected ? (
               <div className="flex flex-col items-end gap-1">
                 <button
                   type="button"
@@ -444,6 +467,15 @@ export default function ClientReviewPage() {
         )}
       </div>
 
+      {allAccepted && (
+        <div className="max-w-5xl mx-auto px-6 pt-4">
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>All content reviewed — your project has been updated. Head back to your dashboard to continue.</span>
+          </div>
+        </div>
+      )}
+
       {feedbackSent && feedbackEmailInfo && (
         <div className="max-w-5xl mx-auto px-6 pt-4">
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -491,7 +523,7 @@ export default function ClientReviewPage() {
         {sections.map((section) => {
           const Icon = section.icon
           const nonBlankFields = section.items.filter((f) => !(f.is_blank && f.field_type === "file"))
-          const pendingIds = section.items.filter((s) => s.status === "pending" && !s.is_blank).map((s) => s.id)
+          const pendingIds = section.items.filter((s) => s.status === "pending" && !isSubmissionBlankish(s)).map((s) => s.id)
 
           const inspirationNotesByIndex = new Map<number, Submission>()
           const inspirationImagesByIndex = new Map<number, Submission>()
@@ -540,9 +572,142 @@ export default function ClientReviewPage() {
                 </div>
 
                 <div className="divide-y divide-gray-100">
-                  {itemsToRender.map((s) => {
+                  {section.id === "page_content"
+                    ? Array.from(
+                        itemsToRender.reduce((acc, s) => {
+                          const key = s.page_name?.trim() || "General"
+                          acc.set(key, [...(acc.get(key) ?? []), s])
+                          return acc
+                        }, new Map<string, Submission[]>()),
+                      ).map(([pageName, pageItems]) => (
+                        <div key={`${section.id}-${pageName}`} className="px-5 py-4">
+                          <h3 className="mb-2 mt-4 text-sm font-semibold text-gray-600 first:mt-0">{pageName}</h3>
+                          <div className="space-y-3">
+                            {pageItems.map((s) => {
+                              const isUpdating = updatingIds.has(s.id)
+                              const statusMeta = STATUS_META[s.status]
+                              const noteText = (draftNotes[s.id] ?? "").toString()
+                              const noteCharCount = noteText.length
+                              const fileName = s.file_url ? getFileNameFromUrl(s.file_url) : ""
+                              const hideReviewActions =
+                                isSubmissionBlankish(s)
+
+                              return (
+                                <div
+                                  key={s.id}
+                                  className={`rounded-lg border border-gray-100 px-4 py-3 ${s.status === "rejected" ? "bg-amber-50/30" : "bg-white"}`}
+                                >
+                                  <div className="flex items-start gap-4">
+                                    <div className="min-w-0 flex-1">
+                                      <p className="mb-1 text-xs text-gray-400">{s.page_name || "General"}</p>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="text-sm font-medium text-gray-600">{s.field_label}</p>
+                                        {!(s.status === "pending" && hideReviewActions) && (
+                                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
+                                        )}
+                                        {s.is_blank && (
+                                          <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">Blank</span>
+                                        )}
+                                      </div>
+
+                                      {(s.field_type === "text" || s.field_type === "longtext") && (
+                                        <div className="mt-2">
+                                          <p className={`text-sm text-gray-900 ${s.field_type === "longtext" ? "whitespace-pre-wrap leading-relaxed" : ""}`}>
+                                            {s.text_value || (s.is_blank ? "—" : "")}
+                                          </p>
+                                        </div>
+                                      )}
+
+                                      {s.field_type === "image" && (
+                                        <div className="mt-2">
+                                          {s.file_url ? (
+                                            <div className="space-y-2">
+                                              <img
+                                                src={s.file_url}
+                                                alt={s.field_label}
+                                                className="max-h-32 rounded-md object-cover border border-gray-200 bg-gray-50"
+                                              />
+                                              <p className="text-xs text-gray-500">{fileName}</p>
+                                            </div>
+                                          ) : (
+                                            <p className="text-sm text-gray-500">No image uploaded</p>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {s.status === "pending" && !hideReviewActions && (
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        <button
+                                          type="button"
+                                          disabled={isUpdating || s.is_blank}
+                                          onClick={() => patchStatus(s.id, "accept")}
+                                          className="border border-gray-300 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                          title="Accept"
+                                        >
+                                          <Check className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={isUpdating || s.is_blank}
+                                          onClick={() => patchStatus(s.id, "reject")}
+                                          className="border border-gray-300 bg-white hover:border-red-400 hover:bg-red-50 hover:text-red-500 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                          title="Reject"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {s.status === "rejected" && (
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        <button
+                                          type="button"
+                                          disabled={isUpdating || s.is_blank}
+                                          onClick={() => undoReject(s.id)}
+                                          className="border border-gray-300 bg-white hover:border-red-400 hover:bg-red-50 hover:text-red-500 text-gray-400 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                          title="Reset to pending"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {s.status === "rejected" && (
+                                    <div className="mt-4 pl-0">
+                                      <div className="flex items-center justify-between">
+                                        <p className="text-xs font-medium text-gray-500">Designer note</p>
+                                        <p className="text-[11px] text-gray-400">{noteCharCount} chars</p>
+                                      </div>
+                                      <textarea
+                                        value={noteText}
+                                        onChange={(e) => setDraftNotes((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                                        onBlur={() => saveNote(s.id)}
+                                        placeholder="Leave a note for your client about this field..."
+                                        rows={3}
+                                        className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => saveNote(s.id)}
+                                        className="mt-2 text-xs text-emerald-600 hover:text-emerald-700"
+                                      >
+                                        Save note
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    : itemsToRender.map((s) => {
                     const isUpdating = updatingIds.has(s.id)
                     const statusMeta = STATUS_META[s.status]
+                    const hideReviewActions =
+                      isSubmissionBlankish(s)
 
                     const selectedPages = s.field_key === "selected_pages" ? parseSelectedPages(s.text_value) : null
                     const noteText = (draftNotes[s.id] ?? "").toString()
@@ -557,7 +722,9 @@ export default function ClientReviewPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-medium text-gray-600">{s.field_label}</p>
-                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
+                              {!(s.status === "pending" && hideReviewActions) && (
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusMeta.className}`}>{statusMeta.label}</span>
+                              )}
                               {s.is_blank && (
                                 <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">Blank</span>
                               )}
@@ -622,7 +789,7 @@ export default function ClientReviewPage() {
                             )}
                           </div>
 
-                          {s.status === "pending" && (
+                          {s.status === "pending" && !hideReviewActions && (
                             <div className="flex items-center gap-2 flex-shrink-0">
                               <button
                                 type="button"

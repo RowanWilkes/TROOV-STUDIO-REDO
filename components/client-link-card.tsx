@@ -7,8 +7,9 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Link2, Copy, Check, ExternalLink, Calendar, RefreshCw, Upload, CheckCircle2 } from "lucide-react"
+import { Link2, Copy, Check, ExternalLink, Calendar, RefreshCw, Upload, CheckCircle2, Info } from "lucide-react"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabase"
 
 type ClientLink = {
   id: string
@@ -63,6 +64,10 @@ export function ClientLinkCard({ projectId }: Props) {
   const router = useRouter()
   const [link, setLink] = useState<ClientLink | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingSitemapCheck, setLoadingSitemapCheck] = useState(true)
+  const [loadingPageContentCheck, setLoadingPageContentCheck] = useState(true)
+  const [hasSitemapPages, setHasSitemapPages] = useState(false)
+  const [hasPageContentFields, setHasPageContentFields] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [expiresAt, setExpiresAt] = useState("")
   const [generating, setGenerating] = useState(false)
@@ -88,6 +93,42 @@ export function ClientLinkCard({ projectId }: Props) {
       .catch(() => {
         if (!cancelled) setLoading(false)
       })
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
+
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    setLoadingSitemapCheck(true)
+    setLoadingPageContentCheck(true)
+
+    ;(async () => {
+      const [{ data: sitemapRow }, { data: contentRow }] = await Promise.all([
+        supabase.from("sitemap").select("pages").eq("project_id", projectId).maybeSingle(),
+        supabase.from("content_section").select("data").eq("project_id", projectId).maybeSingle(),
+      ])
+      if (cancelled) return
+
+      const sitemapPages = Array.isArray(sitemapRow?.pages) ? sitemapRow.pages : []
+      setHasSitemapPages(sitemapPages.length > 0)
+      setLoadingSitemapCheck(false)
+
+      const raw = (contentRow?.data as Record<string, unknown> | null) ?? null
+      const pageContent =
+        raw && raw.pageContent && typeof raw.pageContent === "object" && !Array.isArray(raw.pageContent)
+          ? (raw.pageContent as Record<string, unknown>)
+          : {}
+      const hasFields = Object.values(pageContent).some((entry) => {
+        if (!entry || typeof entry !== "object") return false
+        const fields = (entry as { fields?: unknown }).fields
+        return Array.isArray(fields) && fields.length > 0
+      })
+      setHasPageContentFields(hasFields)
+      setLoadingPageContentCheck(false)
+    })()
+
     return () => {
       cancelled = true
     }
@@ -221,7 +262,7 @@ export function ClientLinkCard({ projectId }: Props) {
 
         {/* ── Loading skeleton ── */}
         {loading && (
-          <div className="px-6 py-4 border-b border-gray-100">
+          <div className="px-6 py-4">
             <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3 mb-2" />
             <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
           </div>
@@ -262,7 +303,7 @@ export function ClientLinkCard({ projectId }: Props) {
 
         {/* ── Optional client email (no link yet) ── */}
         {status === "none" && !loading && (
-          <div className="px-6 py-4 border-b border-gray-100 bg-white">
+          <div className="px-6 py-4 bg-white">
             <label className="text-sm font-medium text-gray-700">Client email (optional)</label>
             <p className="text-xs text-gray-400 mb-1">Used to send feedback requests directly to your client</p>
             <input
@@ -277,7 +318,7 @@ export function ClientLinkCard({ projectId }: Props) {
 
         {/* ── Active / Disabled — show URL + controls ── */}
         {(status === "active" || status === "disabled") && link && shareUrl && !loading && (
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/70">
+          <div className="px-6 py-4 bg-gray-50/70">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Client link</p>
             <div className="flex items-center gap-2 mb-3">
               <div className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500 font-mono truncate">
@@ -287,19 +328,19 @@ export function ClientLinkCard({ projectId }: Props) {
                 type="button"
                 onClick={handleCopy}
                 title="Copy link"
-                className="h-8 w-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0"
+                className="flex shrink-0 items-center justify-center rounded-md bg-gray-900 px-3 py-2 text-white transition-colors hover:bg-gray-700"
               >
                 {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  <Check className="h-3.5 w-3.5 text-emerald-300" />
                 ) : (
-                  <Copy className="h-3.5 w-3.5 text-gray-400" />
+                  <Copy className="h-3.5 w-3.5 text-white" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => window.open(shareUrl, "_blank")}
                 title="Open link"
-                className="h-8 w-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors hover:bg-gray-50"
               >
                 <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
               </button>
@@ -398,7 +439,7 @@ export function ClientLinkCard({ projectId }: Props) {
 
         {/* ── Expired banner ── */}
         {status === "expired" && link && !loading && (
-          <div className="px-6 py-4 border-b border-gray-100 bg-amber-50/60">
+          <div className="px-6 py-4 bg-amber-50/60">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-amber-500 shrink-0" />
               <div>
@@ -416,6 +457,63 @@ export function ClientLinkCard({ projectId }: Props) {
         )}
 
         {/* ── Footer actions ── */}
+        {status !== "submitted" && (
+          <div className="px-6">
+            <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Before you send</p>
+
+              {loadingSitemapCheck ? (
+                <div className="mb-2 flex items-center gap-2 text-xs">
+                  <div className="h-3 w-40 animate-pulse rounded bg-gray-200" />
+                </div>
+              ) : hasSitemapPages ? (
+                <div className="mb-2 flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span className="text-gray-600">Sitemap pages added</span>
+                </div>
+              ) : (
+                <div className="mb-2 flex items-center gap-2 text-xs">
+                  <Info className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-gray-500">
+                    No sitemap pages added —{" "}
+                    <button
+                      type="button"
+                      className="text-gray-500 underline"
+                      onClick={() => router.push(`/dashboard?project=${encodeURIComponent(projectId)}&view=sitemap`)}
+                    >
+                      add them in Sitemap
+                    </button>
+                  </span>
+                </div>
+              )}
+
+              {loadingPageContentCheck ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="h-3 w-56 animate-pulse rounded bg-gray-200" />
+                </div>
+              ) : hasPageContentFields ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span className="text-gray-600">Page content fields set up — your client will be asked to fill in copy for each page</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs">
+                  <Info className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-gray-500">
+                    Want your client to fill in copy for specific pages?{" "}
+                    <button
+                      type="button"
+                      className="text-gray-500 underline"
+                      onClick={() => router.push(`/dashboard?project=${encodeURIComponent(projectId)}&view=content`)}
+                    >
+                      Set up page content fields in Content →
+                    </button>
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="px-6 py-4 flex items-center gap-3">
           {status === "submitted" && (
             <Button
@@ -433,7 +531,7 @@ export function ClientLinkCard({ projectId }: Props) {
             className={
               status === "none"
                 ? "gap-2 text-white"
-                : "gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 hover:border-gray-400"
+                : "gap-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900"
             }
             style={status === "none" ? { background: "#7C3AED" } : {}}
           >

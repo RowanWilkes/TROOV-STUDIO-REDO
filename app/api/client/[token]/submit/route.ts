@@ -7,10 +7,20 @@ export const dynamic = "force-dynamic"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+function formatPageCategoryName(pageName: string | null | undefined) {
+  const raw = (pageName ?? "").trim()
+  if (!raw) return "Page"
+  return raw
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
 type FieldSubmission = {
   fieldKey: string
   fieldLabel: string
-  fieldType: "text" | "longtext" | "file" | "color"
+  fieldType: string
   pageName: string | null
   stepId?: string | null
   textValue: string | null
@@ -69,6 +79,40 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   if (insertError) {
     console.error("[client-submit] insert error:", insertError)
     return NextResponse.json({ error: "Failed to save submission" }, { status: 500 })
+  }
+
+  const imageRows = fields.filter((f) => f.fieldType === "image" && f.fileUrl)
+  if (imageRows.length > 0) {
+    const { data: assetRow } = await supabase
+      .from("asset_section")
+      .select("id, data")
+      .eq("project_id", link.project_id)
+      .maybeSingle()
+    const current = (assetRow?.data as Record<string, unknown>) ?? {}
+    const existing = Array.isArray(current.uploadedAssets)
+      ? (current.uploadedAssets as Array<{ id: string; name: string; data: string; label: string }>)
+      : []
+    const appended = imageRows.map((f) => ({
+      id: crypto.randomUUID(),
+      name: f.fieldLabel,
+      data: f.fileUrl as string,
+      label: `${formatPageCategoryName(f.pageName)} — ${f.fieldLabel}`,
+    }))
+    const updated = { ...current, uploadedAssets: [...existing, ...appended] }
+    if (assetRow) {
+      await supabase.from("asset_section").update({ data: updated }).eq("project_id", link.project_id)
+    } else {
+      const { data: ownerRow } = await supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", link.project_id)
+        .maybeSingle()
+      await supabase.from("asset_section").insert({
+        project_id: link.project_id,
+        user_id: ownerRow?.user_id ?? null,
+        data: updated,
+      })
+    }
   }
 
   if (!isResubmit) {

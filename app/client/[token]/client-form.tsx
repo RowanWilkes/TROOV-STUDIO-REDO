@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 
-type SitemapPage = { id: string; name: string; path?: string }
 type FormField = {
   key: string
   label: string
@@ -18,9 +17,21 @@ type FormStep = {
   subtitle: string
   fields: FormField[]
 }
-type PageSelection = { id: string; name: string; isCustom?: boolean }
 type InspirationImage = { file: File; note: string }
 type WebsiteReference = { url: string; note: string }
+type PageContentFieldType = "heading" | "paragraph" | "cta" | "custom" | "image"
+type PageContentField = {
+  id: string
+  label: string
+  type: PageContentFieldType
+  hint?: string
+  value?: string
+}
+type PageContentEntry = {
+  pageName: string
+  fields: PageContentField[]
+}
+type PageContentMap = Record<string, PageContentEntry>
 
 type ReviewItem =
   | { kind: "text"; key: string; stepTitle: string; label: string; value: string }
@@ -32,7 +43,7 @@ type Props = {
   token: string
   projectId: string
   projectName: string
-  pages: SitemapPage[]
+  pageContent: PageContentMap
   alreadySubmitted: boolean
   resubmitFields?: string[]
 }
@@ -83,15 +94,6 @@ function buildSteps(): FormStep[] {
     fields: [],
   })
 
-  // Page selection step is rendered separately (not as a FormStep with fields)
-  // so we only add it as a sentinel to track step count
-  steps.push({
-    id: "page_selection",
-    title: "Your Website Pages",
-    subtitle: "Tell your designer which pages your website needs.",
-    fields: [],
-  })
-
   steps.push({
     id: "assets",
     title: "Files & Assets",
@@ -103,10 +105,6 @@ function buildSteps(): FormStep[] {
   })
 
   return steps
-}
-
-function wantsSelectedPagesResubmit(set: Set<string>) {
-  return set.has("selected_pages")
 }
 
 function wantsAssetsResubmit(set: Set<string>) {
@@ -196,7 +194,7 @@ function fieldCardHighlightClass(isResubmit: boolean, field: FormField, resubmit
   return match ? "ring-2 ring-amber-300 border-amber-200" : ""
 }
 
-export function ClientForm({ token, projectName, alreadySubmitted, resubmitFields }: Props) {
+export function ClientForm({ token, projectId, projectName, pageContent, alreadySubmitted, resubmitFields }: Props) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isReview, setIsReview] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -217,37 +215,79 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
   const logoFilesRef = useRef<HTMLInputElement | null>(null)
   const [brandColourRef, setBrandColourRef] = useState<File | null>(null)
   const brandColourRefRef = useRef<HTMLInputElement | null>(null)
-  const [selectedPages, setSelectedPages] = useState<PageSelection[]>([{ id: "home", name: "Home" }])
-  const [customPageInput, setCustomPageInput] = useState("")
+  const [pageContentValues, setPageContentValues] = useState<Record<string, string>>({})
+  const [pageContentImageFiles, setPageContentImageFiles] = useState<Record<string, File | null>>({})
+  const pageContentImageRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const resubmitSet = useMemo(() => new Set(resubmitFields ?? []), [resubmitFields])
   const isResubmit = (resubmitFields?.length ?? 0) > 0
 
+  const pageContentSections = useMemo(() => {
+    const rows = Object.values(pageContent ?? {})
+    return rows
+      .map((entry) => {
+        const pageName = typeof entry?.pageName === "string" ? entry.pageName : "Page"
+        const rawFields = Array.isArray(entry?.fields) ? entry.fields : []
+        const fields = rawFields.filter((f) => {
+          if (!f || typeof f.id !== "string" || typeof f.label !== "string" || typeof f.type !== "string") return false
+          if (!isResubmit) return true
+          return resubmitSet.has(f.id)
+        })
+        return { pageName, fields }
+      })
+      .filter((entry) => entry.fields.length > 0)
+  }, [pageContent, isResubmit, resubmitSet])
+
+  const hasPageContentStep = pageContentSections.length > 0
+
   const allSteps = buildSteps()
   const steps = useMemo(() => {
-    if (!isResubmit) return allSteps
+    const base = (() => {
+      if (!isResubmit) return allSteps
 
-    const filtered: FormStep[] = []
-    for (const s of allSteps) {
-      if (s.id === "page_selection") {
-        if (wantsSelectedPagesResubmit(resubmitSet)) filtered.push(s)
-        continue
-      }
-      if (s.id === "inspiration") {
-        if (wantsInspirationStepResubmit(resubmitSet)) filtered.push(s)
-        continue
-      }
-      if (s.id === "assets") {
-        if (!wantsAssetsResubmit(resubmitSet)) continue
-        const fields = s.fields.filter((f) => fieldMatchesResubmitFormField(f.key, resubmitSet))
+      const filtered: FormStep[] = []
+      for (const s of allSteps) {
+        if (s.id === "inspiration") {
+          if (wantsInspirationStepResubmit(resubmitSet)) filtered.push(s)
+          continue
+        }
+        if (s.id === "assets") {
+          if (!wantsAssetsResubmit(resubmitSet)) continue
+          const fields = s.fields.filter((f) => fieldMatchesResubmitFormField(f.key, resubmitSet))
+          if (fields.length > 0) filtered.push({ ...s, fields })
+          continue
+        }
+        const fields = s.fields.filter((f) => resubmitSet.has(f.key))
         if (fields.length > 0) filtered.push({ ...s, fields })
-        continue
       }
-      const fields = s.fields.filter((f) => resubmitSet.has(f.key))
-      if (fields.length > 0) filtered.push({ ...s, fields })
-    }
-    return filtered
-  }, [allSteps, isResubmit, resubmitSet])
+      return filtered
+    })()
+    if (!hasPageContentStep) return base
+    return [
+      ...base,
+      {
+        id: "page_content",
+        title: "Page Content",
+        subtitle:
+          "Your designer has set up your site pages and needs specific content and images for each one. Fill in as much as you can — you can always leave fields blank.",
+        fields: [],
+      },
+    ]
+  }, [allSteps, isResubmit, resubmitSet, hasPageContentStep])
+
+  useEffect(() => {
+    if (pageContentSections.length === 0) return
+    setPageContentValues((prev) => {
+      const next = { ...prev }
+      for (const section of pageContentSections) {
+        for (const field of section.fields) {
+          if (field.type === "image") continue
+          if (next[field.id] == null) next[field.id] = field.value ?? ""
+        }
+      }
+      return next
+    })
+  }, [pageContentSections])
 
   useEffect(() => {
     if (steps.length === 0) return
@@ -362,6 +402,32 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       })
     }
 
+    for (const section of pageContentSections) {
+      for (const field of section.fields) {
+        if (field.type === "image") {
+          const file = pageContentImageFiles[field.id]
+          if (!file) continue
+          out.push({
+            kind: "file",
+            key: nextKey(),
+            stepTitle: "Page Content",
+            label: `${section.pageName} — ${field.label}`,
+            objectUrl: URL.createObjectURL(file),
+          })
+          continue
+        }
+        const val = pageContentValues[field.id] ?? ""
+        if (!val.trim()) continue
+        out.push({
+          kind: "text",
+          key: nextKey(),
+          stepTitle: "Page Content",
+          label: `${section.pageName} — ${field.label}`,
+          value: val,
+        })
+      }
+    }
+
     return out
   }, [
     isReview,
@@ -376,6 +442,9 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
     brandAssets,
     inspirationImages,
     brandColourRef,
+    pageContentSections,
+    pageContentImageFiles,
+    pageContentValues,
   ])
 
   useEffect(() => {
@@ -403,9 +472,14 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
     setBrandAssets((prev) => prev.filter((_, i) => i !== index))
   }
 
-  async function uploadFile(file: File): Promise<string | null> {
+  async function uploadFile(
+    file: File,
+    options?: { pageName?: string; fieldLabel?: string },
+  ): Promise<string | null> {
     const fd = new FormData()
     fd.append("file", file)
+    if (options?.pageName) fd.append("pageName", options.pageName)
+    if (options?.fieldLabel) fd.append("fieldLabel", options.fieldLabel)
     const res = await fetch(`/api/client/${token}/upload`, { method: "POST", body: fd })
     if (!res.ok) return null
     const data = await res.json()
@@ -419,7 +493,7 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
       type FieldPayload = {
         fieldKey: string
         fieldLabel: string
-        fieldType: "text" | "longtext" | "file" | "color"
+        fieldType: string
         pageName: string | null
         stepId: string
         textValue: string | null
@@ -671,19 +745,41 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
         })
       }
 
-      // Add selected pages as a special submission field
-      if (!isResubmit || resubmitSet.has("selected_pages")) {
-        fields.push({
-          fieldKey: "selected_pages",
-          fieldLabel: "Selected Pages",
-          fieldType: "text",
-          pageName: null,
-          stepId: "page_selection",
-          textValue: JSON.stringify(selectedPages.map((p) => ({ id: p.id, name: p.name }))),
-          colorValue: null,
-          fileUrl: null,
-          isBlank: selectedPages.length === 0,
-        })
+      if (hasPageContentStep) {
+        for (const section of pageContentSections) {
+          for (const field of section.fields) {
+            if (field.type === "image") {
+              const file = pageContentImageFiles[field.id]
+              const url = file
+                ? await uploadFile(file, { pageName: section.pageName, fieldLabel: field.label })
+                : null
+              fields.push({
+                fieldKey: field.id,
+                fieldLabel: field.label,
+                fieldType: "image",
+                pageName: section.pageName,
+                stepId: "page_content",
+                textValue: null,
+                colorValue: null,
+                fileUrl: url,
+                isBlank: url === null,
+              })
+            } else {
+              const val = pageContentValues[field.id] ?? ""
+              fields.push({
+                fieldKey: field.id,
+                fieldLabel: field.label,
+                fieldType: field.type,
+                pageName: section.pageName,
+                stepId: "page_content",
+                textValue: val || null,
+                colorValue: null,
+                fileUrl: null,
+                isBlank: !val.trim(),
+              })
+            }
+          }
+        }
       }
 
       const res = await fetch(`/api/client/${token}/submit`, {
@@ -707,7 +803,9 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
     }
   }
 
-  const totalFields = steps.reduce((acc, s) => acc + s.fields.length, 0)
+  const totalFields =
+    steps.reduce((acc, s) => acc + s.fields.length, 0) +
+    pageContentSections.reduce((acc, section) => acc + section.fields.length, 0)
 
   if (submitted) {
     return (
@@ -789,8 +887,6 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
   const isLastStep = currentStep === steps.length - 1
   const showWebsitesInspiration = !isResubmit || wantsWebsitesInspirationSection(resubmitSet)
   const showScreenshotsInspiration = !isResubmit || wantsScreenshotsInspirationSection(resubmitSet)
-  const pageSelectionHighlight =
-    isResubmit && wantsSelectedPagesResubmit(resubmitSet) ? "ring-2 ring-amber-300 border-amber-200" : ""
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F7F5FF", fontFamily: "var(--font-body)" }}>
@@ -818,128 +914,93 @@ export function ClientForm({ token, projectName, alreadySubmitted, resubmitField
           <p className="text-gray-500 text-sm">{step.subtitle}</p>
         </div>
 
-        {step.id === "page_selection" ? (
-          <div className="space-y-4">
-            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${pageSelectionHighlight}`}>
-              <p className="text-sm font-semibold text-gray-800 mb-1">Which pages do you need?</p>
-              <p className="text-xs text-gray-400 mb-4">Select all that apply. Home is always included.</p>
-              <div className="space-y-2">
-                {[
-                  { id: "home", name: "Home" },
-                  { id: "about", name: "About Us" },
-                  { id: "services", name: "Services" },
-                  { id: "contact", name: "Contact" },
-                  { id: "blog", name: "Blog / News" },
-                  { id: "faq", name: "FAQ" },
-                  { id: "gallery", name: "Gallery / Portfolio" },
-                  { id: "testimonials", name: "Testimonials" },
-                  { id: "pricing", name: "Pricing" },
-                  { id: "booking", name: "Book / Enquire" },
-                ].map((page) => {
-                  const isHome = page.id === "home"
-                  const isSelected = selectedPages.some((p) => p.id === page.id)
-                  return (
-                    <button
-                      key={page.id}
-                      type="button"
-                      disabled={isHome}
-                      onClick={() => {
-                        if (isHome) return
-                        setSelectedPages((prev) =>
-                          isSelected ? prev.filter((p) => p.id !== page.id) : [...prev, { id: page.id, name: page.name }],
-                        )
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
-                        isSelected
-                          ? "border-[#4E4499] bg-purple-50/60 text-[#4E4499]"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      } ${isHome ? "opacity-60 cursor-default" : "cursor-pointer"}`}
-                    >
-                      <div
-                        className={`h-5 w-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isSelected ? "border-[#4E4499] bg-[#4E4499]" : "border-gray-300"
-                        }`}
-                      >
-                        {isSelected && (
-                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-sm font-medium">{page.name}</span>
-                      {isHome && <span className="text-xs text-gray-400 ml-auto">Always included</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+        {step.id === "page_content" ? (
+          <div className="space-y-5">
+            {pageContentSections.map((section) => (
+              <div key={section.pageName} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">{section.pageName}</h3>
+                <div className="space-y-4">
+                  {section.fields.map((field) => (
+                    <div key={field.id} className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">{field.label}</label>
+                      {field.hint ? <p className="text-xs text-gray-400">{field.hint}</p> : null}
 
-            <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${pageSelectionHighlight}`}>
-              <p className="text-sm font-semibold text-gray-800 mb-1">Need a page not listed above?</p>
-              <p className="text-xs text-gray-400 mb-3">Type the name and press Add.</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customPageInput}
-                  onChange={(e) => setCustomPageInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      const name = customPageInput.trim()
-                      if (!name) return
-                      const id = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-                      if (!selectedPages.some((p) => p.id === id)) {
-                        setSelectedPages((prev) => [...prev, { id, name, isCustom: true }])
-                      }
-                      setCustomPageInput("")
-                    }
-                  }}
-                  placeholder="e.g. Our Team, Case Studies, Shop..."
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const name = customPageInput.trim()
-                    if (!name) return
-                    const id = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-                    if (!selectedPages.some((p) => p.id === id)) {
-                      setSelectedPages((prev) => [...prev, { id, name, isCustom: true }])
-                    }
-                    setCustomPageInput("")
-                  }}
-                  className="px-5 py-3 rounded-xl font-semibold text-white text-sm transition-colors"
-                  style={{ backgroundColor: "#4E4499" }}
-                >
-                  Add
-                </button>
-              </div>
-              {selectedPages.filter((p) => p.isCustom).length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedPages.filter((p) => p.isCustom).map((page) => (
-                    <span
-                      key={page.id}
-                      className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium px-3 py-1.5 rounded-full"
-                    >
-                      {page.name}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPages((prev) => prev.filter((p) => p.id !== page.id))}
-                        className="text-purple-400 hover:text-purple-700 transition-colors"
-                      >
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </span>
+                      {(field.type === "heading" || field.type === "cta") && (
+                        <input
+                          type="text"
+                          value={pageContentValues[field.id] ?? ""}
+                          onChange={(e) => setPageContentValues((p) => ({ ...p, [field.id]: e.target.value }))}
+                          placeholder={field.value ?? ""}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all"
+                        />
+                      )}
+
+                      {field.type === "paragraph" && (
+                        <textarea
+                          rows={4}
+                          value={pageContentValues[field.id] ?? ""}
+                          onChange={(e) => setPageContentValues((p) => ({ ...p, [field.id]: e.target.value }))}
+                          placeholder={field.value ?? ""}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+                        />
+                      )}
+
+                      {field.type === "custom" && (
+                        <textarea
+                          rows={3}
+                          value={pageContentValues[field.id] ?? ""}
+                          onChange={(e) => setPageContentValues((p) => ({ ...p, [field.id]: e.target.value }))}
+                          placeholder={field.value ?? ""}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#4E4499] focus:ring-2 focus:ring-[#4E4499]/20 transition-all resize-none"
+                        />
+                      )}
+
+                      {field.type === "image" && (
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => pageContentImageRefs.current[field.id]?.click()}
+                            className="w-full rounded-xl border-2 border-dashed border-gray-200 py-6 flex flex-col items-center gap-2 hover:border-[#4E4499] hover:bg-purple-50/30 transition-colors"
+                          >
+                            <svg className="h-7 w-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <span className="text-sm text-gray-500">Upload image</span>
+                            <span className="text-xs text-gray-300">PNG, JPG, WebP</span>
+                          </button>
+                          {pageContentImageFiles[field.id] ? (
+                            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5">
+                              <p className="flex-1 text-sm text-gray-700 truncate">{pageContentImageFiles[field.id]!.name}</p>
+                              <button
+                                type="button"
+                                onClick={() => setPageContentImageFiles((p) => ({ ...p, [field.id]: null }))}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : null}
+                          <input
+                            ref={(el) => {
+                              pageContentImageRefs.current[field.id] = el
+                            }}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] ?? null
+                              setPageContentImageFiles((p) => ({ ...p, [field.id]: file }))
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
-              )}
-            </div>
-
-            <p className="text-xs text-gray-400 text-center">
-              {selectedPages.length} page{selectedPages.length !== 1 ? "s" : ""} selected — your designer will use this to build your sitemap
-            </p>
+              </div>
+            ))}
           </div>
         ) : step.id === "inspiration" ? (
           <div className="space-y-5">
