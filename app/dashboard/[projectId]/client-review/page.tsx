@@ -231,6 +231,40 @@ export default function ClientReviewPage() {
       if (!res.ok) throw new Error(data.error ?? "Update failed")
 
       setAllSubs((prev) => prev.map((s) => (s.id === submissionId ? { ...s, ...data.submission } : s)))
+      if (action === "accept" && data?.submission) {
+        const submission = data.submission as Submission
+        try {
+          const { data: csRow } = await supabase
+            .from("content_section")
+            .select("data")
+            .eq("project_id", projectId)
+            .maybeSingle()
+
+          if ((csRow?.data as Record<string, any> | undefined)?.pageContent) {
+            const updatedPageContent = { ...(csRow.data as Record<string, any>).pageContent }
+            for (const pageKey of Object.keys(updatedPageContent)) {
+              const page = updatedPageContent[pageKey]
+              if (page.pageName?.toLowerCase() === submission.page_name?.toLowerCase()) {
+                updatedPageContent[pageKey] = {
+                  ...page,
+                  fields: page.fields.map((f: any) =>
+                    f.label === submission.field_label
+                      ? { ...f, value: submission.field_type === "image" ? submission.file_url : submission.text_value }
+                      : f
+                  )
+                }
+              }
+            }
+            const { error: writeError } = await supabase
+              .from("content_section")
+              .update({ data: { ...(csRow.data as Record<string, any>), pageContent: updatedPageContent }, updated_at: new Date().toISOString() })
+              .eq("project_id", projectId)
+            if (writeError) console.error("content_section write-back failed:", writeError)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
     } catch {
       toast.error("Failed to update field.")
     } finally {
@@ -289,9 +323,43 @@ export default function ClientReviewPage() {
   async function acceptAll() {
     setAcceptingAll(true)
     try {
+      const acceptedSubs = pendingNonBlank
       const res = await fetch(`/api/client-review/${projectId}/accept-all`, { method: "POST" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Failed")
+      for (const submission of acceptedSubs) {
+        try {
+          const { data: csRow } = await supabase
+            .from("content_section")
+            .select("data")
+            .eq("project_id", projectId)
+            .maybeSingle()
+
+          if ((csRow?.data as Record<string, any> | undefined)?.pageContent) {
+            const updatedPageContent = { ...(csRow.data as Record<string, any>).pageContent }
+            for (const pageKey of Object.keys(updatedPageContent)) {
+              const page = updatedPageContent[pageKey]
+              if (page.pageName?.toLowerCase() === submission.page_name?.toLowerCase()) {
+                updatedPageContent[pageKey] = {
+                  ...page,
+                  fields: page.fields.map((f: any) =>
+                    f.label === submission.field_label
+                      ? { ...f, value: submission.field_type === "image" ? submission.file_url : submission.text_value }
+                      : f
+                  )
+                }
+              }
+            }
+            const { error: writeError } = await supabase
+              .from("content_section")
+              .update({ data: { ...(csRow.data as Record<string, any>), pageContent: updatedPageContent }, updated_at: new Date().toISOString() })
+              .eq("project_id", projectId)
+            if (writeError) console.error("content_section write-back failed:", writeError)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
       toast.success(`${data.updated ?? 0} fields accepted.`)
       await fetchData()
     } catch {
